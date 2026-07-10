@@ -55,3 +55,11 @@ agy plugin list | import [source] | install <target> | uninstall | enable | disa
 - 서버 `--exposition=readonly|high|low|compact` (기본 readonly,high) — Codex 프리셋은
   readonly 확정 (§5-4 미결 5 해소).
 - `codex mcp add <name> --env K=V -- <command>` 시그니처 확인 — NODE_PATH 주입 가능.
+
+## L5 추가 실측 (2026-07-10)
+
+- 루트 `plugin.json` 추가만으로 `agy plugin validate/install` 통과 — skills 11 + agents 1
+  임포트, `~/.gemini/config/plugins/sc4sap-lite/`에 core/server 포함 전체 복사 (PLUGIN_ROOT
+  상대 해석 유지). "import claude" 경로조차 불필요 — 직설치가 최단 경로였음.
+- MCP 번들: plugin.json 포인터/인라인/`mcp.json` 모두 미인식 (1.0.7) → 전역 등록으로 확정.
+- 갱신 시 재설치 필요 (복사 방식) — doctor 점검 항목.
