@@ -1,0 +1,9 @@
+{
+  "name": "sap-agentic-harness-server-devdeps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev-only manifest to install @napi-rs/keyring for bundle-keyring.mjs. Not shipped; the bundled binaries live in runtime-deps/keyring/node_modules/ (git-tracked).",
+  "dependencies": {
+    "@napi-rs/keyring": "^1.1.0"
+  }
+}

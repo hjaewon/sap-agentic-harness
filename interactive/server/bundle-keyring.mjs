@@ -57,7 +57,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
+const ROOT = __dirname;
 const SRC_NAPI = join(ROOT, 'node_modules', '@napi-rs');
 const DST_NAPI = join(ROOT, 'runtime-deps', 'keyring', 'node_modules', '@napi-rs');
 const INTEGRITY_PATH = join(ROOT, 'runtime-deps', 'keyring', 'integrity.json');
