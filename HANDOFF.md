@@ -120,6 +120,14 @@ Antigravity(가능한 선까지)에서 반복. 리뷰 인계 스키마(review-re
 거부(또는 write 미등록)". 수정 후 재번들 절차는 `interactive/server/UPDATE-RUNBOOK.md`.
 현재는 정책층(`interactive/core/policies/credential-handling.md`)이 커버 — E2E 비차단.
 
+**엔진 백로그 2 — `.sc4sap/` 프로젝트 폴더명**: 번들에 하드코딩(`path.join(cwd, ".sc4sap", …)`
+실측) — 개명하려면 엔진 소스 configurable화 필요, tier 이슈와 같은 사이클에 처리 권장.
+**머신 레벨 홈은 개명 완료(2026-07-10)**: `SC4SAP_HOME_DIR=C:\Users\hjaew\.sap-agentic-harness`
+사용자 env 영구 등록(번들·훅·lib 모두 이 오버라이드 지원 실측), 기존 프로파일 2개
+(IDEA-JNC, KR-DEV) 마이그레이션 완료. 구 `~/.sc4sap`은 백업 보존 — 동결된 sc4sap-custom을
+다시 켜면 그쪽을 읽어 갈라질 수 있으니 **정본은 새 경로**. env는 새 프로세스부터 유효
+(실행 중 세션은 재시작 필요).
+
 ## 7. 핵심 파일 지도
 
 ```

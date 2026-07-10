@@ -15,6 +15,11 @@ knowledge/personas/procedures/policies are static; this is the per-project runti
 ~/.sap-agentic-harness/profiles/<alias>/sap.env     ← connection profile (NEVER committed to git)
 ```
 
+The machine home is resolved via the `SC4SAP_HOME_DIR` env var (set persistently on this
+machine); without it the engine defaults to `~/.sc4sap`. The **project-level** state
+directory name `.sc4sap/` below is hardcoded in the server bundle and stays as-is
+(historical internal name — rename tracked as an engine-fork backlog item).
+
 Keys (exact list verified against the server bundle in Phase L2 — see
 [credential-handling](policies/credential-handling.md)):
 
