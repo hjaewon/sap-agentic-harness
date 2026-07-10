@@ -183,16 +183,74 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - (d) **활성화/갱신 상태 플래그 신뢰 불가** — failed+에러0 모순, `activate=true` 거짓 성공, GUI 비가시 유령 inactive 레이어. 검증은 소스 읽기로만 가능
 - (e) 사용자 DEV 박스 서비스 2종 다운(엔진 무관): ABAP Unit ADT 실행 404 · ZMCP_ADT_SRV Textpool 500 — 복구 후 RunUnitTest/WriteTextElementsBulk 재실행
 
-## 5. E2E 이후 남은 백로그
+## 5. E2E 이후 남은 백로그 (상세 — 새 세션이 이 절만 읽고 착수 가능하게 기록)
 
-| 항목 | 내용 | 근거 |
+**착수 순서 추천: 5-1 → 5-2 → 5-3** (5-4~5-6은 낮음). 전 항목 보조 머신에서 가능.
+공통 완료 조건: §9의 게이트 4종 통과 유지 + 상태 변경 시 이 문서 갱신.
+
+### 5-1. tool-catalog 재생성 — 1순위
+
+- **현황**: `interactive/server/tool-catalog/`의 4파일(read/write/runtime/전체, read 81/write 76
+  분류)은 원본 이식본이라 live와 어긋남 — 카탈로그에만 27종(프로그램/화면 계열), live에만
+  12종(GrepObjects·GetCallGraph·UpdateSourceByPatch 등). 상세는 같은 폴더 README.md.
+- **작업**: 연결 상태 tools/list(186종)를 실측해 4파일을 재생성하고 read/write/runtime
+  분류 유지, README의 "어긋남 주의" 문구를 재생성 완료로 갱신.
+- **실측 방법**: `scripts/smoke-mcp.mjs`를 본떠 **`server/launch.cjs`를 spawn**(cwd=레포
+  루트 — `.sc4sap/active-profile.txt` 인식) → initialize → tools/list. 각 tool의
+  name+description+[read-only] 접두어까지 수집하면 분류 자동화 가능.
+  IDES-DEV 프로파일로 186종 노출 재확인됨(2026-07-10 보조 머신 실측).
+- **함정**: 번들을 직접 기동하면 inspection-only(155)로 잡힘 — §4.1-(b) gen-permissions와
+  같은 함정. 반드시 launch.cjs 경유 + 프로파일 활성 상태로.
+- **완료 기준**: 카탈로그 도구 수 = 연결 실측 수(186), 카탈로그↔live diff 0, check-links 통과.
+
+### 5-2. doctor.mjs — 3사 어댑터-코어 동기화 점검 도구
+
+- **근거**: interactive/DESIGN.md 파일 지도의 `scripts/doctor.mjs`("3사 어댑터 버전/코어
+  해시 불일치 감지") + §5-2 L6 게이트 "doctor 동기화 점검" — L6에서 유일하게 미구현.
+- **작업**: `interactive/scripts/doctor.mjs` 신설. 점검 항목:
+  ① 번들 무결성(server/VERSION·integrity.json vs 실해시 — `server/verify-engine.mjs` 로직 재사용)
+  ② `adapters/compatibility.json`의 3사 고정 버전 vs 설치 실측(`claude plugin list` /
+  `codex plugin list` / `agy plugin list` — 미설치 하네스는 skip 처리)
+  ③ Claude 훅 배선 경로 실재 여부(프로젝트 settings의 hook command 경로).
+- **완료 기준**: 정상 환경 exit 0 / 불일치 시 항목별 보고 + exit 1. README(어댑터 3벌)에 사용법 1줄.
+
+### 5-3. review-request 스키마 확장 — 환경 컨텍스트 동봉 (D-013)
+
+- **근거**: L6 교차 리뷰에서 동일 대상에 Claude PASS vs Codex FAIL(MAJOR 7) — 원인 대부분이
+  환경 컨텍스트 미전달(백엔드 장애를 코드 결함으로 계상, 스펙 승인 편차를 위반으로 계상).
+  docs/DECISIONS.md D-013.
+- **작업**: `interactive/core/procedures/schemas/review-request.schema.json`에 **additive**
+  (하위호환) 필드 추가 — 예: `environment_context` { `known_outages[]`(백엔드 장애),
+  `approved_deviations[]`(스펙 승인 편차 + 승인 근거), `notes` }. create-program 절차
+  문서의 review-request 생성 단계에 기입 지침 반영. review-result 스키마는 무변경.
+- **완료 기준**: 스키마 유효(JSON) + 절차 문서 반영 + check-links·coverage 게이트 통과.
+  실증은 다음 create-program 완주 시 교차 리뷰 1회로.
+
+### 5-4. 검증도구 개선 3건 [낮음] (L5 리뷰 보류분 2-3/2-4/2-5)
+
+- `check-links.mjs`: 앵커(#섹션) 존재 검증 추가
+- `check-migration-coverage.mjs`: transform/copy 규칙의 목적지 경로 실재 검사 추가
+- `smoke-mcp.mjs`: `--exposition` 인자 지원(노출 프리셋별 스모크)
+
+### 5-5. deferred 스크립트 6종 (L6+, 원천은 동결 레포 sc4sap-custom/scripts/ — 읽기만)
+
+| 원천 | 목적지 | 현행 수동 대체 |
 |---|---|---|
-| doctor.mjs | 3사 어댑터-코어 버전/해시 불일치 감지 | interactive/DESIGN.md §3-2 (L6) |
-| tool-catalog 재생성 | 연결 상태(186 tools) 기준으로 갱신 | server/tool-catalog/README.md |
-| review-request 스키마 확장 | 환경 컨텍스트(장애·문서화된 편차) 동봉 — 교차 리뷰 판정 편차 완화 | docs/DECISIONS.md D-013 |
-| deferred 스크립트 6종 | extract-spro/customizations, fetch 2종, profile-cli, option-tui | MIGRATION-MANIFEST의 deferred(L6+) 행 |
-| 검증도구 개선 3건(낮음) | 링크체커 앵커 검증, 커버리지 목적지 존재 검사, 스모크 exposition 인자 | L5-review-response.md 보류 절 |
-| 다국어 README | 재작성 여부 결정 | 매니페스트 archive 행 |
+| extract-spro.mjs · extract-customizations.mjs | `tools/extract/` | spro-lookup.md · customization-lookup.md |
+| fetch-abap-keyword-doc.mjs · fetch-sap-help-doc.mjs | `tools/fetch/` | help-portal-fetch.md |
+| sap-profile-cli.mjs | `scripts/` | troubleshooting.md 수동 절차 |
+| sap-option-tui.mjs | 재심사 | config.json 직접 편집으로 대체 중 |
+
+### 5-6. 다국어 README — 재작성 여부 결정만 (매니페스트 archive 행)
+
+### 머신별 가능 범위 (2026-07-10 기준)
+
+| 작업 | 주 머신 | 보조 머신(D:\AI PROJECT) |
+|---|---|---|
+| 위 5-1~5-6 | ✅ | ✅ (5-1은 IDES-DEV 연결로) |
+| 트랙 A 부트스트랩 (DESIGN.md §16) | ✅ | ❌ vsp-custom·final-harness 소스 없음 |
+| E2E 잔여 2건(RunUnitTest·WriteTextElementsBulk) | KR-DEV 백엔드 복구 후 | ❌ 사내망 전용 |
+| 엔진 백로그 (§6) | 포크 소스 필요 | 포크 소스 필요 |
 
 ## 6. 별도 레포로 이관된 이슈 (엔진 포크)
 
