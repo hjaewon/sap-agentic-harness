@@ -26,11 +26,11 @@ import { fileURLToPath } from 'node:url';
 import { resolveConfigJsonPath } from '../lib/profile-resolve.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXCEPTIONS_DIR = resolve(__dirname, '..', '..', 'exceptions');
-// `table_exception.md` is the index/documentation file; each category lives in
-// its own `*.md` so the files stay small and grep-able. Everything under
-// exceptions/ EXCEPT the index is parsed and merged.
-const INDEX_FILE = 'table_exception.md';
+const EXCEPTIONS_DIR = resolve(__dirname, '..', '..', '..', 'core', 'policies', 'data-protection');
+// `table_exception.md` is the index/documentation file and
+// `data-extraction-policy.md` is the policy document; each blocklist category
+// lives in its own `*.md`. Everything else in the directory is parsed and merged.
+const EXCLUDED_FILES = new Set(['table_exception.md', 'data-extraction-policy.md']);
 
 const TIER_ORDER = { minimal: 1, standard: 2, strict: 3 };
 const DEFAULT_PROFILE = 'strict';
@@ -73,7 +73,7 @@ function loadProfile(configPath) {
 function listSectionFiles() {
   try {
     return readdirSync(EXCEPTIONS_DIR)
-      .filter((f) => f.toLowerCase().endsWith('.md') && f.toLowerCase() !== INDEX_FILE.toLowerCase())
+      .filter((f) => f.toLowerCase().endsWith('.md') && !EXCLUDED_FILES.has(f.toLowerCase()))
       .map((f) => join(EXCEPTIONS_DIR, f))
       .sort();
   } catch {
@@ -307,9 +307,9 @@ async function main() {
     const lines = denyHits.map((h) => `  - ${h.table} — ${h.category}: ${h.why || 'protected'}`).join('\n');
     const reason =
       `sc4sap blocklist (profile: ${profile}) — row extraction denied:\n${lines}\n\n` +
-      `See exceptions/table_exception.md and common/data-extraction-policy.md for allowed alternatives ` +
+      `See core/policies/data-protection/ (table_exception.md index, data-extraction-policy.md) for allowed alternatives ` +
       `(released CDS views, anonymized test data, COUNT/SUM aggregates, or documented one-off approval).\n` +
-      `To change scope, run \`/sc4sap:setup\` and reselect the blocklist profile.`;
+      `To change scope, edit blocklistProfile in .sc4sap/config.json (see core/procedures/troubleshooting.md).`;
     process.stdout.write(JSON.stringify({
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',

@@ -32,25 +32,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * so upgrades don't leave dead paths in users' settings.json.
  */
 function resolveHookScript(basename) {
-  const scriptRelative = resolve(__dirname, 'hooks', basename);
+  const scriptRelative = resolve(__dirname, basename);
   const candidates = [
     resolve(
       homedir(),
       '.claude',
       'plugins',
       'marketplaces',
-      'sc4sap-custom',
-      'scripts',
-      'hooks',
-      basename,
-    ),
-    resolve(
-      homedir(),
-      '.claude',
-      'plugins',
-      'marketplaces',
-      'sc4sap',
-      'scripts',
+      'sc4sap-lite',
+      'adapters',
+      'claude',
       'hooks',
       basename,
     ),
@@ -73,7 +64,7 @@ const HOOKS = [
     matcher:
       'mcp__.*__(Create|Update|Delete|RunUnitTest|RuntimeRunProgramWithProfiling|RuntimeRunClassWithProfiling)',
     testHint:
-      'Test it by switching to a QA/PRD profile via /sc4sap:sap-option, then calling an Update* tool — the call should be denied.',
+      'Test it by switching the active profile to a QA/PRD alias (edit .sc4sap/active-profile.txt), then calling an Update* tool — the call should be denied.',
   },
   {
     marker: 'prefer-sqlquery-explicit-fields.mjs',
@@ -83,12 +74,18 @@ const HOOKS = [
   },
 ];
 
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
 const useProject = args.has('--project');
 const uninstall = args.has('--uninstall');
+const projectIdx = argv.indexOf('--project');
+const projectDir =
+  projectIdx >= 0 && argv[projectIdx + 1] && !argv[projectIdx + 1].startsWith('--')
+    ? argv[projectIdx + 1]
+    : process.cwd();
 
 const settingsPath = useProject
-  ? resolve(process.cwd(), '.claude', 'settings.json')
+  ? resolve(projectDir, '.claude', 'settings.json')
   : resolve(homedir(), '.claude', 'settings.json');
 
 function loadSettings() {
