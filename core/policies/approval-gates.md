@@ -19,16 +19,17 @@ displayed to the user and explicitly approved.
 
 **Accepted approval keywords** (exact, explicit):
 
-- `승인` / `approve` / `proceed` / `go ahead` / `confirmed`
+- `승인` / `approve` / `approved` / `ok` / `proceed` / `go ahead` / `confirmed`
+  (the canonical list lives in `../procedures/schemas/approval.schema.json` — keep both in sync)
 
-**NOT accepted**: `yes`, `ok`-style bare acknowledgements, "sounds good",
+**NOT accepted**: `yes`, "sounds good",
 enthusiasm ("빨리", "해봐"), silence, or moving on to another topic. If the
 response is a change request, revise `spec.md`, re-display it, and wait again —
 never silently merge comments and continue.
 
 **Approval record.** On approval, write a record conforming to
-`../procedures/schemas/approval.schema.json` (schema file pending; record the
-fields below until it lands) into `.sc4sap/program/{PROG}/`:
+`../procedures/schemas/approval.schema.json` into `.sc4sap/program/{PROG}/`
+(field summary below; the schema is authoritative):
 
 - the **spec hash** (content hash of `spec.md` at the moment of approval)
 - the target **SID/client** (from the active profile)

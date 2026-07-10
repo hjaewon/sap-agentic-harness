@@ -105,7 +105,7 @@ Return the consultant's answer, prefixed with the consultant identity and the en
 
 For multi-module questions, the `🧭 Consultant` line lists all persona names, the body leads with the synthesis — shared points, disagreements, cross-module summary — followed by one subsection per module perspective.
 
-## MCP Tools Used
+## Backend Tools Used
 
 - `SearchObject`, `GetObjectInfo` — existence checks as the consultant works
 - `GetPackage`, `GetPackageContents` — CBO scope confirmation

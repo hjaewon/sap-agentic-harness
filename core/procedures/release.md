@@ -78,7 +78,7 @@ This ensures you never accidentally release the wrong transport, but the user do
 - Transport already released: report status and skip release step
 - Authorization error on release: report S_TRANSPRT authorization requirement
 
-## MCP Tools Used
+## Backend Tools Used
 
 - `ListTransports` — retrieve open transports
 - `GetTransport` — transport details and object list

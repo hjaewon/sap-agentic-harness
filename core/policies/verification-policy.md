@@ -56,16 +56,12 @@ Record the outcome of every chain run under the program's state directory
 .sc4sap/program/{PROG}/verification.json
 ```
 
-The record follows the schema at `../procedures/schemas/verification.schema.json`
-(schema file pending; until it lands, record at minimum the fields below):
+The record conforms to `../procedures/schemas/verification.schema.json` (authoritative):
+one object per chain run with `prog` plus the four fixed step keys —
+`check_syntax`, `activate`, `unit_test`, `atc` — each `{status, evidence}` where
+`evidence` carries the verbatim tool output summary (error messages, failed test
+methods, ATC findings with priorities).
 
-- `program` — main object name
-- `run_at` — ISO timestamp of the chain run
-- `steps[]` — one entry per step: `step` (syntax | activation | unit-test | atc),
-  `tool` (exact tool name), `objects` (list checked), `result` (pass | fail),
-  `attempt` (1-based), `detail` (verbatim summary of the tool output — error
-  messages, failed test methods, ATC finding list with priorities)
-- `verdict` — overall pass/fail of the full chain
-
-Evidence is append-only: a re-run adds a new record, it never overwrites the
-failed one.
+Evidence is preserved across re-runs: before writing a new run's
+`verification.json`, rename the previous one to `verification.prev-<n>.json` —
+a re-run never overwrites a failed record.

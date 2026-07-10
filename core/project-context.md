@@ -46,15 +46,16 @@ Keys (exact list verified against the server bundle in Phase L2 — see
 | `activeModules` | array of module codes | cross-module concerns in design |
 | `industry` | key into [knowledge/industry/](knowledge/industry/) | triggered industry knowledge |
 | `country` | ISO key into [knowledge/country/](knowledge/country/) | triggered localization knowledge |
+| `blocklistProfile` | `minimal` \| `standard` \| `strict` (default) | table blocklist scope read by the data-protection hook/server guard |
 
 ## Work-in-progress state (created by procedures)
 
 ```
 .sc4sap/program/{PROG}/      ← create-program artifacts: platform.md, module-interview.md,
-                               interview.md, plan.md, spec.md, state.json, review.md, report.md
+                               interview.md, plan.md, spec.md, state.json, report.md, review-request/review-result JSON
                                + approval/review/verification records per procedures/schemas/
 .sc4sap/cbo/<MODULE>/<PACKAGE>/  ← CBO inventory artifacts (analyze-cbo-obj)
-.sc4sap/spro/ · .sc4sap/customizations/  ← optional extraction artifacts (may be absent —
+.sc4sap/spro-config.json · .sc4sap/customizations*  ← optional extraction artifacts (may be absent —
                                procedures must fall back to knowledge/modules/<MOD>/)
 ```
 
