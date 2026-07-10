@@ -15,7 +15,7 @@ Connection profiles are **machine-level**, written once per machine, outside
 every repository:
 
 ```
-~/.sc4sap/profiles/<alias>/sap.env     ← host, client, user, tier, blocklist profile
+~/.sap-agentic-harness/profiles/<alias>/sap.env     ← host, client, user, tier, blocklist profile
 ```
 
 A project selects its profile via one line in `.sc4sap/active-profile.txt`

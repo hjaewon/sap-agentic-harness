@@ -12,7 +12,7 @@ knowledge/personas/procedures/policies are static; this is the per-project runti
 ## Machine-level (once per machine)
 
 ```
-~/.sc4sap/profiles/<alias>/sap.env     ← connection profile (NEVER committed to git)
+~/.sap-agentic-harness/profiles/<alias>/sap.env     ← connection profile (NEVER committed to git)
 ```
 
 Keys (exact list verified against the server bundle in Phase L2 — see
