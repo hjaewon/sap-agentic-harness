@@ -69,4 +69,4 @@ Each country file contains:
 1. Copy an existing file as a template (e.g., `kr.md` for APAC, `de.md` for EU).
 2. Fill in the sections above.
 3. Add a row to the table in this README.
-4. If agents will actively need it, update `.sc4sap/config.json` → `country` and `sap.env` → `SAP_COUNTRY` via `/sc4sap:sap-option`.
+4. If agents will actively need it, update `.sc4sap/config.json` → `country` and `sap.env` → `SAP_COUNTRY` via `the profile settings (edit .sc4sap/config.json — see core/procedures/troubleshooting.md)`.

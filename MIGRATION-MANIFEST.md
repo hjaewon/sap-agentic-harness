@@ -57,12 +57,12 @@
 | `scripts/syntax-checker.mjs` | transform | `adapters/claude/hooks/` (유지 훅 — L3 재배선) |
 | `scripts/lib/**` | transform | 유지 훅·도구 공용 lib — 필요분만 (L3) |
 | `scripts/spec/**` | copy | `tools/spec/` (xlsx 산출 파이프라인) |
-| `scripts/extract-spro.mjs` | transform | `tools/extract/` (SPRO 지식 추출 유지) |
-| `scripts/extract-customizations.mjs` | transform | `tools/extract/` |
-| `scripts/fetch-abap-keyword-doc.mjs` | transform | `tools/fetch/` (help-portal-fetch 절차 의존) |
-| `scripts/fetch-sap-help-doc.mjs` | transform | `tools/fetch/` |
-| `scripts/sap-profile-cli.mjs` | transform | `scripts/` (프로파일 관리 — project-context 규약) |
-| `scripts/sap-option-tui.mjs` | transform | `scripts/` (옵션 편집 유틸 — L1 재심사) |
+| `scripts/extract-spro.mjs` | transform | `tools/extract/` — **deferred(L6+)**: 수동 fallback 문서화됨(spro-lookup.md) |
+| `scripts/extract-customizations.mjs` | transform | `tools/extract/` — **deferred(L6+)**: 수동 fallback 문서화됨(customization-lookup.md) |
+| `scripts/fetch-abap-keyword-doc.mjs` | transform | `tools/fetch/` — **deferred(L6+)**: 수동 fallback 문서화됨(help-portal-fetch.md) |
+| `scripts/fetch-sap-help-doc.mjs` | transform | `tools/fetch/` — **deferred(L6+)** |
+| `scripts/sap-profile-cli.mjs` | transform | `scripts/` — **deferred(L6+)**: 수동 절차는 troubleshooting.md |
+| `scripts/sap-option-tui.mjs` | transform | **deferred(L6+ 재심사)**: config.json 직접 편집으로 대체 중 |
 | `scripts/bundle-keyring.mjs` | copy | `server/` (keyring 번들 도구) |
 | `scripts/verify-engine.mjs` | copy | `server/` (번들 무결성 검증 — UPDATE-RUNBOOK 부속) |
 | `scripts/ci/**` | archive | CI 신규 작성 시 참고 |
