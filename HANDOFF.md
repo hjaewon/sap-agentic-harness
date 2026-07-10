@@ -189,6 +189,7 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 ```
 HANDOFF.md                      ← 이 문서 (상태 바뀌면 갱신)
+docs/DECISIONS.md               ← 결정 로그 (append-only — 결정의 '왜'는 여기 영구 보존)
 DESIGN.md                       ← 트랙 A(무인 하네스) 설계 v2.1 — §16 부트스트랩부터 시작
 interactive/
   DESIGN.md                     ← 트랙 B 설계 정본 (이중 리뷰·L5 실측 갱신 반영)
@@ -218,6 +219,8 @@ docs/superpowers/specs/…lite-design.md  ← 설계 스냅샷 (정본은 intera
 5. 매니페스트·게이트 우선: 구조 변경 시 `node interactive/scripts/check-links.mjs interactive`와
    `node interactive/scripts/check-migration-coverage.mjs`가 항상 통과 상태여야 한다.
 6. superpowers 플러그인은 사용자가 의도적으로 비활성화함 — 재활성화 제안 불필요.
+7. **굵직한 결정(대안을 기각한 선택)은 `docs/DECISIONS.md`에 append** — 수정·삭제 금지,
+   정정도 새 항목으로. 이 문서(HANDOFF)를 재작성할 때 결정의 '왜'가 소실되지 않게 하는 장치다.
 
 ## 9. 검증 명령 모음 (재개 시 상태 점검용)
 
