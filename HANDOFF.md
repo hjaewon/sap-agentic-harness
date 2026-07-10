@@ -103,6 +103,58 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 **E2E 후 → L6 교차 검증**: 동일 과제(상담+조회 수준)를 Codex(`toggle on` + MCP 등록)와
 Antigravity(가능한 선까지)에서 반복. 리뷰 인계 스키마(review-request/result) 왕복 1회 실증.
 
+### 4.1 L3 E2E — ✅ 완료 (2026-07-10)
+
+**E2E 전 구간 완주.** 연결을 막던 조립 결함 2건(keyring·연결 미배선)을 수리·실증했고,
+재시작 후 하네스 통합 경로로 실연결(system_id=DEV) → 안전훅 재배선 → FI 상담 →
+**create-program 풀 파이프라인 완주**(스펙 승인 게이트[사람] → Sonnet executor 구현 →
+Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSyntax/활성화/ATC).
+산출물: DEV `$TMP`의 `ZR_FI_GL_LIST` 5오브젝트 ACTIVE v1.1, 전 게이트 기록은
+`.sc4sap/program/ZR_FI_GL_LIST/`(report.md 포함). **리뷰 게이트 가치 실증**: 문법·ATC·활성화를
+전부 통과한 의미 결함(INNER vs LEFT JOIN)을 리뷰만 잡아냄.
+잔여(백엔드 복구 후): RunUnitTest 재실행, WriteTextElementsBulk 1회. 다음 단계 = **L6 교차 검증**.
+
+**확정 발견 & 수리:**
+
+1. **keyring 바이너리 번들 누락** → keychain 비번 해석 불가 → 연결 불가.
+   수리: `interactive/server/package.json`(+lock) 추가, `npm install`로 4플랫폼(win32/darwin×2/linux)
+   populate, `bundle-keyring.mjs`의 `ROOT`를 `__dirname`으로 교정(마이그레이션 후 한 단계 어긋나 있었음),
+   `interactive/.gitignore`에 `!/server/runtime-deps/keyring/node_modules/` 네거이션(블랭킷 `node_modules/`가
+   바이너리를 삼켜 미커밋됐던 것이 근본원인). 검증: 모듈 로드 + Credential Manager `sc4sap/KR-DEV/HJAEWON` 읽힘.
+2. **연결 env 미배선** → `.mcp.json`이 `--env-path`/`MCP_ENV_PATH`를 서버에 안 넘겨 4.13 번들이 **항상 mock**
+   (username/password="mock", client 없음 → "Basic authentication requires SAP_CLIENT" 에러의 정체).
+   active-profile은 tier/도구노출만 설정하지 그 자체로 연결을 만들지 않음(설계 문서는 "activateProfile이 연결 전
+   실행되어 연결이 env를 상속" 가정이나 4.13 브로커는 env-**파일** 경로를 요구 — 엔진 회귀).
+   수리(어댑터, 번들 무수정): 런처 shim `interactive/server/launch.cjs` — `.sc4sap/active-profile.txt`를 읽어
+   프로파일 `sap.env` 경로를 `process.env.MCP_ENV_PATH`로 세팅 후 번들 require. `.mcp.json` args를 shim으로 변경.
+   검증: launch.cjs 경유 `GetSystemInfo` → **실데이터 `system_id=DEV, client=700, user=HJAEWON(홍재원), adt=modern`**.
+3. **"미노출 27종" 판정 정정** → 프로그램/화면 계열(CreateProgram·CreateInclude·CreateScreen·CreateGuiStatus·
+   CreateTextElement 등)은 **부재가 아니라 프로파일 활성 시 동적 노출**. inspection-only 155 → connected **186 tools**.
+   → **create-program 실행 가능** (앞선 "부재" 결론은 inspection-only 아티팩트였음). tool-catalog 보류 해소.
+4. **권한 템플릿 재생성** → 기존 템플릿은 inspection-only(155)로 생성돼 프로그램 계열 write 누락(153 entries).
+   connected(186)로 재생성 → `permissions-template.json` 184 tools(+파일op 5 = 189). `gen-permissions.mjs`는
+   여전히 inspection-only 기동이라 **연결 상태 생성으로 고쳐야 함(엔진/스크립트 백로그)**.
+
+**스테이징(미커밋) 변경:** `interactive/.gitignore`·`.mcp.json`·`server/bundle-keyring.mjs`·
+`server/runtime-deps/keyring/integrity.json`·`adapters/claude/permissions-template.json`(수정) +
+`server/launch.cjs`·`server/package.json`·`server/package-lock.json`·`server/runtime-deps/keyring/node_modules/`(신규).
+프로젝트 상태 `.sc4sap/active-profile.txt`(=KR-DEV)+`config.json`은 git-ignored(정상).
+
+**E2E 체크리스트 결과 (전 항목 완료):**
+1. ✅ 실연결 — 하네스 `GetSystemInfo` → `DEV/700/HJAEWON/modern`
+2. ✅ 권한 병합 — `settings.local.json` allow 189 (사용자 `!node merge-perms` 실행; 실데이터 2종 제외 유지)
+3. ✅ 안전훅 재배선 — 3종 프로젝트 settings 등록(라이트 경로), PA0008 차단 standalone 실증
+4. ✅ FI 상담 — 페르소나 로드 + 라이브 컨텍스트(ACDOCA/SKA1 실조회) + KR 로컬라이제이션 반영
+5. ✅ create-program 완주 — 승인 게이트(SHA 바인딩) → 구현 → 리뷰 FAIL→수정→PASS → 기계검증 체인
+6. ✅ 일괄 커밋 (push는 사용자 판단)
+
+**E2E가 발굴한 엔진/백엔드 이슈 (§6 백로그 이관):**
+- (a) **연결 미배선** — activateProfile이 connection 브로커에 미공급(4.13 회귀). adapter shim(launch.cjs)으로 우회 중 — 엔진 근본수리 필요
+- (b) **gen-permissions가 inspection-only 기동** — 프로그램 계열 write 미포함 템플릿 생성. 연결 상태 생성으로 수정 필요
+- (c) **DeleteInclude enqueue 누수** — 잠금→삭제 후 미해제, 고아 잠금이 재생성 차단(5회 재현). SM12 수동 정리로만 해소
+- (d) **활성화/갱신 상태 플래그 신뢰 불가** — failed+에러0 모순, `activate=true` 거짓 성공, GUI 비가시 유령 inactive 레이어. 검증은 소스 읽기로만 가능
+- (e) 사용자 DEV 박스 서비스 2종 다운(엔진 무관): ABAP Unit ADT 실행 404 · ZMCP_ADT_SRV Textpool 500 — 복구 후 RunUnitTest/WriteTextElementsBulk 재실행
+
 ## 5. E2E 이후 남은 백로그
 
 | 항목 | 내용 | 근거 |
