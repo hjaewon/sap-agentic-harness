@@ -199,8 +199,9 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 ## 5. E2E 이후 남은 백로그 (상세 — 새 세션이 이 절만 읽고 착수 가능하게 기록)
 
-**5-1~5-4·5-6 완료 (2026-07-11)** — 남은 항목은 5-5(deferred L6+ — 실수요 발생 시)뿐.
-공통 완료 조건: §9의 게이트 4종 통과 유지 + 상태 변경 시 이 문서 갱신.
+**5-1~5-4·5-6 완료 (2026-07-11)** — 남은 항목: 5-5(deferred L6+ — 실수요 발생 시) ·
+5-7(설치 절차 이식 갭 — 엔진 수리와 짝). 공통 완료 조건: §9의 게이트 4종 통과 유지 +
+상태 변경 시 이 문서 갱신.
 
 ### 5-1. tool-catalog 재생성 — ✅ 완료 (2026-07-11, 보조 머신)
 
@@ -259,6 +260,21 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 | fetch-abap-keyword-doc.mjs · fetch-sap-help-doc.mjs | `tools/fetch/` | help-portal-fetch.md |
 | sap-profile-cli.mjs | `scripts/` | troubleshooting.md 수동 절차 |
 | sap-option-tui.mjs | 재심사 | config.json 직접 편집으로 대체 중 |
+
+### 5-7. sap-assets 설치 절차 + FM 부재 시 제외 규칙 [이식 갭 — 2026-07-11 발견]
+
+- **근거**: 원본 setup의 **wizard-step-09**(동결 레포 — 읽기만)는 ZMCP_ADT_UTILS 번들을
+  MCP 도구로 자동 설치하는 절차를 가짐 — tier 게이트(QA/PRD 거부 + CTS 안내) ·
+  시스템 dedup(sentinel 파일) · 기존재 skip · 부분 실패 시 사용자 판단 ·
+  **RFC-enabled는 SE37 수동**(TFDIR.FMODE는 ADT REST로 불가 — 원본도 수동).
+  라이트에는 소스(server/sap-assets/)와 진단(troubleshooting §1 FM 존재 확인)만 이식되고
+  설치 절차와 부재 시 제외 규칙은 미이식 — E2E 잔여 IDES 이전 시도에서 발견(D-015 세션).
+- **작업**: ① 설치 절차를 `core/procedures/`로 이식(원본 스텝 9의 게이트 로직 유지,
+  SAP_VERSION별 소스 선택 S4/ECC, RFC-enabled 수동 단계 명시) ② 절차들에 "textpool FM
+  부재/RFC 백엔드 미구성 시 Screen·GUI Status·Text Element 3계열 SKIPPED 처리 +
+  `environment_context.known_outages` 기입"(5-3 필드 활용) 명시.
+- **선결**: CreateFunctionGroup 엔진 수리(§6 엔진 백로그 3-2) — S/4HANA 2021에서
+  설치 절차가 실행되려면 필요. 실증은 엔진 수리 후 IDES 1회.
 
 ### 5-6. 다국어 README — ✅ 결정 완료 (2026-07-11): 재작성 안 함
 
