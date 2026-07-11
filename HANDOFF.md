@@ -4,7 +4,7 @@
 > 작성 2026-07-10 · 최종 갱신 2026-07-11. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
 > **다음 착수 = Claude 세션 재시작 → "하네스 이식해줘"(harness-init) → harness-tailor →
-> Phase 0a** (§5 서두 — 부트스트랩 §16-1·3 완료 2026-07-11, §16-4 파일럿 결정은 사람 몫).
+> Phase 0a** (§5 서두 — 부트스트랩 §16-1·3·4 완료 2026-07-11, 파일럿 = IDES-DEV $TMP).
 
 ---
 
@@ -25,7 +25,8 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │     §15-F 불변식: v0.17.1(cf42b64) 재검증 완료(2026-07-11) — 전량 유지. 두 의존의
 │           검증 lock = adapters/vsp/vsp.lock.json · adapters/final-harness.lock.json (D-018)
 │     시작점: 세션 재시작 → harness-init("하네스 이식해줘") → harness-tailor = Phase 0a
-│           (DESIGN.md §13 — §16-2 SAP 연결은 Phase 0b에서, §16-4 파일럿 결정은 사람)
+│           (DESIGN.md §13 — §16-2 SAP 연결은 Phase 0b에서. §16-4 파일럿 확정:
+│           IDES-DEV(S4H/100) $TMP — 2026-07-11 사용자 결정)
 │
 └── [트랙 B] 대화형 트랙 — ★ L0~L5 구현 완료, E2E 대기  ←←← 현재 작업 지점
       위치: interactive/ (= 3사 공통 플러그인 루트)
@@ -219,8 +220,8 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 **5-1~5-4·5-6·5-9·5-10 완료 (2026-07-11)** — 남은 항목과 순서 (새-컨텍스트 이중 검토
 2026-07-11이 재배열, 근거: "안전 주장-실체 격차가 열린 채 편의를 쌓지 않는다"):
-**트랙 A: harness-init→tailor(Phase 0a — 부트스트랩 §16-1·3 완료 2026-07-11 보조 머신,
-잔여: 세션 재시작 + §16-4 파일럿 결정)** → 5-7(설치 절차 이식)
+**트랙 A: harness-init→tailor(Phase 0a — 부트스트랩 §16-1·3·4 완료 2026-07-11 보조 머신
+[2는 Phase 0b], 파일럿 = IDES-DEV $TMP, 잔여: 세션 재시작)** → 5-7(설치 절차 이식)
 → 5-8(잔여 축소 — row-data 승인 실증은 Codex 실사용 전 필수로 상향, compact-readonly
 스파이크는 폐기) → 5-5(축소 — 아래). 공통 완료 조건: §9의 게이트 4종 통과 유지 +
 상태 변경 시 이 문서 갱신.
