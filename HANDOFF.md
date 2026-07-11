@@ -3,9 +3,9 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-11. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **다음 착수 = 트랙 A Phase 1.5** (Connected Online Validation — ZSAH1_WORKDAYS $TMP
-> deploy → ABAP Unit red/green 실측 + offline-통과·connected-실패 1건 검출, DESIGN §13 —
-> **Phase 1까지 완료 2026-07-11, 무인 엔진 첫 완주 실증**, 파일럿 = IDES-DEV $TMP).
+> **다음 착수 = 트랙 A Phase 2** (Online Read-Only Planning — 기존 컨텍스트·where-used를
+> 계획 단계에 편입, DESIGN §13 — **Phase 1.5까지 완료 2026-07-11: 무인 엔진 첫 완주 +
+> red/green 서버 실증 5 FAIL→5 PASS**, 파일럿 = IDES-DEV $TMP).
 
 ---
 
@@ -14,7 +14,7 @@
 ```
 D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-agentic-harness)
 │
-├── [트랙 A] 하네스 트랙 (무인 step + 대화형 레인 겸용) — ★ Phase 1까지 완료 (무인 엔진 첫 완주)
+├── [트랙 A] 하네스 트랙 (무인 step + 대화형 레인 겸용) — ★ Phase 1.5까지 완료 (red/green 서버 실증)
 │     설계: DESIGN.md (v2.1, 2026-07-09 확정 + 2026-07-10 엔진 델타 주)
 │     내용: final-harness(D:\claude-practice\claude-fable-final) 엔진 + vsp-custom CLI로
 │           ABAP 개발을 계획→실행→verify→LESSONS/RULES 학습 루프로 관리.
@@ -33,11 +33,14 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │           domain/abap 시드(S-001~025+CHECKLIST) + **무인 엔진 첫 완주**: 1-workdays-util
 │           (bridge, 2 steps 각 1회 시도·verify 실패 0, opus 사후 리뷰 하드 위반 0) →
 │           src/zsah1_workdays.prog.abap (테스트 클래스 먼저를 스텝 경계로 기계 증명).
-│           ⚠ ABAP Unit red/green·활성화는 미실행(offline 한계) — Phase 1.5의 필수 관문.
-│           엔진 lock = v0.17.3(8f7f13b) 동기, 저자 동결 선언. 상세 = .harness/STATE.md·
-│           phases/1-workdays-util/run-summary.json·review.md. $TMP 잔존 ZSAH0B_ 3건(무해).
-│           다음: Phase 1.5 — ZSAH1_WORKDAYS deploy($TMP)→Unit red/green + offline-통과·
-│           connected-실패 1건 검출 (완료 기준, DESIGN §13)
+│           1.5: **red/green 서버 실증** — 스텁 5 FAIL → 최종본 **5 PASS**(무인 산출물
+│           정확성 실채점 확인) + ATC(INFO 1, exit 0) + 완료 기준 충족(ENDIF 소스:
+│           offline lint 0 → connected CODE_FAIL 1). vsp test의 REPORT 로컬 테스트
+│           지원 확인(Phase 3 근거). 엔진 lock = v0.17.3(8f7f13b) 동기, 저자 동결 선언.
+│           상세 = .harness/STATE.md·phases/1-workdays-util/·VERIFY-PATTERNS §1.5절.
+│           $TMP 잔존: ZSAH0B_ 3 + ZSAH1_WORKDAYS + ZSAH15_BROKEN(빈 스켈레톤, 무해).
+│           다음: Phase 2 — Online Read-Only Planning (§13). Phase 3(Gated Deploy)
+│           선결 3조건 중 리뷰 게이트 편입은 백로그 5-11
 │
 └── [트랙 B] 대화형 트랙 — ★ L0~L5 구현 완료, E2E 대기  ←←← 현재 작업 지점
       위치: interactive/ (= 3사 공통 플러그인 루트)
@@ -231,8 +234,8 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 **5-1~5-4·5-6·5-9·5-10 완료 (2026-07-11)** — 남은 항목과 순서 (새-컨텍스트 이중 검토
 2026-07-11이 재배열, 근거: "안전 주장-실체 격차가 열린 채 편의를 쌓지 않는다"):
-**트랙 A: Phase 1.5 — Connected Validation(Phase 1까지 완료 2026-07-11 보조 머신 —
-무인 엔진 첫 완주 실증, 파일럿 = IDES-DEV $TMP, 상세 §1 현황·STATE.md)** → 5-7(설치 절차 이식)
+**트랙 A: Phase 2 — Read-Only Planning(1.5까지 완료 2026-07-11 보조 머신 — 무인 첫
+완주 + red/green 실증, 파일럿 = IDES-DEV $TMP, 상세 §1 현황·STATE.md)** → 5-7(설치 절차 이식)
 → 5-8(잔여 축소 — row-data 승인 실증은 Codex 실사용 전 필수로 상향, compact-readonly
 스파이크는 폐기) → 5-5(축소 — 아래). 공통 완료 조건: §9의 게이트 4종 통과 유지 +
 상태 변경 시 이 문서 갱신.
@@ -396,7 +399,7 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 | 작업 | 주 머신 | 보조 머신(D:\AI PROJECT) |
 |---|---|---|
-| **트랙 A: Phase 1.5 Connected Validation (다음 착수)** | vsp 빌드 + 플러그인 설치부터 (§16-1·3, lock 대조) | ✅ Phase 1까지 완료 — 1.5부터 (§1 현황) |
+| **트랙 A: Phase 2 Read-Only Planning (다음 착수)** | vsp 빌드 + 플러그인 설치부터 (§16-1·3, lock 대조) | ✅ Phase 1.5까지 완료 — Phase 2부터 (§1 현황) |
 | 5-10 잔여: install-hooks 재배선 | **재개 시 필수** (`--project` 재실행) | ✅ 완료 (2026-07-11) |
 | E2E 잔여: WriteTextElementsBulk | KR-DEV 백엔드 복구 후 | △ IDES에 ZMCP FM 수동 설치(GUI) 시 soap로 가능 (§3) |
 | 엔진 백로그 (§6) | ✅ 레포 내 `engine/` (D-017) | ✅ 동일 — 4.13.1·4.13.2 수리·재번들 실증 |

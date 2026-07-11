@@ -18,11 +18,18 @@
   하드 위반 0) → src/zsah1_workdays.prog.abap (테스트 클래스 먼저 — 스텝 경계로 기계
   증명). lint Error 차단 실증은 Phase 0a의 0→1→0 기록으로 충족. GOAL 전 기준 충족
 
+- 2026-07-11 | Phase 1.5 완료 — **red/green 서버 실증**: 스텁 deploy→5 FAIL(red),
+  최종본 deploy→**5 PASS(green)** — 무인 산출물의 정확성 실채점 확인. ATC 1건
+  (INFO, exit 0 규약 재확인). **완료 기준 충족**: ENDIF 누락 소스가 offline lint
+  exit 0 → connected deploy CODE_FAIL exit 1 (검출 1건 실증). 발견: vsp test가
+  REPORT 로컬 테스트 클래스 지원 확인(Phase 3 red/green 루프 성립 근거), 문법 오류
+  deploy는 깨진 잔존이 아니라 빈 스켈레톤 롤백(0b 서술 정정 — VERIFY-PATTERNS 반영)
+
 ## Next
 
-- Phase 1.5 (Connected Online Validation — 0b에서 ATC/health 기반으로 재정의):
-  ZSAH1_WORKDAYS를 $TMP deploy → ABAP Unit red/green 실측(리뷰 권고 — offline
-  desk-check의 실검증) + "offline 통과·connected 실패" 케이스 1건 검출 (DESIGN §13)
+- Phase 2 (Online Read-Only Planning): 기존 package/object context를 계획에 반영,
+  where-used/boundary 분석을 계획 단계에 편입 (DESIGN §13). Phase 3(Gated Deploy)
+  선결 = 백로그 5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건
 
 ## Attempts & dead ends
 
