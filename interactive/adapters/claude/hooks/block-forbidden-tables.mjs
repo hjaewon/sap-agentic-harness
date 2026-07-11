@@ -15,9 +15,14 @@
  * Any profile additionally honors `.sc4sap/blocklist-extend.txt` (one
  * table name / pattern per line) if present.
  *
- * Failure mode: fails OPEN (allows) on parse/IO errors so a broken file
- * doesn't block legitimate development. L1 (agents) and L2 (CLAUDE.md) still
- * enforce the policy in that case.
+ * Failure mode: fails CLOSED (denies) on stdin/parse errors, on a blocklist
+ * load exception, and when the built-in blocklist resolves to 0 entries for
+ * a non-`custom` profile — a missing or broken blocklist must never silently
+ * open row-data extraction. This hook is Layer 3 of the three-layer defense:
+ * L1 = documented policy (core/policies/data-protection/, read and applied
+ * by agents/skills), L2 = the MCP server's own built-in row-extraction guard
+ * (authoritative — still enforces if this hook is missing or bypassed),
+ * L3 = this PreToolUse hook (fast, harness-level pre-call check).
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -84,11 +89,7 @@ function listSectionFiles() {
 function loadBuiltinBlocklist() {
   const exact = new Map(); // name -> meta { category, tier, action, why }
   const patterns = [];     // { re, category, tier, action, why }
-  const sections = listSectionFiles();
-  // Back-compat: if no per-section files exist yet, fall back to the legacy
-  // single-file blocklist at exceptions/table_exception.md so upgrades don't
-  // break in-flight.
-  const files = sections.length > 0 ? sections : [join(EXCEPTIONS_DIR, INDEX_FILE)];
+  const files = listSectionFiles();
   for (const file of files.filter((p) => existsSync(p))) {
     parseBlocklistText(readFileSync(file, 'utf8'), exact, patterns);
   }
@@ -210,20 +211,41 @@ function mergeLists(...lists) {
   return { exact, patterns };
 }
 
+// Strip SQL block (/* ... */) and line (-- ...) comments before scanning for
+// table references — a comment hiding a table name (e.g. `FROM /*c*/ KNA1`)
+// previously fed the regex a lone `/` and let the real table slip through.
+function stripSqlComments(sql) {
+  return sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--.*$/gm, ' ');
+}
+
+// Returns { tables: Set<string>, ambiguous: boolean }. `ambiguous` is true
+// when a scanned SQL field contains a FROM/JOIN keyword (after comment
+// stripping) but no table name could be extracted from it — e.g. a dynamic
+// or computed table reference. Callers must treat that as "cannot judge",
+// not as "no tables referenced".
 function extractTables(toolName, toolInput) {
   const tables = new Set();
-  if (!toolInput || typeof toolInput !== 'object') return tables;
+  let sqlHasFromOrJoin = false;
+  if (!toolInput || typeof toolInput !== 'object') return { tables, ambiguous: false };
   for (const key of ['table', 'table_name', 'tableName', 'tabname', 'target_table']) {
     if (typeof toolInput[key] === 'string') tables.add(toolInput[key].toUpperCase());
   }
   for (const key of ['sql', 'query', 'sql_query', 'statement']) {
-    const sql = toolInput[key];
-    if (typeof sql !== 'string') continue;
-    const re = /\b(?:FROM|JOIN)\s+([A-Z0-9_\/]+)/gi;
+    const rawSql = toolInput[key];
+    if (typeof rawSql !== 'string') continue;
+    const sql = stripSqlComments(rawSql);
+    if (/\b(?:FROM|JOIN)\b/i.test(sql)) sqlHasFromOrJoin = true;
+    // FROM/JOIN followed by one or more comma-separated table names.
+    const re = /\b(?:FROM|JOIN)\s+([A-Z0-9_\/]+(?:\s*,\s*[A-Z0-9_\/]+)*)/gi;
     let m;
-    while ((m = re.exec(sql)) !== null) tables.add(m[1].toUpperCase());
+    while ((m = re.exec(sql)) !== null) {
+      for (const name of m[1].split(',')) {
+        const n = name.trim();
+        if (n) tables.add(n.toUpperCase());
+      }
+    }
   }
-  return tables;
+  return { tables, ambiguous: sqlHasFromOrJoin && tables.size === 0 };
 }
 
 // Return every rule a table matches (exact hit first, then each matching
@@ -262,12 +284,41 @@ function readStdin() {
   });
 }
 
+// Emit a PreToolUse hook decision and terminate. Every decision path in this
+// hook (deny/ask) funnels through here so the JSON shape is defined once.
+function emitDecision(permissionDecision, permissionDecisionReason) {
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision,
+      permissionDecisionReason,
+    },
+  }));
+  process.exit(0);
+}
+
 async function main() {
   const raw = await readStdin();
-  if (!raw) process.exit(0);
+  if (!raw) {
+    emitDecision(
+      'deny',
+      'sc4sap blocklist — empty hook payload, cannot determine the target table(s). ' +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
+  }
 
   let payload;
-  try { payload = JSON.parse(raw); } catch { process.exit(0); }
+  try {
+    payload = JSON.parse(raw);
+  } catch (err) {
+    emitDecision(
+      'deny',
+      `sc4sap blocklist — could not parse hook payload (${err.message}), cannot determine the target table(s). ` +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
+  }
 
   const toolName = payload.tool_name || payload.toolName || '';
   const toolInput = payload.tool_input || payload.toolInput || payload.arguments || {};
@@ -277,10 +328,26 @@ async function main() {
   const profile = loadProfile(configPath);
 
   let builtin;
-  try { builtin = loadBuiltinBlocklist(); }
-  catch (err) {
-    process.stderr.write(`[sc4sap hook] Unable to load blocklist: ${err.message}\n`);
-    process.exit(0);
+  try {
+    builtin = loadBuiltinBlocklist();
+  } catch (err) {
+    emitDecision(
+      'deny',
+      `sc4sap blocklist — unable to load blocklist (${err.message}). Check core/policies/data-protection/. ` +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
+  }
+
+  if (profile !== 'custom' && builtin.exact.size === 0 && builtin.patterns.length === 0) {
+    emitDecision(
+      'deny',
+      `sc4sap blocklist (profile: ${profile}) — the built-in blocklist loaded 0 entries. This looks like a ` +
+        'missing or broken core/policies/data-protection/ install — check that directory contains the section ' +
+        '*.md files. Denying row-data extraction by default until it can be loaded (set blocklistProfile to ' +
+        '"custom" in .sc4sap/config.json if an empty built-in list is intentional).',
+    );
+    return;
   }
 
   const filtered = filterByProfile(builtin, profile);
@@ -291,7 +358,17 @@ async function main() {
 
   const blocklist = mergeLists(filtered, extend, custom);
 
-  const tables = extractTables(toolName, toolInput);
+  const { tables, ambiguous } = extractTables(toolName, toolInput);
+  if (ambiguous) {
+    emitDecision(
+      'ask',
+      'sc4sap blocklist — could not identify the target table(s): the query contains a FROM/JOIN keyword but no ' +
+        'table name could be extracted (possibly a dynamic or computed table reference). Human confirmation ' +
+        'required before proceeding.',
+    );
+    return;
+  }
+
   const hits = [];
   for (const t of tables) {
     const h = effectiveHitForTable(t, blocklist);
@@ -305,36 +382,25 @@ async function main() {
   // deny takes precedence over warn.
   if (denyHits.length > 0) {
     const lines = denyHits.map((h) => `  - ${h.table} — ${h.category}: ${h.why || 'protected'}`).join('\n');
-    const reason =
+    emitDecision(
+      'deny',
       `sc4sap blocklist (profile: ${profile}) — row extraction denied:\n${lines}\n\n` +
-      `See core/policies/data-protection/ (table_exception.md index, data-extraction-policy.md) for allowed alternatives ` +
-      `(released CDS views, anonymized test data, COUNT/SUM aggregates, or documented one-off approval).\n` +
-      `To change scope, edit blocklistProfile in .sc4sap/config.json (see core/procedures/troubleshooting.md).`;
-    process.stdout.write(JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'deny',
-        permissionDecisionReason: reason,
-      },
-    }));
-    process.exit(0);
+        `See core/policies/data-protection/ (table_exception.md index, data-extraction-policy.md) for allowed alternatives ` +
+        `(released CDS views, anonymized test data, COUNT/SUM aggregates, or documented one-off approval).\n` +
+        `To change scope, edit blocklistProfile in .sc4sap/config.json (see core/procedures/troubleshooting.md).`,
+    );
+    return;
   }
 
   // warn category: require explicit user confirmation via permissionDecision="ask".
   const lines = warnHits.map((h) => `  - ${h.table} — ${h.category}: ${h.why || 'sensitive'}`).join('\n');
-  const reason =
+  emitDecision(
+    'ask',
     `sc4sap blocklist (profile: ${profile}) — sensitive table access requires confirmation:\n${lines}\n\n` +
-    `These are "Protected Business Data" tables. Default posture is blocked until the user authorizes the request ` +
-    `(scope, anonymization, intended use). Approve only if the user has confirmed scope and party-ID handling. ` +
-    `Safer alternatives: released CDS views, anonymized test data, COUNT/SUM aggregates.`;
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'ask',
-      permissionDecisionReason: reason,
-    },
-  }));
-  process.exit(0);
+      `These are "Protected Business Data" tables. Default posture is blocked until the user authorizes the request ` +
+      `(scope, anonymization, intended use). Approve only if the user has confirmed scope and party-ID handling. ` +
+      `Safer alternatives: released CDS views, anonymized test data, COUNT/SUM aggregates.`,
+  );
 }
 
 main();

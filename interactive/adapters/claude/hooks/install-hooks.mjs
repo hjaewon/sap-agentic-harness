@@ -63,7 +63,7 @@ const HOOKS = [
   {
     marker: 'tier-readonly-guard.mjs',
     matcher:
-      'mcp__.*__(Create|Update|Delete|Activate|Patch|Release|Write|RunUnitTest|RuntimeRunProgramWithProfiling|RuntimeRunClassWithProfiling)',
+      'mcp__.*__(Create|Update|Delete|Activate|Patch|Release|Write|RunUnitTest|RuntimeRunProgramWithProfiling|RuntimeRunClassWithProfiling|RuntimeCreateProfilerTraceParameters)',
     testHint:
       'Test it by switching the active profile to a QA/PRD alias (edit .sc4sap/active-profile.txt), then calling an Update* tool — the call should be denied.',
   },
@@ -104,11 +104,10 @@ function saveSettings(obj) {
   writeFileSync(settingsPath, `${JSON.stringify(obj, null, 2)}\n`, 'utf8');
 }
 
-function findGroup(settings, { marker, matcher }) {
+function findGroup(settings, { marker }) {
   return settings.hooks.PreToolUse.find(
     (g) =>
       g &&
-      g.matcher === matcher &&
       Array.isArray(g.hooks) &&
       g.hooks.some(
         (h) => typeof h?.command === 'string' && h.command.includes(marker),
@@ -122,6 +121,7 @@ function installOne(settings, spec) {
 
   const existing = findGroup(settings, spec);
   if (existing) {
+    existing.matcher = spec.matcher;
     for (const h of existing.hooks) {
       if (typeof h?.command === 'string' && h.command.includes(spec.marker)) {
         h.command = command;

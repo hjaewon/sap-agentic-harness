@@ -11,7 +11,8 @@
  *   2. If found, read `$SC4SAP_HOME_DIR/profiles/<alias>/sap.env` (falls back
  *      to `~/.sc4sap/profiles/<alias>/sap.env`) and extract `SAP_TIER`.
  *   3. If no pointer is found, fall back to `<projectDir>/.sc4sap/sap.env`
- *      (legacy single-profile mode) and extract `SAP_TIER` (default DEV).
+ *      (legacy single-profile mode) and extract `SAP_TIER` (unresolved →
+ *      null; see Failure mode).
  *
  * Block matrix (Strict) — mirrors MCP server readonlyGuard (the server side is
  * an allowlist / fail-closed guard and remains the last line of defense; this
@@ -25,8 +26,11 @@
  * proved incomplete (ActivateObjects, PatchGuiStatus, ReleaseTransport,
  * WriteTextElementsBulk bypassed it).
  *
- * Failure mode: fails OPEN on any parse/IO error. MCP server L2 guard still
- * enforces, so missing hook = slower UX but not unsafe.
+ * Failure mode: fails CLOSED. An unresolved tier (missing profile pointer,
+ * missing/unreadable sap.env, or a non-DEV/QA/PRD value) is treated as "no
+ * tier" and denies mutation / RUNTIME_EXEC calls — only an explicit DEV
+ * tier passes. stdin/JSON parse failures are denied the same way. MCP
+ * server L2 guard still enforces as the last line of defense.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -46,8 +50,14 @@ const RUNTIME_EXEC = new Set([
   'RunUnitTest',
   'RuntimeRunProgramWithProfiling',
   'RuntimeRunClassWithProfiling',
+  'RuntimeCreateProfilerTraceParameters',
 ]);
 const QA_ALLOW = new Set(['RunUnitTest']);
+
+const PROFILE_SETUP_HINT =
+  'Set up (or switch to) a DEV profile: create ~/.sah/profiles/<alias>/sap.env ' +
+  '(or $SC4SAP_HOME_DIR override) with SAP_TIER=dev, and point this project at it with a single ' +
+  'alias line in .sc4sap/active-profile.txt. Details: core/procedures/troubleshooting.md.';
 
 function sc4sapHome() {
   return process.env.SC4SAP_HOME_DIR || join(homedir(), '.sc4sap');
@@ -89,7 +99,7 @@ function parseDotenvTier(envFilePath) {
       const value = line.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
       const v = value.toUpperCase();
       if (v === 'DEV' || v === 'QA' || v === 'PRD') return v;
-      return 'DEV';
+      return null;
     }
   } catch {
     return null;
@@ -102,11 +112,11 @@ function resolveTier(projectDir) {
   if (alias) {
     const envPath = join(sc4sapHome(), 'profiles', alias, 'sap.env');
     const tier = parseDotenvTier(envPath);
-    return { alias, tier: tier ?? 'DEV', source: envPath, legacy: false };
+    return { alias, tier, source: envPath, legacy: false };
   }
   const legacy = join(projectDir, '.sc4sap', 'sap.env');
   const tier = parseDotenvTier(legacy);
-  return { alias: null, tier: tier ?? 'DEV', source: legacy, legacy: true };
+  return { alias: null, tier, source: legacy, legacy: true };
 }
 
 function shortToolName(toolName) {
@@ -123,14 +133,22 @@ function checkAllowed(toolName, tier) {
   if (tier === 'DEV') return null;
   if (toolName === 'ReloadProfile') return null;
 
+  const gated = isMutation(toolName) || RUNTIME_EXEC.has(toolName);
+  if (!gated) return null;
+
+  if (tier === null) {
+    return (
+      `${toolName} requires a resolved SAP tier, but none could be determined — denying by default ` +
+      `(only an explicit DEV profile may mutate or execute code).\n` +
+      `Profile not configured — ${PROFILE_SETUP_HINT}`
+    );
+  }
+
   if (isMutation(toolName)) {
     return `${toolName} mutates SAP objects; only DEV profiles may mutate.`;
   }
-  if (RUNTIME_EXEC.has(toolName)) {
-    if (tier === 'QA' && QA_ALLOW.has(toolName)) return null;
-    return `${toolName} executes ABAP code on the server and is blocked on ${tier} profiles.`;
-  }
-  return null;
+  if (tier === 'QA' && QA_ALLOW.has(toolName)) return null;
+  return `${toolName} executes ABAP code on the server and is blocked on ${tier} profiles.`;
 }
 
 function readStdin() {
@@ -144,15 +162,38 @@ function readStdin() {
   });
 }
 
+function emitDeny(reason) {
+  process.stdout.write(
+    JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: reason,
+      },
+    }),
+  );
+  process.exit(0);
+}
+
 async function main() {
   const raw = await readStdin();
-  if (!raw) process.exit(0);
+  if (!raw) {
+    emitDeny(
+      'sc4sap tier-readonly-guard — DENIED: empty hook payload, cannot verify the SAP tier. ' +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
+  }
 
   let payload;
   try {
     payload = JSON.parse(raw);
-  } catch {
-    process.exit(0);
+  } catch (err) {
+    emitDeny(
+      `sc4sap tier-readonly-guard — DENIED: could not parse hook payload (${err.message}), cannot verify the SAP tier. ` +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
   }
 
   const toolNameRaw = payload.tool_name || payload.toolName || '';
@@ -172,21 +213,29 @@ async function main() {
   let ctx;
   try {
     ctx = resolveTier(projectDir);
-  } catch {
-    process.exit(0);
+  } catch (err) {
+    emitDeny(
+      `sc4sap tier-readonly-guard — DENIED: could not resolve the SAP tier (${err.message}). ` +
+        'Denying by default (this gate fails closed).',
+    );
+    return;
   }
 
   const reason = checkAllowed(tool, ctx.tier);
   if (!reason) process.exit(0);
 
   const aliasLabel = ctx.alias ?? '(legacy)';
+  // The null-tier branch of checkAllowed() already embeds PROFILE_SETUP_HINT
+  // in `reason` — only append it here for the resolved-tier (QA/PRD) case to
+  // avoid repeating the same sentence twice in one message.
+  const hintLine = ctx.tier === null ? '' : `${PROFILE_SETUP_HINT}\n`;
   const message =
     `sc4sap tier-readonly-guard — DENIED\n` +
     `  tool:    ${tool}\n` +
     `  profile: ${aliasLabel}\n` +
-    `  tier:    ${ctx.tier}\n` +
+    `  tier:    ${ctx.tier ?? '(unresolved)'}\n` +
     `  reason:  ${reason}\n\n` +
-    `Switch to a DEV profile via /sc4sap:sap-option, then retry.\n` +
+    `${hintLine}` +
     `(This check is backed by the MCP server-side guard — bypassing this hook does not bypass enforcement.)`;
 
   process.stdout.write(
