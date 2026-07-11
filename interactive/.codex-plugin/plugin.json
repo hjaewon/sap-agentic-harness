@@ -16,7 +16,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "SC4SAP Lite",
+    "displayName": "SAP Agentic Harness",
     "shortDescription": "SAP ABAP development and consulting — knowledge, personas, gated procedures",
     "category": "Engineering",
     "capabilities": [

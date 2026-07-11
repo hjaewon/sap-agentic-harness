@@ -4,7 +4,7 @@
   "claude-code": {
     "manifest": ".claude-plugin/plugin.json (+ marketplace.json)",
     "install": "/plugin marketplace add <repo> → /plugin install sap-agentic-harness@sap-agentic-harness",
-    "smoke": "설치 E2E 대기 (adapters/claude/README.md 체크리스트)"
+    "smoke": "E2E 완료 (2026-07-10, HANDOFF §4 — create-program 완주 + 3사 교차 검증)"
   },
   "codex": {
     "version": "0.144.1",
