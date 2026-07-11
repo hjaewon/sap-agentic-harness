@@ -9,7 +9,7 @@
 ## 1. 프로젝트 지도 — 레포 하나, 트랙 둘
 
 ```
-D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-agentic-harness, 미푸시 커밋 있음)
+D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-agentic-harness)
 │
 ├── [트랙 A] 하네스 트랙 (무인 step + 대화형 레인 겸용) — ★ 구현 미착수
 │     설계: DESIGN.md (v2.1, 2026-07-09 확정 + 2026-07-10 엔진 델타 주)
@@ -409,4 +409,5 @@ agy plugin list                                          # AG 임포트 상태
 git log --oneline | head                                 # 최근: 5e529fc(스코프) ← 8959b73(병합)
 ```
 
-git 미푸시 커밋 다수 — push는 사용자 판단 (원격: hjaewon/sap-agentic-harness).
+push는 사용자 판단 — 요청 시에만 (원격: hjaewon/sap-agentic-harness. 2026-07-11 전량 push,
+아카이브용 엔진 포크 hjaewon/abap-mcp-adt-powerup도 최종 상태 4.13.1 push).
