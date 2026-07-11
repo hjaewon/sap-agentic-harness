@@ -48,12 +48,19 @@
   잔여: UpdateInterface/UpdateProgram 동일 잠복(HANDOFF §6 백로그 9), vsp
   RenameObject 누수 후보, CLAS deploy NoModification 근본(3번 — 조사 후 결정 대기)
 
+- 2026-07-12 | 수리 3 완료 — 조사(opus 위임: vsp vs 엔진 lock 흐름 대조로 원인
+  특정) → 라이브 프로브(Accept v1/v2 동일 NoModification = 가드 오탐 H1 확정) →
+  수리(sonnet 위임): ① 가드 경고 강등+진행(vsp 8279a7c) ② copy 5함수
+  result.Success 검사+배너 정직화(322320f). 라이브 검증: **deploy CLAS
+  "Successfully updated and activated" 최초 완주** + copy 소스 실기록 정직 성공.
+  vsp.lock v2.38.1-89, §14-4 CLAS 개통, R-006 개정(수리 반영). 잔여: RenameObject
+  누수 후보(COMMANDS ⑤-6), 엔진 UpdateInterface/UpdateProgram 잠복(§6 백로그 9)
+
 ## Next
 
-- 수리 3번(vsp CLAS deploy NoModification 근본 + copy 거짓 성공) 조사 후 진행 여부
-  사용자 결정 대기 → 그 다음 백로그 5-7(sap-assets 설치 절차 이식, HANDOFF §5 순서).
-  Phase 3(Gated Deploy) 선결 = 5-11(무인 gated write 전 리뷰 게이트 편입) 포함
-  3조건 + CLAS 배포 경로 부재(§14-4 △) 해소
+- 백로그 5-7(sap-assets 설치 절차 이식, HANDOFF §5 순서). Phase 3(Gated Deploy)
+  선결 = 5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건 — CLAS 배포 경로는
+  수리 3으로 개통됨(§14-4)
 
 ## Attempts & dead ends
 
