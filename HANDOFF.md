@@ -293,14 +293,20 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   대표 절차 성공률, 라우터/union 오선택률, tier 행렬, row-data 음성, 감사 식별성.
 - smoke-mcp의 write 판정을 이름 추정 대신 카탈로그 operation class 기반으로.
 
-### 5-9. 트랙 A 선결 결정 — vsp-custom·final-harness 편입 여부 [결정만, 부트스트랩 전]
+### 5-9. 트랙 A 선결 결정 — vsp-custom·final-harness 소유 전략 [결정만, 부트스트랩 전]
 
-- **질문**: D-017(엔진 engine/ 편입 — 차용 후 완전 소유)의 패턴을 트랙 A 의존 2종에도
-  적용할 것인가. ① `vsp-custom`은 원본 vsp의 차용 커스텀(CUSTOMIZATIONS.md, 원본은
-  `D:\Claude for SAP\vsp`) — 엔진과 같은 패턴이라 편입 후보. ② `final-harness`
-  (`D:\AI PROJECT\claude-final`, v0.16.2)는 자체 제작물(fable-harness 후속)이자 독립
-  제품 — 편입 시 sah 밖 사용처와의 관계 검토 필요. Go 툴체인 유입 부담도 고려.
-- 현행 DESIGN.md §16은 둘을 "설치해서 쓰는 외부 도구"로 전제 — 편입 결정 시 설계 갱신.
+- **위상 (착각 금지)**: `vsp-custom`은 선택적 도구가 아니라 **트랙 A의 유일한 SAP
+  접점·단일 검증/배포 백엔드**다 (DESIGN.md §3 — verify는 하네스가 vsp CLI 직접 실행,
+  배포는 `vsp deploy`, powerup 엔진은 트랙 A에서 미사용). **vsp 없이는 트랙 A의 verify
+  루프 자체가 성립하지 않는다.** vsp-custom도 차용 커스텀(업스트림 `oisee/vibing-steampunk`
+  MIT, 원본 vsp는 `D:\Claude for SAP\vsp`).
+- **결정할 것**: 핵심 의존의 소유 방식 — DESIGN.md의 기존 결정("final-harness와
+  vsp-custom은 물리적으로 한 코드베이스로 섞지 않는다 — Go/Python+스킬/마크다운 스택
+  상이")을 유지할지, D-017 철학(차용한 핵심 의존은 레포 내 완전 소유 — engine/ 선례,
+  subtree 편입은 스택 혼합이 아니라 배치 문제)으로 갱신할지. `final-harness`
+  (`D:\AI PROJECT\claude-final`, v0.16.2 자체 제작물)는 sah 밖 사용처가 있는 독립
+  제품이라 별도 판단축.
+- 편입으로 결정 시: DESIGN.md §2 구조도·§16 부트스트랩 갱신 + DECISIONS append.
 
 ### 5-6. 다국어 README — ✅ 결정 완료 (2026-07-11): 재작성 안 함
 
