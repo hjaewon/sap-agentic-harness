@@ -3,11 +3,11 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-12. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **다음 착수 = 트랙 A Phase 2 무인 실행 기동** — 계획 수립 완료(2026-07-12,
-> `phases/2-duedate-reuse`): read-only 답사가 계획 결정 3건을 변경해 PLANNING.md에
-> 기록(§13 완료 기준의 "계획 문서 기록" 충족). 기동 명령
-> `python scripts/execute.py 2-duedate-reuse` (bridge + sonnet 워커 권장, harness-run
-> 셰퍼딩). 완주 후 connected 채점은 PLANNING.md §5.
+> **트랙 A Phase 2 완료 (2026-07-12)** — 답사→계획 변경 기록(§13 완료 기준 충족) +
+> 무인 완주(2 steps, verify 실패 0, 리뷰 위반 0) + connected 채점 **5 PASS/0 FAIL**.
+> 채점 중 CLAS 배포 결함 3건 실측(vsp deploy/copy + 엔진 UpdateClass —
+> COMMANDS.md ⑤-6/7 · §6 백로그 4 · R-006). **다음 착수 = 백로그 5-7**(설치 절차
+> 이식) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰 게이트 편입 등) 후.
 
 ---
 
@@ -40,14 +40,18 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │           offline lint 0 → connected CODE_FAIL 1). vsp test의 REPORT 로컬 테스트
 │           지원 확인(Phase 3 근거). 엔진 lock = v0.17.3(8f7f13b) 동기, 저자 동결 선언.
 │           상세 = .harness/STATE.md·phases/1-workdays-util/·VERIFY-PATTERNS §1.5절.
-│           $TMP 잔존: ZSAH0B_ 3 + ZSAH1_WORKDAYS + ZSAH15_BROKEN(빈 스켈레톤, 무해).
-│           **Phase 2 계획 수립 완료(2026-07-12)**: IDES-DEV read-only 답사(sonnet 위임)
-│           → 결정 변경 3건(① 대상 객체 PROG 1개→CLAS zcl_sah2_workdays+PROG
-│           zsah2_duedate ② 테스트는 리포트 로컬 배치+deploy 순서 클래스 먼저 ③ 분석
-│           스코프 $TMP 패키지→객체 단위, where-used 정본=graph --direction callers)
-│           = phases/2-duedate-reuse/PLANNING.md 기록. 무인 기동 대기(사용자 결정).
-│           다음: Phase 2 기동→완주→connected 채점. Phase 3(Gated Deploy)
-│           선결 3조건 중 리뷰 게이트 편입은 백로그 5-11
+│           $TMP 잔존: ZSAH0B_ 3 + ZSAH1_WORKDAYS + ZSAH15_BROKEN +
+│           ZCL_SAH2_WORKDAYS + ZSAH2_DUEDATE (전부 무해, COMMANDS.md 부록).
+│           **Phase 2 완료(2026-07-12)**: ① 계획 — read-only 답사(sonnet 위임)가
+│           결정 3건 변경(대상 객체 CLAS+PROG 2개로 / 테스트 리포트 배치+배포 순서
+│           클래스 먼저 / 분석 스코프 객체 단위, where-used 정본=graph --direction
+│           callers) → PLANNING.md 기록(§13 완료 기준). ② 무인 완주(2 steps, verify
+│           실패 0, 사후 리뷰 위반 0). ③ connected 채점 — vsp test **5 PASS/0 FAIL**
+│           + ATC INFO만 + graph가 ZCL 참조 포착. 채점 중 실측: **CLAS 배포 3결함**
+│           (deploy LOCK 거부+잠금 누수 · copy 거짓 성공 — COMMANDS.md ⑤-6/7 ·
+│           R-006, 엔진 UpdateClass 423 계열 — §6 백로그 4). 클래스는 GUI 수동 주입.
+│           다음: 백로그 5-7. Phase 3(Gated Deploy) 선결 3조건 중 리뷰 게이트
+│           편입은 백로그 5-11
 │
 └── [트랙 B] 대화형 트랙 — ★ L0~L5 구현 완료, E2E 대기  ←←← 현재 작업 지점
       위치: interactive/ (= 3사 공통 플러그인 루트)
@@ -438,6 +442,12 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    (같은 세션 즉시 호출 포함 4회 재현, ReloadProfile·GetSession(force_new) 무효, 세션 만료로만
    해제). UpdateClass는 stale 잠금 핸들 재사용("ungültiges Sperr-Handle") + 실패 경로 잠금
    누수 의심 — (c) DeleteInclude enqueue 누수와 같은 계열.
+   → **병명 규명 (2026-07-12 Phase 2 채점)**: UpdateClass의 "ungültiges Sperr-Handle"은
+   stale 캐시가 아니라 **lock(성공)→중간 stateless 요청이 stateful 세션 롤백→PUT 시점
+   잠금 증발** — vsp issue #88(HTTP 423)과 동일 메커니즘. IDES(커넥션 재활용 환경)에서
+   결정적 재현(핸들이 매번 갱신됨), KR-DEV(직결)에서 정상인 것과 정합. 수리 방향 =
+   vsp 642c03c와 동일(lock~write 체인의 중간 요청 stateful화). 이 실패 유형은 고아
+   잠금을 남기지 않음(SM12 확인). 상세: phases/2-duedate-reuse/scoring-raw.md
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.

@@ -52,3 +52,17 @@
 
 CTS 무관 — `$TMP`는 로컬 객체 패키지라 transport가 생성되지 않는다. write는 전부
 DEV tier(IDES-DEV)에서만 (R-003).
+
+## 6. connected 채점 결과 (2026-07-12 실행 — 원로그 `scoring-raw.md`)
+
+- **핵심 채점: `vsp test PROG ZSAH2_DUEDATE` → LTC_DUEDATE 5 PASS / 0 FAIL** —
+  무인 산출물의 정확성이 서버에서 기계로 증명됨 (green).
+- 클래스 반영 경로는 계획(§5-1)과 달라짐: vsp deploy·copy의 CLAS 경로가 모두
+  결함으로 막혀(신규 실측 2건 — COMMANDS.md ⑤-6/7, deploy=LOCK NoModification+
+  잠금 누수, copy=거짓 성공) MCP UpdateClass도 423 계열로 불가 → **GUI 수동
+  주입**(SE80)으로 반영. §4-2의 의존 순서(클래스 먼저 → 리포트)는 매체와 무관하게
+  유지·검증됨 — 클래스 활성 후 리포트가 "created and activated"로 통과.
+- ATC: CLAS INFO 1 · PROG INFO 2 (시스템 시간대 환경성 + 텍스트 요소 미번역 —
+  코드 결함 아님), exit 0 규약 재확인.
+- 부수 실증(§5-4): `graph PROG ZSAH2_DUEDATE --direction callees`가
+  `TYPE ZCL_SAH2_WORKDAYS` 참조를 포착 — 계획-단계 분석 명령의 실효 확인.

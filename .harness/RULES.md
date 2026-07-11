@@ -21,3 +21,4 @@
 - R-003 [sap-safety] QA/PRD tier SAP 시스템에 vsp write(deploy/copy/execute 등)를 실행하지 않는다 — write는 DEV tier에서만 (from tailor)
 - R-004 [repo] 동결 레포(sc4sap-custom·sc4sap-lite)를 수정하지 않으며 sc4sap-custom/private/는 읽지도 않는다 (from tailor)
 - R-005 [secrets] SAP 접속 정보(호스트·자격증명·.env 내용)를 레포에 커밋하지 않는다 (from tailor)
+- R-006 [vsp] CLAS 배포에 vsp deploy/copy 성공 보고를 믿지 않는다 — deploy는 LOCK 거부+고아 잠금, copy는 소스 미기록 거짓 성공(IDES 실측). CLAS 반영은 수리 전까지 GUI 수동 + 반드시 `vsp source read`로 확인 (from L-001)

@@ -32,13 +32,19 @@
   테스트 먼저 → calc 이식) 생성, D-4 린트 통과(경로 실재·맥락 표현 0·verify 체인
   CHAIN_EXIT=0 실증). offline lint가 .clas.abap에도 동작 실측(verify 전제).
 
+- 2026-07-12 | Phase 2 완료 — 무인 완주(사용자 직접 기동, 2 steps attempts 2/2·
+  verify 실패 0, 사후 리뷰 위반 0) + connected 채점 **vsp test 5 PASS/0 FAIL**
+  (ATC INFO만, graph가 ZCL 참조 포착). 채점 중 CLAS 배포 3결함 실측·기록:
+  vsp deploy LOCK NoModification+잠금 누수, vsp copy 거짓 성공(→L-001/R-006,
+  COMMANDS.md ⑤-6/7), 엔진 UpdateClass 423 계열 병명 규명(HANDOFF §6 백로그 4).
+  클래스는 GUI 수동 주입, 리포트·테스트는 vsp 체인. 잔존 +2(ZCL_SAH2_WORKDAYS·
+  ZSAH2_DUEDATE)
+
 ## Next
 
-- Phase 2 무인 기동(사용자 승인 대기): `python scripts/execute.py 2-duedate-reuse`
-  — bridge + sonnet 워커 권장, harness-run 셰퍼딩. 완주 후 connected 채점
-  (PLANNING.md §5: deploy ZCL→ZSAH2→test 5 PASS→ATC, CTS 무관 $TMP) 후 Phase 2
-  완료 판정. Phase 3(Gated Deploy) 선결 = 백로그 5-11(무인 gated write 전 리뷰
-  게이트 편입) 포함 3조건
+- 백로그 5-7(sap-assets 설치 절차 이식) — HANDOFF §5 순서. Phase 3(Gated Deploy)
+  선결 = 5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건 + CLAS 배포 경로
+  부재(§14-4 △) 해소 검토(vsp 수리 or 타입 제한)
 
 ## Attempts & dead ends
 
