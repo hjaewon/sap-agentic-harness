@@ -15,6 +15,8 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │     설계: DESIGN.md (v2.1, 2026-07-09 확정 + 2026-07-10 엔진 델타 주)
 │     내용: final-harness(D:\claude-practice\claude-fable-final) 엔진 + vsp-custom CLI로
 │           ABAP 개발을 계획→실행→verify→LESSONS/RULES 학습 루프로 관리.
+│           ★ vsp-custom = 트랙 A의 유일한 SAP 접점·검증/배포 백엔드 — 없으면 verify
+│           루프 불성립 (DESIGN.md §3, powerup 엔진은 이 트랙에서 미사용). 소유 전략 = 5-9
 │           설계는 원래부터 대화형 세션(Phase 0a/0b·CONSULT) + 무인 step 겸용 —
 │           "무인"은 실행 모드 하나이지 트랙 전체가 아님.
 │     엔진 현행: v0.16.0 (2026-07-10) — 라우팅 4갈래·request-weight triage·
@@ -39,7 +41,8 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 | `D:\claude for SAP\sc4sap-custom` | **동결** (지식 수정 금지) — 이식 원천. Claude 풀버전 플러그인이지만 lite가 대체 |
 | `D:\claude for SAP\sc4sap-lite` | **동결·이관됨** — interactive/로 subtree 병합 완료. README에 이관 표기. 삭제해도 무방(사용자 판단) |
 | `hjaewon/abap-mcp-adt-powerup` | **→ `engine/`으로 편입 (2026-07-11, D-017)** — 엔진 소스 정본은 이제 레포 내 `engine/`(재현 빌드 바이트 일치 검증). GitHub 포크·로컬 클론은 히스토리 아카이브. 엔진 이슈는 §6 — engine/에서 수리 |
-| `D:\claude for SAP\vsp\vsp-custom` | 트랙 A 백엔드 — 아직 빌드 안 함 (Go 1.26.4 설치됨) |
+| `D:\claude for SAP\vsp\vsp-custom` (주) / `D:\Claude for SAP\vsp-custom` (보조) | **트랙 A의 유일한 SAP 접점·검증/배포 백엔드** (핵심 의존 — 업스트림 oisee/vibing-steampunk 차용, 소유 전략 5-9). 아직 빌드 안 함 (Go 1.26.4 설치됨) |
+| final-harness: `D:\claude-practice\claude-fable-final` (주) / `D:\AI PROJECT\claude-final` (보조, v0.16.2 실측) | 트랙 A 하네스 엔진 — **자체 제작 독립 제품**(fable-harness 후속, sah 밖 사용처 가능). 소유 전략 5-9의 별도 판단축 |
 
 ## 2. 지금까지의 타임라인 (전부 2026-07-10, 커밋은 본 레포 main)
 
