@@ -188,7 +188,7 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 ## 5. E2E 이후 남은 백로그 (상세 — 새 세션이 이 절만 읽고 착수 가능하게 기록)
 
-**5-1~5-3 완료 (2026-07-11)** — 남은 항목은 5-4~5-6(전부 낮음). 전 항목 보조 머신에서 가능.
+**5-1~5-4·5-6 완료 (2026-07-11)** — 남은 항목은 5-5(deferred L6+ — 실수요 발생 시)뿐.
 공통 완료 조건: §9의 게이트 4종 통과 유지 + 상태 변경 시 이 문서 갱신.
 
 ### 5-1. tool-catalog 재생성 — ✅ 완료 (2026-07-11, 보조 머신)
@@ -227,11 +227,18 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   D-013 "동일 계약으로 소비" 취지 완결). 스키마 유효 + check-links·coverage 통과.
 - 실증은 다음 create-program 완주 시 교차 리뷰 1회로.
 
-### 5-4. 검증도구 개선 3건 [낮음] (L5 리뷰 보류분 2-3/2-4/2-5)
+### 5-4. 검증도구 개선 3건 — ✅ 완료 (2026-07-11, L5 리뷰 보류분 2-3/2-4/2-5)
 
-- `check-links.mjs`: 앵커(#섹션) 존재 검증 추가
-- `check-migration-coverage.mjs`: transform/copy 규칙의 목적지 경로 실재 검사 추가
-- `smoke-mcp.mjs`: `--exposition` 인자 지원(노출 프리셋별 스모크)
+- `check-links.mjs`: 앵커(#섹션) 존재 검증 — GitHub 슬러그 규칙(유니코드 보존·중복 -N·
+  fence 내 # 제외), 순수 `#앵커`(자기 파일)와 `file.md#앵커` 모두. 도입 즉시 실검출:
+  string-processing.md 목차 5건(원본부터 낡은 목차 → 실제 15섹션 구조로 수리).
+- `check-migration-coverage.mjs`: copy/transform 규칙의 목적지(3열 backtick 토큰) 실재
+  검사 — deferred 행·와일드카드 토큰·프로즈만 있는 행은 skip, 부재 = exit 1. 도입 즉시
+  실검출: INSTALLATION 행의 구 계획 목적지 docs/installation/ 미채택 → 실제 이식처
+  (adapters/ README 3벌)로 매니페스트 정정. **주의: 3열에 backtick 경로를 쓰면 실재
+  검사 대상이 된다 — 존재하지 않는 경로 언급은 backtick 없이 쓸 것.**
+- `smoke-mcp.mjs`: `--exposition` 지원(무인자 시 기존 동작 동일). readonly 실측:
+  **tools 65 / write 0** (row-data 2종은 readonly에도 노출 — 정책층 커버, 기존 문서와 일치).
 
 ### 5-5. deferred 스크립트 6종 (L6+, 원천은 동결 레포 sc4sap-custom/scripts/ — 읽기만)
 

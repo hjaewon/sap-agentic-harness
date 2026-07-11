@@ -69,7 +69,7 @@
 | `scripts/**` | obsolete | LEAN/오케스트레이션 훅·HUD·세션 장치 일괄 폐기 |
 | `docs/bundle-integrity.md` | transform | `server/UPDATE-RUNBOOK.md` 원천 |
 | `docs/engine-bundle-integrity.md` | transform | `server/UPDATE-RUNBOOK.md` 원천 |
-| `docs/INSTALLATION.md` | transform | `docs/installation/` 재작성 참고 |
+| `docs/INSTALLATION.md` | transform | `adapters/` README 3벌(하네스별 설치 가이드)로 재작성 — 구 계획 docs/installation/ 폴더는 미채택(2026-07-11 정정) |
 | `docs/INSTALLATION.*.md` | transform | 동상 (다국어) |
 | `docs/odata-backend.md` | transform | `server/sap-assets/` 문서 참고 |
 | `docs/multi-profile-*.md` | transform | `core/project-context.md` 참고 |

@@ -5,13 +5,20 @@
 ## Table of Contents
 
 1. [String Data Types](#string-data-types)
-2. [String Templates](#string-templates)
-3. [String Functions](#string-functions)
-4. [FIND and REPLACE](#find-and-replace)
-5. [Regular Expressions](#regular-expressions)
-6. [Split and Concatenate](#split-and-concatenate)
-7. [Case Conversion](#case-conversion)
-8. [Numeric String Operations](#numeric-string-operations)
+2. [Declaration and Literals](#declaration-and-literals)
+3. [String Templates](#string-templates)
+4. [String Length](#string-length)
+5. [Concatenation](#concatenation)
+6. [Splitting](#splitting)
+7. [Case Transformation](#case-transformation)
+8. [Shifting and Condensing](#shifting-and-condensing)
+9. [Substring Operations](#substring-operations)
+10. [Finding Substrings](#finding-substrings)
+11. [Character Set Operations](#character-set-operations)
+12. [Replacing](#replacing)
+13. [Regular Expressions](#regular-expressions)
+14. [Other String Functions](#other-string-functions)
+15. [Utility Classes](#utility-classes)
 
 ---
 

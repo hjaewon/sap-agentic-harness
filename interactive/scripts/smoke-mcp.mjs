@@ -9,7 +9,17 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const env = { ...process.env, NODE_PATH: path.join(ROOT, 'server', 'runtime-deps', 'keyring', 'node_modules') };
 for (const k of Object.keys(env)) if (k.startsWith('SAP_') || k.startsWith('MCP_')) delete env[k];
 
-const srv = spawn('node', [path.join(ROOT, 'server', 'server.bundle.cjs')], { cwd: ROOT, env });
+const cliArgs = process.argv.slice(2);
+let exposition;
+for (let i = 0; i < cliArgs.length; i++) {
+  if (cliArgs[i].startsWith('--exposition=')) exposition = cliArgs[i].slice('--exposition='.length);
+  else if (cliArgs[i] === '--exposition') exposition = cliArgs[++i];
+}
+if (exposition) console.log(`exposition: ${exposition}`);
+
+const serverArgs = [path.join(ROOT, 'server', 'server.bundle.cjs')];
+if (exposition) serverArgs.push(`--exposition=${exposition}`);
+const srv = spawn('node', serverArgs, { cwd: ROOT, env });
 const send = (o) => srv.stdin.write(JSON.stringify(o) + '\n');
 
 let buf = '';
