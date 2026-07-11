@@ -13,10 +13,17 @@
  *   3. If no pointer is found, fall back to `<projectDir>/.sc4sap/sap.env`
  *      (legacy single-profile mode) and extract `SAP_TIER` (default DEV).
  *
- * Block matrix (Strict) — same as MCP server readonlyGuard:
- *   PRD: Create_, Update_, Delete_, RunUnitTest, RuntimeRun{Program,Class}WithProfiling
- *   QA:  Create_, Update_, Delete_, RuntimeRun{Program,Class}WithProfiling  (RunUnitTest allowed)
+ * Block matrix (Strict) — mirrors MCP server readonlyGuard (the server side is
+ * an allowlist / fail-closed guard and remains the last line of defense; this
+ * hook covers the mutation prefixes actually exposed on the default surface):
+ *   PRD: {Create,Update,Delete,Activate,Patch,Release,Write}_, RunUnitTest,
+ *        RuntimeRun{Program,Class}WithProfiling
+ *   QA:  same minus RunUnitTest (unit tests are allowed on QA)
  *   DEV: nothing blocked.
+ * 2026-07-11: Activate/Patch/Release/Write prefixes added — the engine's
+ * readonlyGuard header documents that a Create/Update/Delete-only denylist
+ * proved incomplete (ActivateObjects, PatchGuiStatus, ReleaseTransport,
+ * WriteTextElementsBulk bypassed it).
  *
  * Failure mode: fails OPEN on any parse/IO error. MCP server L2 guard still
  * enforces, so missing hook = slower UX but not unsafe.
@@ -26,7 +33,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-const MUTATION_PREFIXES = ['Create', 'Update', 'Delete'];
+const MUTATION_PREFIXES = [
+  'Create',
+  'Update',
+  'Delete',
+  'Activate',
+  'Patch',
+  'Release',
+  'Write',
+];
 const RUNTIME_EXEC = new Set([
   'RunUnitTest',
   'RuntimeRunProgramWithProfiling',

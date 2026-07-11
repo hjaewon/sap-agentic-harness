@@ -196,12 +196,15 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - (e) 사용자 DEV 박스 서비스 2종 다운(엔진 무관): ABAP Unit ADT 실행 404 · ZMCP_ADT_SRV Textpool 500 — 복구 후 RunUnitTest/WriteTextElementsBulk 재실행
   → **2026-07-11 판정 정정(D-015)**: RunUnitTest 404는 표준 S/4HANA 2021 IDES에서도 동일 재현 —
   박스 장애가 아니라 **엔진 결함 유력**, §6 엔진 백로그 3으로 이관. Textpool 500은 기존 판정 유지(KR-DEV 복구 대기)
+  → **RunUnitTest 해소(2026-07-11, 엔진 4.13.1)**: 근본 원인은 Cloud 전용 API 호출 —
+  클래식 testruns 전환 수리 후 배포 형태(launch.cjs+새 번들)로 IDES 완주, 4개 테스트
+  메서드 전부 PASS. **E2E 잔여는 WriteTextElementsBulk 1건만 남음**(KR-DEV 복구 또는 5-7)
 
 ## 5. E2E 이후 남은 백로그 (상세 — 새 세션이 이 절만 읽고 착수 가능하게 기록)
 
 **5-1~5-4·5-6 완료 (2026-07-11)** — 남은 항목: 5-5(deferred L6+ — 실수요 발생 시) ·
-5-7(설치 절차 이식 갭 — 엔진 수리와 짝). 공통 완료 조건: §9의 게이트 4종 통과 유지 +
-상태 변경 시 이 문서 갱신.
+5-7(설치 절차 이식 — 선결이던 엔진 수리가 4.13.1로 해소되어 착수 가능) · 5-8(노출 정책
+후속, 낮음). 공통 완료 조건: §9의 게이트 4종 통과 유지 + 상태 변경 시 이 문서 갱신.
 
 ### 5-1. tool-catalog 재생성 — ✅ 완료 (2026-07-11, 보조 머신)
 
@@ -273,8 +276,21 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   SAP_VERSION별 소스 선택 S4/ECC, RFC-enabled 수동 단계 명시) ② 절차들에 "textpool FM
   부재/RFC 백엔드 미구성 시 Screen·GUI Status·Text Element 3계열 SKIPPED 처리 +
   `environment_context.known_outages` 기입"(5-3 필드 활용) 명시.
-- **선결**: CreateFunctionGroup 엔진 수리(§6 엔진 백로그 3-2) — S/4HANA 2021에서
-  설치 절차가 실행되려면 필요. 실증은 엔진 수리 후 IDES 1회.
+- **선결**: ~~CreateFunctionGroup 엔진 수리~~ → ✅ **4.13.1로 해소(2026-07-11)** —
+  FUGR 생성·삭제 IDES 라이브 검증 완료, 설치 절차 착수 가능. 단 RFC-enabled 속성은
+  ADT로 불가(TFDIR.FMODE)라 SE37 수동 단계가 여전히 필요(원본 스텝 9와 동일).
+
+### 5-8. 노출 정책 실행 항목 [낮음 — D-016 후속]
+
+- **Codex config-level 도구 제어 실증**: 공식 설정의 `enabled_tools`/`disabled_tools`/
+  도구별 `approval_mode`로 row-data 2종을 `prompt` 고정 가능한지 현행 설치 버전에서 1회
+  실증 → 되면 어댑터 README 정본화. Antigravity의 대응 기능도 실측(없으면 launch.cjs 앞
+  이름 보존형 tools/list 필터 검토).
+- **절차별 required_capabilities**: 절차 문서에 필요 capability 선언 + 프리셋 tools/list가
+  이를 전부 포함하는지 자동 검사(스크립트) — `high`를 개발 기본값으로 신뢰하기 위한 근거.
+- **compact-readonly 스파이크** (선택): 합격 기준 = 직렬화 스키마 토큰 실측(도구 수 아님),
+  대표 절차 성공률, 라우터/union 오선택률, tier 행렬, row-data 음성, 감사 식별성.
+- smoke-mcp의 write 판정을 이름 추정 대신 카탈로그 operation class 기반으로.
 
 ### 5-6. 다국어 README — ✅ 결정 완료 (2026-07-11): 재작성 안 함
 
@@ -288,7 +304,7 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 |---|---|---|
 | 위 5-1~5-6 | ✅ | ✅ (5-1은 IDES-DEV 연결로) |
 | 트랙 A 부트스트랩 (DESIGN.md §16) | ✅ | ✅ **정정(2026-07-11)** — 소스 2종 실재 (§3) |
-| E2E 잔여: RunUnitTest | ~~KR-DEV 복구 후~~ → 엔진 수리 후 (D-015 — 2시스템 404 재현) | 동일 (IDES 실측이 판정 근거) |
+| E2E 잔여: RunUnitTest | ✅ **해소** — 엔진 4.13.1 수리 + IDES 완주(2026-07-11) | 동일 |
 | E2E 잔여: WriteTextElementsBulk | KR-DEV 백엔드 복구 후 | △ IDES에 ZMCP FM 수동 설치(GUI) 시 soap로 가능 (§3) |
 | 엔진 백로그 (§6) | 포크 소스 필요 | 포크 소스 필요 |
 
@@ -299,19 +315,38 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 거부(또는 write 미등록)". 수정 후 재번들 절차는 `interactive/server/UPDATE-RUNBOOK.md`.
 현재는 정책층(`interactive/core/policies/credential-handling.md`)이 커버 — E2E 비차단.
 
-**엔진 백로그 3 — 2026-07-11 IDES(S/4HANA 2021) 실측 신규 4건** (전부 하네스 경유 실증,
-재번들 절차는 UPDATE-RUNBOOK):
+**엔진 백로그 3 — 2026-07-11 IDES(S/4HANA 2021) 실측** (재번들 절차는 UPDATE-RUNBOOK):
 
-1. **RunUnitTest 404** (D-015): 실존 표준 테스트 대상 호출이 KR-DEV·IDES 2시스템에서 동일 404 —
-   엔진 abapunit 호출(경로/페이로드) 결함 유력. 번들 경로 실측: `/sap/bc/adt/abapunit/{runs,testruns,results}`.
-2. **CreateFunctionGroup 400**: "Daten sind ungültig und konnten nicht konvertiert werden" —
-   이름·설명·생략 무관 재현 3회. FUGR 생성 페이로드가 이 릴리스와 비호환.
+1. ~~**RunUnitTest 404**~~ → ✅ **해소 (4.13.1, 포크 커밋 d0ed3ba)**: 원인 = vendored 클라이언트가
+   ABAP Cloud 전용 `/sap/bc/adt/abapunit/runs`를 온프레미스에 호출(discovery 실측으로 컬렉션
+   부재 확정 — 2시스템 404의 정체). 클래식 `POST /abapunit/testruns`(runConfiguration v1,
+   options 블록 포함) 전환 + 동기 결과를 connection 귀속 TTL 스토어로 run_id 계약에 브리지.
+   Codex 교차 리뷰 MAJOR 6건 중 5건 반영(URI 인코딩·5분 타임아웃·스토어 격리·응답 검증·
+   href 관대화). IDES 라이브 4메서드 PASS + jest 343 통과.
+2. ~~**CreateFunctionGroup 400**~~ → ✅ **해소 (4.13.1)**: 원인 = CT `groups.v3+xml` 하드코딩
+   vs 시스템은 v2만 광고(A/B 프로브 확정). discovery 협상(최고 광고 버전, per-connection
+   캐시, 실패 시 현행 폴백, legacy 분기는 협상 스킵). 생성→활성화→삭제 라이브 검증.
 3. **CreateProgram(program_type=function_group) 거짓 성공**: 타입 무시하고 PROG/P 생성
    (응답 `"type":"PROG/P"`, URI `programs/programs`) — (d)의 거짓 성공 계열.
 4. **CreateClass 잠금 미해제**: 생성 직후 Update 계열이 "locked by another user"
    (같은 세션 즉시 호출 포함 4회 재현, ReloadProfile·GetSession(force_new) 무효, 세션 만료로만
    해제). UpdateClass는 stale 잠금 핸들 재사용("ungültiges Sperr-Handle") + 실패 경로 잠금
    누수 의심 — (c) DeleteInclude enqueue 누수와 같은 계열.
+5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
+   HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
+   `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.
+6. **low/CDS unit test 경로 동일 결함**: `RunClassUnitTestsLow`·CDS unit test 실행/조회가
+   여전히 Cloud 전용 `/abapunit/runs` 사용 — 온프레미스에서 동일 404 예상 (high만 4.13.1로 수리됨).
+7. **vendored 상수 비대칭**: `ACCEPT_FUNCTION_GROUP`(v2,v1) vs `CT_FUNCTION_GROUP`(v3) — 업스트림 결함.
+8. **abapunit 엔드포인트 discovery 협상**(Cloud `/api/abapunit/runs` 병행 지원) — Codex 리뷰
+   제안, 온프레미스 포크라 보류.
+
+**안전훅 L3 확장 (2026-07-11)**: tier-readonly-guard의 MUTATION_PREFIXES에
+Activate·Patch·Release·Write 추가 (Codex 설계 리뷰가 지적한 공백 — ActivateObjects·
+PatchGuiStatus·ReleaseTransport·WriteTextElementsBulk가 L3를 통과했음. 엔진 L2는 4.12.0부터
+fail-closed allowlist라 실위험은 없었음). install-hooks matcher + 이 머신 settings 갱신,
+격리 테스트(QA 4계열 DENIED·RunUnitTest/ReloadProfile 허용·DEV 무차단) 통과.
+**주 머신 재개 시 `node interactive/adapters/claude/hooks/install-hooks.mjs --project` 재실행 필요.**
 
 **엔진 백로그 2 — `.sc4sap/` 프로젝트 폴더명**: 번들에 하드코딩(`path.join(cwd, ".sc4sap", …)`
 실측) — 개명하려면 엔진 소스 configurable화 필요, tier 이슈와 같은 사이클에 처리 권장.

@@ -63,7 +63,7 @@ const HOOKS = [
   {
     marker: 'tier-readonly-guard.mjs',
     matcher:
-      'mcp__.*__(Create|Update|Delete|RunUnitTest|RuntimeRunProgramWithProfiling|RuntimeRunClassWithProfiling)',
+      'mcp__.*__(Create|Update|Delete|Activate|Patch|Release|Write|RunUnitTest|RuntimeRunProgramWithProfiling|RuntimeRunClassWithProfiling)',
     testHint:
       'Test it by switching the active profile to a QA/PRD alias (edit .sc4sap/active-profile.txt), then calling an Update* tool — the call should be denied.',
   },
