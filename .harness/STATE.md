@@ -12,11 +12,17 @@
 - 2026-07-11 | Phase 0b 완료 — §16-2 연결(vsp-env.ps1) + COMMANDS.md 전수 실측 +
   실패 패턴 실측(ENV4·CODE2·LOCK 실재현)→verify-sap.ps1 마커 완성 + §14-2/3/9 판정 +
   VERIFY-PATTERNS 정본. GOAL 전 기준 충족
+- 2026-07-11 | Phase 1 완료 — 커버리지 표(ABAP 부분 실효·CDS/BDEF 무의미·AMDP 본문
+  불투명) + domain/abap 시드(S-001~025 + CHECKLIST) + **무인 엔진 첫 완주**
+  (1-workdays-util, bridge 드라이버, 2 steps 각 1회 시도·verify 실패 0, 사후 리뷰
+  하드 위반 0) → src/zsah1_workdays.prog.abap (테스트 클래스 먼저 — 스텝 경계로 기계
+  증명). lint Error 차단 실증은 Phase 0a의 0→1→0 기록으로 충족. GOAL 전 기준 충족
 
 ## Next
 
-- Phase 1 (Offline ABAP Harness): ABAP 1건 offline 초안→lint 루프, 객체 유형별
-  offline 커버리지 실측 표, domain/abap RULES.seed 선별 이식 (DESIGN §13)
+- Phase 1.5 (Connected Online Validation — 0b에서 ATC/health 기반으로 재정의):
+  ZSAH1_WORKDAYS를 $TMP deploy → ABAP Unit red/green 실측(리뷰 권고 — offline
+  desk-check의 실검증) + "offline 통과·connected 실패" 케이스 1건 검출 (DESIGN §13)
 
 ## Attempts & dead ends
 
