@@ -12,8 +12,14 @@
 
 ## 갱신 절차
 
-1. 엔진 포크(`hjaewon/abap-mcp-adt-powerup`)에서 `npm run bundle` → `dist/server.bundle.cjs`
-2. lite로 복사: `server/server.bundle.cjs` + `VERSION` + `integrity.json` 갱신
+> 엔진 소스는 2026-07-11부터 **레포 내 `engine/`** (D-017 편입 — GitHub 포크는 히스토리
+> 아카이브). 수리→번들→반영이 한 레포에서 끝난다.
+
+1. `engine/`에서 소스 수정 → `npm run bundle` → `engine/dist/server.bundle.cjs`
+   (의존성이 없으면 `cd engine && npm install` 선행. 버전 범프는 `npm version <semver>
+   --no-git-tag-version` + CHANGELOG 항목 — engine/CLAUDE.md 컨벤션 준수)
+2. lite로 복사: `server/server.bundle.cjs` + `VERSION`(commit은 sah 커밋 sha) +
+   `integrity.json` 갱신(`node interactive/server/verify-engine.mjs --refresh`)
 3. **capability diff**: 갱신 전후 `node scripts/smoke-mcp.mjs`의 tools 목록을 비교 —
    추가/삭제/이름 변경을 기록하고, 변경이 있으면 `server/tool-catalog/`와
    어댑터 노출 프리셋·권한 정책을 함께 갱신 (DESIGN.md §6 리뷰 5.4 대응)
