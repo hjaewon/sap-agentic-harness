@@ -1,9 +1,11 @@
 # VERIFY-PATTERNS (포인터 스텁)
 
-정본은 `adapters/vsp/VERIFY-PATTERNS.md` (Phase 0b에서 실측 완성 — DESIGN.md §10 정본
-규약). 이 파일은 harness-plan이 참조하는 `.harness/` 위치용 포인터 스텁이다.
+정본: `adapters/vsp/VERIFY-PATTERNS.md` (Phase 0b 실측 완성, 2026-07-11). 이 파일은
+harness-plan이 참조하는 `.harness/` 위치용 포인터 스텁이다.
 
 ## 확정 패턴 (Phase 0a 실측 기준)
+
+전체 패턴 표·사다리·호출 규약은 정본 참조.
 
 1. `vsp lint --file <f>` — 오프라인 스타일 린트 7종. **Error 심각도만 exit≠0,
    Warning은 exit 0으로 게이트를 통과한다.** 초안 품질 게이트로만 사용.

@@ -438,11 +438,13 @@ packs/modules/fi/
 - **완료 기준**: 하네스 run-summary에 성공 step 기록 + 커버리지 표 4개 유형 완성 +
   의도적 규칙 위반(lint Error) 소스가 offline 게이트에서 차단됨을 1회 실증
 
-### Phase 1.5: Connected Syntax Verify (v2 신설)
-- (전제: §14-9의 read-only syntax check 명령이 Phase 0b에서 확인된 경우. 미확인이면
-  이 Phase를 ATC/health 기반 online validation으로 재정의한다)
-- read-only 연결로 SAP syntax check 급 검증을 verify에 편입 — offline 린트의 깊이
-  한계(§8.1)를 메우는 층
+### Phase 1.5: Connected Online Validation (v2 신설 — 2026-07-11 Phase 0b 실측으로 재정의)
+- §14-9 판정: read-only syntax check **부재 확정**(문법 검사는 쓰기 경로에만 결합 —
+  adapters/vsp/COMMANDS.md §11) → 예정대로 **ATC/health 기반 online validation으로 재정의**.
+  단 atc/health는 findings가 있어도 exit 0이므로 verify는 출력 파싱 규약
+  (adapters/vsp/VERIFY-PATTERNS.md) 경유가 필수다.
+- 보조 후보: $TMP 스테이징 deploy가 서버 문법 검사를 겸한다(단 오류 객체도 생성되는
+  부작용 실측 — 채택 여부는 Phase 1에서 결정).
 - **완료 기준**: offline에서 통과하나 connected에서 실패하는 케이스 1건 이상을 의도적으로
   만들어 검출됨을 확인
 
@@ -472,14 +474,14 @@ packs/modules/fi/
 | # | 항목 | 결정 시점 |
 |---|---|---|
 | 1 | tdd-guard 대응: 엔진의 ABAP 확장(업스트림 기여) vs 관례 강제 유지 (§7) | Phase 0a harness-tailor 실행 시 |
-| 2 | drift check: 객체 타입별 정규화 규칙 + export/비교 명령 (§6) | Phase 0b 실측 |
-| 3 | verify 실패 유형별 출력 패턴 실측 → verify-sap.ps1 마커 완성 (exit code는 일괄 1로 확인 — §15-V10) | Phase 0b 실측 |
+| 2 | drift check: 객체 타입별 정규화 규칙 + export/비교 명령 (§6) | ✅ 0b 실측(2026-07-11): `vsp source read` 객체 단위 왕복 확인. export는 WebSocket 403 결함으로 보류 (COMMANDS.md §7). 타입별 정규화 규칙은 Phase 1에서 대상 타입 확장 시 |
+| 3 | verify 실패 유형별 출력 패턴 실측 → verify-sap.ps1 마커 완성 (exit code는 일괄 1로 확인 — §15-V10) | ✅ 0b 완료(2026-07-11): ENV 4계열·CODE 2계열·LOCK 실재현 → verify-sap.ps1 반영, 4마커 재현 검증 (VERIFY-PATTERNS.md) |
 | 4 | deploy/copy의 객체 타입별 지원 범위(class include는 TODO — §15-V6)와 src/→SAP 배포 매체(파일별 deploy vs zip copy) | Phase 0b 실측 |
 | 5 | offline lint의 CDS/RAP/AMDP 실효 커버리지 | Phase 1 실측 표 |
 | 6 | sap-harness-* 전용 스킬 신설 필요 여부 | Phase 1 종료 후 |
 | 7 | 첫 파일럿 객체/패키지 선정 | Phase 0a (§16-4) |
 | 8 | lint `--strict`(Warning도 실패) 옵션의 vsp 포크 추가 여부 (§8.1) | Phase 1 착수 시 |
-| 9 | read-only SAP syntax check 명령의 실재 여부 (없으면 Phase 1.5 재정의) | Phase 0b |
+| 9 | read-only SAP syntax check 명령의 실재 여부 (없으면 Phase 1.5 재정의) | ✅ 0b 판정(2026-07-11): 부재 — Phase 1.5를 ATC/health 기반으로 재정의 (§13) |
 
 ## 15. 설계 중 실측으로 확인된 사실 (근거 좌표)
 
