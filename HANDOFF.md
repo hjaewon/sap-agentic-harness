@@ -25,10 +25,13 @@
 > already-exists 기계 식별자 우선)·**4.13.11**(11-⑤ Structure check-with-source
 > + 구 3-6 low/CDS 클래식 testruns 전환). 엔진 잔여 = 신규 발굴 11-⑩·⑪ +
 > 관찰 2(add-if-missing GET 비직렬화·low 무동작 파라미터). **다음 착수 확정
-> (사용자 선택 2026-07-13)**: ① 11-⑪ 수리(스프린트 패턴 1 Wave — opus 위임·
-> 역-검증·라이브 red→green·새-컨텍스트 리뷰) → ② 트랙 A 지식 문서 갱신
-> (harness-docs — 알림 2회째) → ③ Phase 3 선결 설계(5-11 리뷰 게이트 편입).
-> 11-⑩은 설계 판단 필요라 후순위 유보.
+> (사용자 선택 2026-07-13)**: ① 11-⑪·⑫ 수리(스프린트 패턴 1 Wave 묶음 —
+> opus 위임·역-검증·라이브 red→green·새-컨텍스트 리뷰, 완료 시
+> UPSTREAM-FIX-HANDOFF §5·§7 갱신) → ② 트랙 A 지식 문서 갱신(harness-docs —
+> 알림 2회째) → ③ Phase 3 선결 설계(5-11 리뷰 게이트 편입). 11-⑩은 설계
+> 판단 필요라 후순위 유보. **업스트림 핸드오프 작성 완료(2026-07-13)** =
+> `engine/UPSTREAM-FIX-HANDOFF.md`(영어 자립형, 4.13.2~4.13.11 전량) —
+> 포크 클론(D:\Claude for SAP\abap-mcp-adt-powerup, 4.13.1 동결)에 적용용.
 
 ---
 
@@ -639,6 +642,15 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
 11. **AdtTable.check의 ddlCode 드랍 (4.13.11 리뷰 발굴, 11-⑤ 동류)**:
     runTableCheckRun에 ddlCode를 안 넘겨 UpdateTable 사전 check가 새 DDL이
     아닌 저장본만 검사 — 11-⑤와 동일한 check-with-source 전달 1수리 가능.
+12. **Create 페이로드 EN 하드코딩 잔여 (~16곳, 4.13.10 스코프 밖 — 2026-07-13
+    실수요 실증)**: Class·Interface·Program·Package·Table·Structure·SRVD·
+    DDLX·DCL 생성부는 여전히 language/masterLanguage EN 하드코딩 — 생성은
+    성공(마스터언어 정규화 관용)하나 설명이 EN 슬롯에 저장돼 비영어 로그온
+    (KO·CS 등)에서 설명이 비어 보임. 실수요 증거: 포크 클론(4.13.1)의 번들
+    직편집 KO 치환 19곳 핸드핵 발견(리빌드 시 소실되는 임시조치 — 원복 권장).
+    수리 = 4.13.10 resolveLogonLanguage 인프라를 나머지 create 빌더에 기계적
+    확장(UPSTREAM-FIX-HANDOFF §5에 확장 지점 문서화됨). 11-⑪과 같은 Wave로
+    묶기 적합.
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.
