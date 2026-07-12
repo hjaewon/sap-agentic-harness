@@ -9,8 +9,10 @@
 > vsp v2.38.1-89(가드 오탐 강등·잠금 누수·copy 거짓 성공, COMMANDS.md ⑤-6/7) +
 > 엔진 4.13.3(UpdateClass 세션 유지, §6 백로그 4). CLAS 배포 경로 개통(§14-4).
 > **백로그 5-7 완료 (2026-07-12)** — install-sap-assets.md 이식 + 3계열 SKIPPED
-> 규칙(기입측+소비측). 같은 날 잔여 수리: vsp RenameObject 잠금 누수(7a2ef66,
-> lock v2.38.1-90). **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
+> 규칙(기입측+소비측). 같은 날 잔여 수리 2건: vsp RenameObject 잠금 누수(7a2ef66,
+> lock v2.38.1-90) + 엔진 **4.13.4**(UpdateInterface·UpdateProgram 잠금 세션 유지,
+> IDES red→green — §6 백로그 9 해소, 잔여 감사는 신규 백로그 10).
+> **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
 > 실증이 Codex 실사용 전 필수) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
 > 게이트 편입 등) 후.
 
@@ -470,6 +472,19 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    **잔여(신규 백로그 9)**: UpdateInterface·UpdateProgram이 구조 동일(lock→check→
    PUT, stateful 미설정)한 잠복 버그 — 각 파일 인라인이라 이번 최소 수리에서 제외,
    동일 1줄 수리 가능. CreateClass 생성 직후 잠금 건은 별개로 잔존.
+   → ✅ **백로그 9 해소 (4.13.4, 2026-07-12)**: 두 핸들러 모두 lock 직후 stateful
+   핀 1줄 + 회귀 테스트 2본(역-검증 완료 — 핀 제거 시 테스트 FAIL 확인). jest
+   **515 통과(0 실패)**, 런북 재번들(capability diff no-op — 155 동일), **IDES
+   라이브 red→green 양 핸들러 실증**: 4.13.3 번들로 ungültiges Sperr-Handle 재현
+   → 4.13.4로 동일 호출 완주 ($TMP 한정, 임시 인터페이스는 삭제 정리). low 계열
+   (UpdateInterfaceLow/UpdateProgramLow)은 caller 제공 lock_handle + 세션 복원
+   구조라 별개 흐름 — 무변경.
+   **신규 백로그 10 — 동일 시그니처 잔여 감사**: UpdateView는 사실상 확정(lock→
+   ddl_source 사전 check→PUT, 핀 없음 — 동일 1줄 수리 가능). UpdateServiceDefinition·
+   UpdateFunctionModule·UpdateMetadataExtension·UpdateBehaviorDefinition은 lock~PUT
+   사이 중간 stateless 요청 존재 여부 핸들러별 확인 필요. 사전 check 없는 Update
+   계열(Table/Structure/FunctionGroup/Domain/DataElement)은 저위험 후보. 감사
+   방식은 이번과 동일한 red→green 권장. CreateClass 생성 직후 잠금 건은 별개로 잔존.
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.

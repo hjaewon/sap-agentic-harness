@@ -62,6 +62,20 @@ async function handleUpdateProgram(context, params) {
             logger?.debug(`Locking program: ${programName}`);
             lockHandle = await client.getProgram().lock({ programName });
             logger?.debug(`Program locked: ${programName} (handle=${lockHandle ? `${lockHandle.substring(0, 8)}...` : 'none'})`);
+            // Keep the ENQUEUE lock alive across the rest of the chain.
+            // getProgram().lock() returns with the connection reset to stateless,
+            // but the pre-write syntax check below is an intermediate /checkruns
+            // POST that sits BETWEEN the lock and the source PUT. If it (or the
+            // PUT) goes out stateless, SAP routes it through a fresh work process
+            // that has no record of the stateful session, tears the session down,
+            // and the ENQUEUE lock evaporates — the PUT then fails with "resource
+            // not locked (invalid lock handle)" (HTTP 423) seconds after the lock
+            // succeeded. Reproduces 100% on systems that recycle the HTTP
+            // connection between requests (e.g. IDES); harmless where the session
+            // was retained anyway (direct-connect systems). Same fix class as
+            // UpdateClass (4.13.3) and vsp issue #88. unlock() restores stateless
+            // in the finally block below.
+            connection.setSessionType('stateful');
             // PreCheck syntax check on the new source BEFORE upload.
             // If this throws, we never PUT the broken code, so the program
             // stays in its previous working state.

@@ -69,6 +69,13 @@
   build/vet/test green, 라이브 재현 미실시)으로 한계를 COMMANDS ⑤-6에 명기.
   vsp.lock v2.38.1-90 갱신
 
+- 2026-07-12 | 엔진 4.13.4 — UpdateInterface·UpdateProgram 잠금 세션 유지 (opus
+  위임, HANDOFF §6 백로그 9 해소) — 4.13.3과 동일 1줄(lock 직후 stateful 핀) +
+  회귀 테스트 2본(역-검증). jest 515/0, 런북 재번들(capability diff no-op),
+  **IDES 라이브 red→green 양 핸들러**(구 번들 Sperr-Handle 재현 → 신 번들 완주,
+  $TMP 한정·임시 객체 정리). 동일 시그니처 스캔이 UpdateView 등 후보 발굴 →
+  신규 백로그 10(감사)로 이관
+
 ## Next
 
 - 백로그 5-7(sap-assets 설치 절차 이식, HANDOFF §5 순서). Phase 3(Gated Deploy)

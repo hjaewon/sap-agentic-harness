@@ -129,6 +129,21 @@ export async function handleUpdateInterface(
         // Lock
         lockHandle = await client.getInterface().lock({ interfaceName });
 
+        // Keep the ENQUEUE lock alive across the rest of the chain.
+        // getInterface().lock() returns with the connection reset to
+        // stateless, but the pre-write syntax check below is an intermediate
+        // /checkruns POST that sits BETWEEN the lock and the source PUT. If it
+        // (or the PUT) goes out stateless, SAP routes it through a fresh work
+        // process that has no record of the stateful session, tears the
+        // session down, and the ENQUEUE lock evaporates — the PUT then fails
+        // with "resource not locked (invalid lock handle)" (HTTP 423) seconds
+        // after the lock succeeded. Reproduces 100% on systems that recycle
+        // the HTTP connection between requests (e.g. IDES); harmless where the
+        // session was retained anyway (direct-connect systems). Same fix class
+        // as UpdateClass (4.13.3) and vsp issue #88. unlock() restores
+        // stateless in the finally block below.
+        connection.setSessionType('stateful');
+
         // Pre-write syntax check on the proposed source. If errors are
         // found we never PUT the broken code; the active interface
         // stays in its previous working state and the lock is released

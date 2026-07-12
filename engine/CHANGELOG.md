@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [4.13.4] - 2026-07-12
+
+### Fixed
+- **`UpdateInterface` and `UpdateProgram` (high-level) had the same latent HTTP 423 "resource … is not locked (invalid lock handle)" bug fixed for `UpdateClass` in 4.13.3.** Both handlers orchestrate their own lock → pre-write syntax check → source PUT → unlock chain inline. `getInterface().lock()` / `getProgram().lock()` acquire the ENQUEUE lock in a stateful request but return with the connection reset to **stateless** (both wrap `setSessionType('stateful')` → lock → `setSessionType('stateless')` internally), so the intermediate pre-write `/checkruns` POST and the subsequent source PUT went out stateless. On backends that recycle the underlying HTTP connection (e.g. IDES), SAP routes a stateless request through a fresh work process that has no record of the stateful ADT session, tears the session down, and the lock evaporates — the PUT then fails with an *invalid lock handle* seconds after the lock appeared to succeed. Both handlers now re-assert `setSessionType('stateful')` immediately after the lock, so the pre-write check and the PUT ride the same stateful session as the lock; `unlock()` restores stateless afterwards. Directly-connected systems that retained the session anyway (e.g. KR-DEV) are unaffected. Regression tests pin `x-sap-adt-sessiontype: stateful` on both the intermediate check and the PUT for each handler (reverse-verified: each test fails without its fix). Closes HANDOFF §6 engine backlog 9. The low-level `UpdateInterfaceLow` / `UpdateProgramLow` handlers are unaffected — they take a caller-supplied lock handle and session state and do not lock inline.
+
 ## [4.13.3] - 2026-07-12
 
 ### Fixed
