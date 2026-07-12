@@ -203,6 +203,49 @@ index 7f00cad..b29a42c 100644
      return {
          ...response,
          data: {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/AdtDataElement.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/AdtDataElement.js
+index 2e26c46..ecf8275 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/AdtDataElement.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/AdtDataElement.js
+@@ -95,6 +95,7 @@ class AdtDataElement {
+                 set_get_parameter: config.setGetParameter,
+                 masterSystem: this.systemContext.masterSystem,
+                 responsible: this.systemContext.responsible,
++                master_language: config.masterLanguage,
+             });
+             state.createResult = createResponse;
+             objectCreated = true;
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/create.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/create.js
+index 25fbc29..512ea70 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/create.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/create.js
+@@ -83,16 +83,24 @@ async function create(connection, args) {
+     const masterSystemAttr = masterSystem
+         ? ` adtcore:masterSystem="${masterSystem}"`
+         : '';
++    // [powerup 4.13.10] The payload language must match the system's logon /
++    // master language or SAP drops the description from the created object
++    // (leaving a skeleton whose GET XML has no adtcore:description at all —
++    // HANDOFF §6 backlog 11-⑧, live-measured on an S/4HANA system logged on
++    // in CS). Callers resolve the logon language from the live system and
++    // pass it as master_language; the historical EN default is kept as the
++    // fallback when it is not provided.
++    const masterLanguage = (args.master_language || 'EN').toUpperCase();
+     const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
+ <blue:wbobj xmlns:blue="http://www.sap.com/wbobj/dictionary/dtel"
+             xmlns:adtcore="http://www.sap.com/adt/core"
+             xmlns:atom="http://www.w3.org/2005/Atom"
+             xmlns:dtel="http://www.sap.com/adt/dictionary/dataelements"
+             adtcore:description="${description}"
+-            adtcore:language="EN"
++            adtcore:language="${masterLanguage}"
+             adtcore:name="${args.data_element_name.toUpperCase()}"
+             adtcore:type="DTEL/DE"
+-            adtcore:masterLanguage="EN"${masterSystemAttr}
++            adtcore:masterLanguage="${masterLanguage}"${masterSystemAttr}
+             adtcore:responsible="${username}">
+   <adtcore:packageRef adtcore:name="${args.package_name.toUpperCase()}"/>
+   <dtel:dataElement>
 diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/delete.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/delete.js
 index 19f115d..6d2833d 100644
 --- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/delete.js
@@ -215,6 +258,87 @@ index 19f115d..6d2833d 100644
      return {
          ...response,
          data: {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/types.d.ts b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/types.d.ts
+index f15ad77..6a92b19 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/types.d.ts
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/types.d.ts
+@@ -20,6 +20,7 @@ export interface ICreateDataElementParams {
+     transport_request?: string;
+     masterSystem?: string;
+     responsible?: string;
++    master_language?: string;
+     type_kind?: 'domain' | 'predefinedAbapType' | 'refToPredefinedAbapType' | 'refToDictionaryType' | 'refToClifType';
+     type_name?: string;
+     data_type?: string;
+@@ -71,6 +72,7 @@ export interface IDataElementConfig {
+     packageName?: string;
+     transportRequest?: string;
+     description?: string;
++    masterLanguage?: string;
+     dataType?: string;
+     length?: number;
+     decimals?: number;
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/update.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/update.js
+index 53f04a3..b5e478e 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/update.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/dataElement/update.js
+@@ -84,10 +84,13 @@ async function getDomainInfo(connection, domainName) {
+  */
+ function patchDataElementXml(currentXml, args) {
+     let xml = currentXml;
+-    // Description
++    // Description — addIfMissing so a half-created skeleton whose GET XML
++    // carries no adtcore:description at all (EN-payload create on a non-EN
++    // logon system, HANDOFF §6 backlog 11-⑧) is repairable via Update
++    // instead of failing the PUT with "Die Beschreibung fehlt".
+     if (args.description) {
+         const description = (0, internalUtils_1.limitDescription)(args.description);
+-        xml = (0, xmlPatch_1.patchXmlAttribute)(xml, 'adtcore:description', description);
++        xml = (0, xmlPatch_1.patchXmlAttribute)(xml, 'adtcore:description', description, { addIfMissing: true });
+     }
+     // Type information
+     xml = (0, xmlPatch_1.patchIf)(xml, args.type_kind, (x, val) => (0, xmlPatch_1.patchXmlElement)(x, 'dtel:typeKind', val));
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/AdtDomain.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/AdtDomain.js
+index 4e6ae55..666c449 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/AdtDomain.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/AdtDomain.js
+@@ -88,6 +88,7 @@ class AdtDomain {
+                 fixed_values: config.fixed_values,
+                 masterSystem: this.systemContext.masterSystem,
+                 responsible: this.systemContext.responsible,
++                master_language: config.masterLanguage,
+             });
+             state.createResult = createResponse;
+             objectCreated = true;
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/create.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/create.js
+index 7738290..51461b4 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/create.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/create.js
+@@ -23,14 +23,22 @@ async function create(connection, args) {
+         ? ` adtcore:masterSystem="${masterSystem}"`
+         : '';
+     const responsibleAttr = username ? ` adtcore:responsible="${username}"` : '';
++    // [powerup 4.13.10] The payload language must match the system's logon /
++    // master language or SAP drops the description from the created object
++    // (leaving a skeleton whose GET XML has no adtcore:description at all —
++    // HANDOFF §6 backlog 11-⑧, live-measured on an S/4HANA system logged on
++    // in CS). Callers resolve the logon language from the live system and
++    // pass it as master_language; the historical EN default is kept as the
++    // fallback when it is not provided.
++    const masterLanguage = (args.master_language || 'EN').toUpperCase();
+     const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
+ <doma:domain xmlns:doma="http://www.sap.com/dictionary/domain"
+              xmlns:adtcore="http://www.sap.com/adt/core"
+              adtcore:description="${args.description || args.domain_name}"
+-             adtcore:language="EN"
++             adtcore:language="${masterLanguage}"
+              adtcore:name="${args.domain_name.toUpperCase()}"
+              adtcore:type="DOMA/DD"
+-             adtcore:masterLanguage="EN"${masterSystemAttr}${responsibleAttr}>
++             adtcore:masterLanguage="${masterLanguage}"${masterSystemAttr}${responsibleAttr}>
+   <adtcore:packageRef adtcore:name="${args.package_name.toUpperCase()}"/>
+ </doma:domain>`;
+     const headers = {
 diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/delete.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/delete.js
 index 8c88ee4..84b74bb 100644
 --- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/delete.js
@@ -227,6 +351,46 @@ index 8c88ee4..84b74bb 100644
      return {
          ...response,
          data: {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/types.d.ts b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/types.d.ts
+index 26e3621..308d9f4 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/types.d.ts
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/types.d.ts
+@@ -13,6 +13,7 @@ export interface ICreateDomainParams {
+     transport_request?: string;
+     masterSystem?: string;
+     responsible?: string;
++    master_language?: string;
+     datatype?: string;
+     length?: number;
+     decimals?: number;
+@@ -49,6 +50,7 @@ export interface IDomainConfig {
+     packageName?: string;
+     transportRequest?: string;
+     description?: string;
++    masterLanguage?: string;
+     datatype?: string;
+     length?: number;
+     decimals?: number;
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/update.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/update.js
+index 07580d1..baf0e0d 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/update.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/domain/update.js
+@@ -17,10 +17,13 @@ const xmlPatch_1 = require("../../utils/xmlPatch");
+  */
+ function patchDomainXml(currentXml, args) {
+     let xml = currentXml;
+-    // Description
++    // Description — addIfMissing so a half-created skeleton whose GET XML
++    // carries no adtcore:description at all (EN-payload create on a non-EN
++    // logon system, HANDOFF §6 backlog 11-⑧) is repairable via Update
++    // instead of failing the PUT with "Die Beschreibung fehlt".
+     if (args.description) {
+         const description = (0, internalUtils_1.limitDescription)(args.description);
+-        xml = (0, xmlPatch_1.patchXmlAttribute)(xml, 'adtcore:description', description);
++        xml = (0, xmlPatch_1.patchXmlAttribute)(xml, 'adtcore:description', description, { addIfMissing: true });
+     }
+     // Type information
+     xml = (0, xmlPatch_1.patchIf)(xml, args.datatype, (x, val) => (0, xmlPatch_1.patchXmlElement)(x, 'doma:datatype', val));
 diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/functionGroup/delete.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/functionGroup/delete.js
 index e1a7813..bd7ea59 100644
 --- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/functionGroup/delete.js
@@ -311,6 +475,39 @@ index 36ebd1b..33de3fc 100644
      return {
          ...response,
          data: {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/AdtView.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/AdtView.js
+index 868d975..b5d5678 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/AdtView.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/AdtView.js
+@@ -92,6 +92,7 @@ class AdtView {
+                 ddl_source: options?.sourceCode || config.ddlSource,
+                 masterSystem: this.systemContext.masterSystem,
+                 responsible: this.systemContext.responsible,
++                master_language: config.masterLanguage,
+             });
+             objectCreated = true;
+             state.createResult = createResponse;
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/create.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/create.js
+index 86ac671..866034a 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/create.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/create.js
+@@ -26,7 +26,15 @@ async function createDDLSObject(connection, args) {
+     const responsibleAttr = responsible
+         ? ` adtcore:responsible="${responsible}"`
+         : '';
+-    const metadataXml = `<?xml version="1.0" encoding="UTF-8"?><ddl:ddlSource xmlns:ddl="http://www.sap.com/adt/ddic/ddlsources" xmlns:adtcore="http://www.sap.com/adt/core" adtcore:description="${description}" adtcore:language="EN" adtcore:name="${args.view_name}" adtcore:type="DDLS/DF" adtcore:masterLanguage="EN"${masterSystemAttr}${responsibleAttr}>
++    // [powerup 4.13.10] The DDLS create service HARD-REJECTS a payload whose
++    // masterLanguage differs from the logon language ("Sprache EN zum Anlegen
++    // der Beschreibung entspricht nicht Mastersprache CS", T100
++    // DDIC_ADT_DDLS/016 → HTTP 400) — live-measured on an S/4HANA system
++    // logged on in CS (HANDOFF §6 backlog 11-⑧/11-④). Callers resolve the
++    // logon language from the live system and pass it as master_language;
++    // the historical EN default is kept as the fallback.
++    const masterLanguage = (args.master_language || 'EN').toUpperCase();
++    const metadataXml = `<?xml version="1.0" encoding="UTF-8"?><ddl:ddlSource xmlns:ddl="http://www.sap.com/adt/ddic/ddlsources" xmlns:adtcore="http://www.sap.com/adt/core" adtcore:description="${description}" adtcore:language="${masterLanguage}" adtcore:name="${args.view_name}" adtcore:type="DDLS/DF" adtcore:masterLanguage="${masterLanguage}"${masterSystemAttr}${responsibleAttr}>
+   <adtcore:packageRef adtcore:name="${args.package_name}"/>
+ </ddl:ddlSource>`;
+     const headers = {
 diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/delete.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/delete.js
 index e8f0b89..945f84d 100644
 --- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/delete.js
@@ -323,6 +520,26 @@ index e8f0b89..945f84d 100644
      return {
          ...response,
          data: {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/types.d.ts b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/types.d.ts
+index bcc0309..c29dd0f 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/types.d.ts
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/view/types.d.ts
+@@ -10,6 +10,7 @@ export interface ICreateViewParams {
+     description?: string;
+     masterSystem?: string;
+     responsible?: string;
++    master_language?: string;
+ }
+ export interface IUpdateViewSourceParams {
+     view_name: string;
+@@ -28,6 +29,7 @@ export interface IViewConfig {
+     transportRequest?: string;
+     description?: string;
+     ddlSource?: string;
++    masterLanguage?: string;
+     sessionId?: string;
+     onLock?: (lockHandle: string) => void;
+ }
 diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/internalUtils.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/internalUtils.js
 index 76c7154..9f388f8 100644
 --- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/internalUtils.js
@@ -412,3 +629,63 @@ index 76c7154..9f388f8 100644
 +        throw new Error(`${label} deletion failed: HTTP ${response.status} ${response.statusText || ''}`.trim());
 +    }
 +}
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.d.ts b/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.d.ts
+index af031bf..7136af0 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.d.ts
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.d.ts
+@@ -7,8 +7,13 @@
+ /**
+  * Replace an XML attribute value.
+  * Example: `adtcore:description="old"` → `adtcore:description="new"`
++ *
++ * [powerup 4.13.10] `options.addIfMissing`: inject the attribute into the
++ * root element's opening tag when it is absent (default: no-op, unchanged).
+  */
+-export declare function patchXmlAttribute(xml: string, attrName: string, newValue: string): string;
++export declare function patchXmlAttribute(xml: string, attrName: string, newValue: string, options?: {
++    addIfMissing?: boolean;
++}): string;
+ /**
+  * Replace XML element text content.
+  * Handles both `<tag>content</tag>` and self-closing `<tag/>`.
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.js
+index d758bd1..60b4d88 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/utils/xmlPatch.js
+@@ -15,10 +15,34 @@ exports.extractXmlString = extractXmlString;
+ /**
+  * Replace an XML attribute value.
+  * Example: `adtcore:description="old"` → `adtcore:description="new"`
++ *
++ * [powerup 4.13.10] Optional `options.addIfMissing`: when the attribute is
++ * absent from the document, inject it into the ROOT element's opening tag
++ * instead of silently no-op'ing. SAP omits `adtcore:description` entirely
++ * from the GET XML of an object whose description never landed (e.g. a
++ * half-created skeleton left by an EN-payload create on a non-EN logon
++ * system — HANDOFF §6 backlog 11-⑧), and the replace-only behavior made such
++ * skeletons unrepairable via the read-modify-write Update path ("Die
++ * Beschreibung fehlt"). Default behavior (no options) is unchanged.
+  */
+-function patchXmlAttribute(xml, attrName, newValue) {
++function patchXmlAttribute(xml, attrName, newValue, options) {
+     const regex = new RegExp(`${attrName}="[^"]*"`);
+-    return xml.replace(regex, `${attrName}="${escapeXmlAttr(newValue)}"`);
++    if (regex.test(xml)) {
++        return xml.replace(regex, `${attrName}="${escapeXmlAttr(newValue)}"`);
++    }
++    if (options && options.addIfMissing) {
++        // Find the first element opening tag (skips the <?xml?> prolog and
++        // comments — those don't start with a name character). Quoted
++        // attribute values are consumed atomically so a '>' inside a value
++        // cannot end the match early.
++        const rootOpenRe = /<([A-Za-z][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/;
++        const m = xml.match(rootOpenRe);
++        if (m && m.index !== undefined) {
++            const newTag = `<${m[1]}${m[2]} ${attrName}="${escapeXmlAttr(newValue)}"${m[3]}>`;
++            return xml.slice(0, m.index) + newTag + xml.slice(m.index + m[0].length);
++        }
++    }
++    return xml;
+ }
+ /**
+  * Replace XML element text content.

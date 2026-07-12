@@ -15,12 +15,14 @@
 > §6 백로그 9·10·11-① 해소, 잔여 후속 = 백로그 11-②~⑨).
 > **5-5 우선분·5-8 필수분 완료 (2026-07-12)** — fetch 스크립트 2종 이식 + Codex
 > row-data 하드 차단 정본화(approval fail-open 실증). **진행 중 = 엔진 잔여 결함
-> 수리 스프린트**(2026-07-12, 11건/5 Wave — `.harness/GOAL.md`): Wave 1~3 완료 =
+> 수리 스프린트**(2026-07-12, 11건/5 Wave — `.harness/GOAL.md`): Wave 1~4 완료 =
 > **4.13.7**(11-② vendored stateless 누수 해소, patch-package 정본화 + 신규 발굴
 > 11-⑩)·**4.13.8**(11-③ FUGR Update CT 협상 + 구 3-7 흡수 해소, 11-④는 CT 아닌
 > 11-⑧ 언어 계열로 판정·이관)·**4.13.9**(구 3-5 삭제 정직화 공통 뿌리 12종 +
-> 구 3-3 CreateProgram 타입 가드 + 11-⑨ 죽은 잠금 쌍 제거). Phase 3(Gated
-> Deploy)은 선결 3조건(5-11 리뷰 게이트 편입 등) 후.
+> 구 3-3 CreateProgram 타입 가드 + 11-⑨ 죽은 잠금 쌍 제거)·**4.13.10**(11-⑧
+> 로그온 언어 동적 해석+스켈레톤 복구 — 11-④ CreateView 개통 동반 + 11-⑥
+> already-exists 기계 식별자 우선). Phase 3(Gated Deploy)은 선결 3조건(5-11
+> 리뷰 게이트 편입 등) 후.
 
 ---
 
@@ -577,10 +579,18 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    없음**(생성 전 거부 — 구 서술 정정). 수리는 11-⑧에서. 부수 발굴:
    handleCreateView catch가 ADT 에러 body를 버려 진단을 가림(제네릭 400만
    전달) — 11-⑧ 수리 시 함께 개선.
+   → ✅ **해소 (4.13.10, 2026-07-12)**: 11-⑧ 언어 동적 해석으로 개통 —
+   CreateView 라이브 생성 성공 + catch가 ADT 에러 body를 전달하도록 수리
+   (형제 핸들러 전수 판정표는 CHANGELOG — 실증 있는 CreateView만 수리).
 5. UpdateStructure 사전 check가 IDES에서 빈 에러로 결정적 실패(수리 전후 동일 =
    별개 결함) — check 래퍼 응답 해석 조사 필요.
 6. isAlreadyExistsError 영어 전용 매칭 — 독어 시스템("ist bereits vorhanden")에서
    UpdateDataElement 사전 검증 오작동.
+   → ✅ **11-⑥ 해소 (4.13.10, 2026-07-12)**: 언어 무관 기계 식별자 우선 재설계
+   — ① exception type id(AlreadyExists 포함) ② T100 키 SWB_TOOL/016(IDES 라이브
+   실측 근거) → 기계 신호 없을 때만 ③ 다국어 텍스트 폴백(기존 영어 보존).
+   네거티브 컨트롤(SWB_TOOL/019 오분류 방지) 테스트 고정. 라이브 red(독어
+   already-exists 오분류로 Update 거부)→green(updated+activated 완주).
 7. UpdateTextElement/Screen/GuiStatus는 별개 병리(ADT lock 무-stateful + RFC write) —
    관찰만, 3계열은 RFC 백엔드 이슈(§3)와 함께 볼 것. CreateTextElement도 동일
    계열(4.13.6 재스캔 발굴).
@@ -590,6 +600,18 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    거부("Die Beschreibung fehlt") — 잠금 수리 후 IDES에서 CreateDomain/
    CreateDataElement의 지배적 차단 요인. 수리 방향: patch 헬퍼 add-if-missing
    + 생성/조회 언어 파라미터 일관화. (1번의 '스켈레톤 복구 불가'와 결부)
+   → ✅ **11-⑧ 해소 (4.13.10, 2026-07-12)**: 로그온 언어 **동적 해석** —
+   `/sap/bc/adt/core/http/systeminformation`이 로그온 언어를 실반환함을 실측
+   (IDES=CS) → 신규 `resolveLogonLanguage()`(검증·EN 폴백·per-connection 캐시,
+   discovery 협상과 동일 패턴), Create 3종(View/Domain/DataElement) 주입 +
+   vendored 빌더/래퍼가 master_language 수용(patch-package 32파일 누적).
+   patchXmlAttribute에 **opt-in add-if-missing** 신설 → 기존 반쪽 스켈레톤을
+   Update로 복구 가능(라이브 복구 실증 2건 — '영구 불구' 해소). 11-④
+   CreateView 400도 이 수리로 개통(라이브 생성 성공) + 에러 body 전달 개선
+   동반. 타 create 경로의 EN은 관용 실증(4.13.1~9 green)으로 미수정(Notes).
+   잔여 관찰: add-if-missing으로 추가된 description이 GET XML에 비직렬화
+   (SAP측 텍스트 행 배치 추정 — 객체 기능은 완전, 심층 규명은 DD01T 실데이터
+   조회 필요라 보류). jest 572/0, 새-컨텍스트 리뷰 PASS.
 9. CreateStructure의 죽은 lock/unlock 쌍 — 아무 요청도 안 감쌈. 제거 또는
    TODO로 남은 DDL update 구현 중 택1.
    → ✅ **11-⑨ 해소 (4.13.9, 2026-07-12)**: 제거 택1(DDL update 구현은 신기능

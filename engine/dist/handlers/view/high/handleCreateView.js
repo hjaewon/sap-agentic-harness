@@ -8,6 +8,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TOOL_DEFINITION = void 0;
 exports.handleCreateView = handleCreateView;
+const adtLogonLanguage_1 = require("../../../lib/adtLogonLanguage");
 const clients_1 = require("../../../lib/clients");
 const utils_1 = require("../../../lib/utils");
 const transportValidation_js_1 = require("../../../utils/transportValidation.js");
@@ -62,6 +63,13 @@ async function handleCreateView(context, params) {
             description: args.description || viewName,
         });
         logger?.debug(`View validation passed: ${viewName}`);
+        // Resolve the system's logon/master language so the DDLS create payload
+        // carries a masterLanguage the create service accepts. The vendored
+        // create hardcodes EN, which the DDLS-create service hard-rejects with
+        // HTTP 400 "Sprache EN … entspricht nicht Mastersprache CS" on any system
+        // whose logon language is not EN (e.g. S/4HANA logged on in CS). Falls
+        // back to EN when systeminformation is unavailable.
+        const masterLanguage = await (0, adtLogonLanguage_1.resolveLogonLanguage)(connection, logger);
         // Create
         logger?.debug(`Creating view: ${viewName}`);
         await client.getView().create({
@@ -70,6 +78,7 @@ async function handleCreateView(context, params) {
             packageName: args.package_name,
             ddlSource: '',
             transportRequest: args.transport_request,
+            masterLanguage,
         });
         logger?.info(`View created: ${viewName}`);
         // NOTE: No post-create syntax check. Unlike classes/interfaces,
@@ -103,7 +112,15 @@ async function handleCreateView(context, params) {
             logger?.error(`Error creating view ${viewName}: ${error.message}`);
             return (0, utils_1.return_error)(error);
         }
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        // Surface the ADT exception body, not just axios' generic "Request
+        // failed with status code 400" — the body carries the actual SAP
+        // diagnosis (e.g. the master-language rejection DDIC_ADT_DDLS/016).
+        const fallback = error instanceof Error ? error.message : String(error);
+        const extracted = (0, utils_1.extractAdtErrorMessage)(error, fallback);
+        const status = error?.response?.status;
+        const errorMessage = status && !extracted.includes(`[HTTP ${status}]`)
+            ? `${extracted} [HTTP ${status}]`
+            : extracted;
         logger?.error(`Error creating view ${viewName}: ${errorMessage}`);
         return (0, utils_1.return_error)(new Error(errorMessage));
     }

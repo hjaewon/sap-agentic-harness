@@ -5,10 +5,12 @@
  * DDL source is set via UpdateView handler.
  */
 
+import { resolveLogonLanguage } from '../../../lib/adtLogonLanguage';
 import { createAdtClient } from '../../../lib/clients';
 import type { HandlerContext } from '../../../lib/handlers/interfaces';
 import {
   encodeSapObjectName,
+  extractAdtErrorMessage,
   return_error,
   return_response,
 } from '../../../lib/utils';
@@ -82,6 +84,14 @@ export async function handleCreateView(context: HandlerContext, params: any) {
     });
     logger?.debug(`View validation passed: ${viewName}`);
 
+    // Resolve the system's logon/master language so the DDLS create payload
+    // carries a masterLanguage the create service accepts. The vendored
+    // create hardcodes EN, which the DDLS-create service hard-rejects with
+    // HTTP 400 "Sprache EN … entspricht nicht Mastersprache CS" on any system
+    // whose logon language is not EN (e.g. S/4HANA logged on in CS). Falls
+    // back to EN when systeminformation is unavailable.
+    const masterLanguage = await resolveLogonLanguage(connection, logger);
+
     // Create
     logger?.debug(`Creating view: ${viewName}`);
     await client.getView().create({
@@ -90,6 +100,7 @@ export async function handleCreateView(context: HandlerContext, params: any) {
       packageName: args.package_name,
       ddlSource: '',
       transportRequest: args.transport_request,
+      masterLanguage,
     });
     logger?.info(`View created: ${viewName}`);
 
@@ -125,7 +136,16 @@ export async function handleCreateView(context: HandlerContext, params: any) {
       logger?.error(`Error creating view ${viewName}: ${error.message}`);
       return return_error(error);
     }
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    // Surface the ADT exception body, not just axios' generic "Request
+    // failed with status code 400" — the body carries the actual SAP
+    // diagnosis (e.g. the master-language rejection DDIC_ADT_DDLS/016).
+    const fallback = error instanceof Error ? error.message : String(error);
+    const extracted = extractAdtErrorMessage(error, fallback);
+    const status = error?.response?.status;
+    const errorMessage =
+      status && !extracted.includes(`[HTTP ${status}]`)
+        ? `${extracted} [HTTP ${status}]`
+        : extracted;
     logger?.error(`Error creating view ${viewName}: ${errorMessage}`);
     return return_error(new Error(errorMessage));
   }

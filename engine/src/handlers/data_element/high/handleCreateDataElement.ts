@@ -7,6 +7,7 @@
  * Workflow: create -> activate -> verify
  */
 
+import { resolveLogonLanguage } from '../../../lib/adtLogonLanguage';
 import { createAdtClient } from '../../../lib/clients';
 import type { HandlerContext } from '../../../lib/handlers/interfaces';
 import { callDdicActivate, callDdicDtel } from '../../../lib/rfcBackend';
@@ -194,6 +195,15 @@ export async function handleCreateDataElement(
         description: typedArgs.description || dataElementName,
       });
 
+      // Resolve the system's logon/master language so the create payload
+      // language matches it. With the vendored EN hardcoding, a create on a
+      // non-EN logon system (e.g. IDES logged on in CS) silently drops the
+      // description — the created skeleton's GET XML carries no
+      // adtcore:description at all, and the read-modify-write update below
+      // then fails with "Die Beschreibung fehlt" (HANDOFF §6 backlog 11-⑧).
+      // Falls back to EN when systeminformation is unavailable.
+      const masterLanguage = await resolveLogonLanguage(connection, logger);
+
       // Create (registers bare object in SAP)
       await client.getDataElement().create({
         dataElementName,
@@ -205,6 +215,7 @@ export async function handleCreateDataElement(
         length: typedArgs.length,
         decimals: typedArgs.decimals,
         transportRequest: typedArgs.transport_request,
+        masterLanguage,
       });
 
       // Lock

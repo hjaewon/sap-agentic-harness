@@ -154,13 +154,25 @@
   루프 프로세스 종료(메인). 별건: fewer-permission-prompts로 게이트 5종
   Bash/PowerShell 정확 형태 10건을 .claude/settings.json allow에 추가
 
+- 2026-07-12 | 엔진 4.13.10 — Wave 4/5 언어 계열 (opus 위임, 세션 한도로 1회
+  중단→재개) — ① 11-⑧(+11-④ 본수리): 로그온 언어 동적 해석(systeminformation
+  실측 CS → resolveLogonLanguage, 캐시·EN 폴백) + Create 3종 주입 + vendored
+  master_language 수용(patch 32파일) + patchXmlAttribute opt-in add-if-missing
+  → 라이브 red→green 3종(View 400 소멸·Domain/DTEL description 착지) + **구
+  번들이 남긴 반쪽 스켈레톤 2건 Update 복구 실증**(영구 불구 해소). ② 11-⑥:
+  already-exists 판별을 기계 식별자 우선(타입→T100 SWB_TOOL/016[실측]→다국어
+  폴백)으로 재설계 — 사용자 "동적 적용" 지시 반영, 라이브 red(독어 오분류
+  거부)→green. ③ CreateView 에러 body 전달(형제 판정표 기록). jest 572/0
+  (역-검증 3계열), capability no-op, 게이트 5종 green, 새-컨텍스트 리뷰(opus)
+  PASS(MINOR 2 관찰만). $TMP 5종 실삭제 검증·고아 잠금 0. 잔여 관찰:
+  add-if-missing 추가 description GET 비직렬화(백로그 후보, HANDOFF 11-⑧ 기록)
+
 ## Next
 
-- 엔진 수리 스프린트 Wave 4~5 (GOAL.md, 사용자 "full로 끝까지"): Wave 4 언어
-  계열(11-⑧+11-④ 뿌리 — 언어 무관 식별자 우선 원칙[사용자 지시]·11-⑥·
-  CreateView 에러 body 개선) → Wave 5 조사·확장(11-⑤·3-6). 종료 시:
-  ZSAH39_FGL 잠금 해소 확인 + GOAL 대조 최종 점검 + HANDOFF 헤더 정리.
-  Phase 3(Gated Deploy) 선결 = 5-11 포함 3조건
+- 엔진 수리 스프린트 Wave 5 (GOAL.md 마지막): 11-⑤ UpdateStructure 사전 check
+  빈 에러 조사·수리 + 3-6 low/CDS unit test Cloud 경로 404(4.13.1 클래식
+  testruns 확장). 종료 시: ZSAH39_FGL 잠금 해소 확인 + GOAL 대조 최종 점검 +
+  HANDOFF 헤더 정리. Phase 3(Gated Deploy) 선결 = 5-11 포함 3조건
 
 ## Attempts & dead ends
 

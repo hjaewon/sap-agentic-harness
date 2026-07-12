@@ -958,6 +958,21 @@ function isAlreadyCheckedError(error) {
 /**
  * Check if error message indicates object already exists
  * Used to handle validation errors for existing objects
+ *
+ * Detection is machine-identifier-first (language-independent), because the
+ * message TEXT follows the backend's language pool and defeats string
+ * matching — live-measured on an S/4HANA system (logon language CS): the
+ * already-exists rejection arrives as an <exc:exception> whose message is
+ * German ("Domain mit Name X ist bereits vorhanden") even under lang="EN",
+ * while the machine signals are stable:
+ *   - T100 key SWB_TOOL/016 ("&1 mit Name &2 ist bereits vorhanden" —
+ *     V1=object type, V2=object name), serialized as
+ *     <entry key="T100KEY-ID">SWB_TOOL</entry><entry key="T100KEY-NO">016</entry>
+ *   - exception type ids containing "AlreadyExists"
+ *     (e.g. ExceptionResourceAlreadyExists)
+ * Only when no machine signal is present does this fall back to multilingual
+ * message-text matching (English + German).
+ *
  * @param error - Error object or error message string
  * @returns true if error indicates object already exists
  */
@@ -968,11 +983,28 @@ function isAlreadyExistsError(error) {
         : error?.response?.data
             ? JSON.stringify(error.response.data)
             : '';
-    const msgLower = `${errorMessage} ${responseData}`.toLowerCase();
+    const combined = `${errorMessage} ${responseData}`;
+    // 1. Machine identifiers (language-independent) — checked first.
+    // Exception type id: <type id="ExceptionResourceAlreadyExists"/> etc.
+    const typeId = combined.match(/<type\s+id="([^"]*)"/)?.[1];
+    if (typeId && /AlreadyExists/i.test(typeId)) {
+        return true;
+    }
+    // T100 message key SWB_TOOL/016 — the workbench "already exists" message.
+    const t100Id = combined.match(/<entry\s+key="T100KEY-ID">([^<]*)<\/entry>/)?.[1];
+    const t100No = combined.match(/<entry\s+key="T100KEY-NO">([^<]*)<\/entry>/)?.[1];
+    if (t100Id === 'SWB_TOOL' && t100No === '016') {
+        return true;
+    }
+    // 2. Fallback: multilingual message-text matching.
+    const msgLower = combined.toLowerCase();
     return (msgLower.includes('already exists') ||
         msgLower.includes('does already exist') ||
         msgLower.includes('resource already exists') ||
-        msgLower.includes('object already exists'));
+        msgLower.includes('object already exists') ||
+        // German
+        msgLower.includes('bereits vorhanden') ||
+        msgLower.includes('existiert bereits'));
 }
 /**
  * Safely handle check operation - ignores "already checked" errors
