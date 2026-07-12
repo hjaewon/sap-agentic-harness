@@ -26,7 +26,7 @@
 | `skills/create-object/ecc/**` | copy | `core/knowledge/abap/templates/ecc/` (DDIC 헬퍼 3종) |
 | `skills/team/**` | obsolete | 명시 폐기 — Claude 전용 팀 오케스트레이션 |
 | `skills/trust-session/**` | obsolete | 명시 폐기 — 정적 권한 템플릿으로 대체 |
-| `skills/setup/**` | transform | `scripts/install-*` + `core/procedures/troubleshooting.md` 원천 |
+| `skills/setup/**` | transform | `scripts/install-*` + `core/procedures/troubleshooting.md` 원천 · wizard-step-09 → `core/procedures/install-sap-assets.md` |
 | `skills/mcp-setup/**` | transform | 설치 가이드 원천 (하네스별 3벌) |
 | `skills/sap-doctor/**` | transform | `scripts/doctor.mjs` + troubleshooting.md 원천 |
 | `skills/sap-option/**` | transform | 프로파일 관리 유틸 + `core/project-context.md` 원천 |

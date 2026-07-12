@@ -5,26 +5,34 @@
 
 ## Task
 
-트랙 A Phase 1.5 — Connected Online Validation (0b에서 ATC/health 기반으로 재정의,
-DESIGN §13). 대상: ZSAH1_WORKDAYS → IDES-DEV $TMP. write는 $TMP 한정(R-003),
-연결 verify는 scripts/verify-sap.ps1 경유(R-001·VERIFY-PATTERNS 규약).
+백로그 5-7 (트랙 B) — sap-assets 설치 절차 이식 + FM 부재 시 3계열 SKIPPED 규칙.
+원천: 동결 레포 `D:\claude for SAP\sc4sap-custom\skills\setup\wizard-step-09-abap-objects.md`
+(읽기 전용 — R-004). 목적지: `interactive/core/procedures/`.
 
 ## Success criteria
 
-- [ ] **red/green 실측**: 스텁 버전(git 5271cc95 시점 소스) deploy → ABAP Unit 실행 →
-      전 케이스 FAIL(red) / 최종 버전 deploy → 전 5케이스 PASS(green) — Phase 1
-      desk-check의 실검증 (리뷰 권고 이행)
-- [ ] ATC 실측 1회 (findings 유무 무관 — exit 0 거동 재확인 + 출력 기록)
-- [ ] **완료 기준(DESIGN §13)**: offline lint를 통과하는 결함 소스(ENDIF 누락 —
-      Phase 1-A 실측 재사용) 1건이 connected 단계(deploy 서버 문법 검사)에서
-      검출됨을 실증 — 래퍼 마커(CODE_FAIL)로 분류 확인
-- [ ] VERIFY-PATTERNS 정본에 connected 층 실측 결과 반영
-- [ ] 게이트 4종 통과 + STATE/HANDOFF 갱신 + 커밋
+- [x] **신규 절차 문서** `interactive/core/procedures/install-sap-assets.md`:
+      원본 스텝 9의 게이트 로직 보존 — ① tier 게이트(dev만 진행, QA/PRD 전면 거부 +
+      CTS 안내) ② 시스템 dedup(sentinel 파일) ③ 기존재 skip ④ 부분 실패 시 사용자
+      판단(자동 삭제 금지) ⑤ RFC-enabled는 SE37 수동(TFDIR.FMODE ADT 불가) ⑥
+      SAP_VERSION별 소스 선택(S4/ECC)
+- [x] 절차가 참조하는 소스 파일은 전부 `interactive/server/sap-assets/`에 **실재**
+      (미동봉 파일 — 예: zrfc 핸들러 클래스 — 을 설치 대상으로 참조하지 않음)
+- [x] **하네스 중립**: bare capability name(vocabulary.md 계약) 사용, `/sc4sap:` 등
+      특정 하네스 명령·죽은 참조 0 (기존 core/procedures 문체·언어[영어] 정합)
+- [x] **3계열 SKIPPED 규칙**: create-program.md·create-object.md에 "textpool FM 부재
+      또는 RFC 백엔드 미구성 시 Screen·GUI Status·Text Element 3계열 SKIPPED 처리 +
+      `environment_context.known_outages` 기입" 명시 (5-3 스키마 필드와 정합)
+- [x] MIGRATION-MANIFEST.md의 wizard-step-09/setup 해당 행 목적지 갱신
+      (3열 백틱 경로는 실재 검사 대상 — 주의)
+- [x] **게이트 5종 전부 통과**: check-migration-coverage(미분류 0) ·
+      check-links(깨짐 0, 앵커 포함) · verify-engine(OK) · smoke-mcp(155) · doctor
+- [x] 새-컨텍스트 read-only 리뷰 PASS (이 GOAL 기준 대조 — 1차 FAIL[소비측
+      review-checklist 범위 누락 검출] → 수리 → 2차 PASS)
+- [x] HANDOFF 갱신(5-7 완료 + 헤더 "다음 착수" 재지정) + STATE.md 기록 + 커밋
 
 ## Verification method
 
-1. vsp test 출력에서 red 실행 = 5 FAIL, green 실행 = 5 PASS (또는 vsp test가
-   REPORT 로컬 테스트를 미지원이면 그 실측 자체를 기록하고 대체 경로 판정)
-2. ENDIF 누락 소스: `vsp lint --file` exit 0 (offline 통과) → deploy 시도 →
-   verify-sap.ps1 경유 CODE_FAIL + exit 1 (connected 검출)
-3. HANDOFF §9 게이트 4종 exit code
+1. 게이트 5종 exit code 실측 (0 또는 문서화된 비차단 warning만)
+2. 신규 문서 내 참조 파일명을 sap-assets 실재 목록과 대조 (누락/유령 0)
+3. 독립 리뷰어(새 컨텍스트, read-only)가 GOAL 기준 항목별 판정

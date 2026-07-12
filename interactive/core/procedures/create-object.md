@@ -143,6 +143,7 @@ Record the outcome for Step 7 (JSON-like):
 
 Rules:
 
+- Screen / GUI Status / Text Element availability: these three tool families dispatch through the server-side `ZMCP_ADT_DISPATCH` / `ZMCP_ADT_TEXTPOOL` FMs. When those FMs are absent on the target system OR the RFC backend is not configured, treat the affected object as **SKIPPED** (an environment gap, not a failure): report it as SKIPPED in Step 7 with the reason, do not retry, and point the user to the [install-sap-assets](install-sap-assets.md) procedure for remediation. When the work feeds a review request (e.g. inside `create-program`), the skip must additionally be recorded under `environment_context.known_outages` per that procedure's Phase 6.
 - Field typing: always follow [field-typing-rule](../knowledge/abap/conventions/field-typing-rule.md) — run `SearchObject(DTEL)` + check `.sc4sap/cbo/<MODULE>/<PACKAGE>/inventory.json` before falling back to primitives.
 - FM signature: always inline in the FUNCTION statement per [function-module-rule](../knowledge/abap/conventions/function-module-rule.md).
 - Naming: already validated in Step 2, but run a second-pass check and refuse on violation.

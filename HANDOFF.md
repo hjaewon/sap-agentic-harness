@@ -8,8 +8,11 @@
 > 채점이 발굴한 CLAS 배포 결함 3건은 **당일 전량 수리·라이브 검증 완료** —
 > vsp v2.38.1-89(가드 오탐 강등·잠금 누수·copy 거짓 성공, COMMANDS.md ⑤-6/7) +
 > 엔진 4.13.3(UpdateClass 세션 유지, §6 백로그 4). CLAS 배포 경로 개통(§14-4).
-> **다음 착수 = 백로그 5-7**(설치 절차 이식) — Phase 3(Gated Deploy)은 선결
-> 3조건(5-11 리뷰 게이트 편입 등) 후.
+> **백로그 5-7 완료 (2026-07-12)** — install-sap-assets.md 이식 + 3계열 SKIPPED
+> 규칙(기입측+소비측). 같은 날 잔여 수리: vsp RenameObject 잠금 누수(7a2ef66,
+> lock v2.38.1-90). **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
+> 실증이 Codex 실사용 전 필수) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
+> 게이트 편입 등) 후.
 
 ---
 
@@ -245,10 +248,9 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 ## 5. E2E 이후 남은 백로그 (상세 — 새 세션이 이 절만 읽고 착수 가능하게 기록)
 
-**5-1~5-4·5-6·5-9·5-10 완료 (2026-07-11)** — 남은 항목과 순서 (새-컨텍스트 이중 검토
-2026-07-11이 재배열, 근거: "안전 주장-실체 격차가 열린 채 편의를 쌓지 않는다"):
-**트랙 A: Phase 2 — Read-Only Planning(1.5까지 완료 2026-07-11 보조 머신 — 무인 첫
-완주 + red/green 실증, 파일럿 = IDES-DEV $TMP, 상세 §1 현황·STATE.md)** → 5-7(설치 절차 이식)
+**5-1~5-4·5-6·5-9·5-10 완료 (2026-07-11) · 5-7 완료 (2026-07-12)** — 남은 항목과
+순서 (새-컨텍스트 이중 검토 2026-07-11이 재배열, 근거: "안전 주장-실체 격차가 열린
+채 편의를 쌓지 않는다"): **트랙 A: Phase 2 완료(2026-07-12, §1 현황·STATE.md)**
 → 5-8(잔여 축소 — row-data 승인 실증은 Codex 실사용 전 필수로 상향, compact-readonly
 스파이크는 폐기) → 5-5(축소 — 아래). 공통 완료 조건: §9의 게이트 4종 통과 유지 +
 상태 변경 시 이 문서 갱신.
@@ -311,7 +313,18 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 | sap-profile-cli.mjs | `scripts/` | deferred 유지 (수동 대체: troubleshooting.md) |
 | sap-option-tui.mjs | — | **폐기 확정 (2026-07-11)** — config.json 직접 편집으로 충분함이 장기 실증. 훅 안내도 troubleshooting 절차로 교체 완료(5-10) |
 
-### 5-7. sap-assets 설치 절차 + FM 부재 시 제외 규칙 [이식 갭 — 2026-07-11 발견]
+### 5-7. sap-assets 설치 절차 + FM 부재 시 제외 규칙 — ✅ 완료 (2026-07-12)
+
+- **완료 내역**: `interactive/core/procedures/install-sap-assets.md` 신설 — 원본
+  스텝 9의 게이트 로직 6종 보존(tier 게이트 QA/PRD 거부+CTS 안내 · dedup sentinel ·
+  기존재 skip · 부분 실패 사용자 판단 · RFC-enabled SE37 수동 · S4/ECC 소스 선택),
+  동봉 실재 파일 22종만 참조(zrfc 핸들러·OData _EXT는 미동봉 명시, 유령 참조 0).
+  3계열 SKIPPED 규칙은 **기입측**(create-program Phase 4/6 · create-object Step 4)
+  + **소비측**(review-checklist known_outages 범위를 3계열로 확장) 양쪽 반영 —
+  1차 새-컨텍스트 리뷰가 소비측 누락을 FAIL로 검출, 수리 후 2차 PASS(리뷰 게이트
+  가치 재실증). 매니페스트 갱신, 게이트 5종 green. 부수 수리: doctor.mjs가 트랙 A
+  python 훅(`${CLAUDE_PROJECT_DIR}` 변수)을 못 읽던 사각지대 해소(.py 인식+변수
+  치환 — 훅 배선 자체는 정상이었음).
 
 - **근거**: 원본 setup의 **wizard-step-09**(동결 레포 — 읽기만)는 ZMCP_ADT_UTILS 번들을
   MCP 도구로 자동 설치하는 절차를 가짐 — tier 게이트(QA/PRD 거부 + CTS 안내) ·
