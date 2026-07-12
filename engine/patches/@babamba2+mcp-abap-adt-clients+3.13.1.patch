@@ -1,0 +1,166 @@
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/behaviorImplementation/AdtBehaviorImplementation.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/behaviorImplementation/AdtBehaviorImplementation.js
+index 01d3c3d..e0cfe11 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/behaviorImplementation/AdtBehaviorImplementation.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/behaviorImplementation/AdtBehaviorImplementation.js
+@@ -251,6 +251,15 @@ ENDCLASS.`;
+             lockHandle = await this.class.lock({ className: config.className });
+             state.lockHandle = lockHandle;
+             this.logger?.info?.('Behavior implementation class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the writes:
++            // this.class.lock() returns with the session reset to stateless,
++            // but the inactive check + the two PUTs below (main source and
++            // implementations include) must ride the same stateful session or
++            // connection-recycling backends (e.g. IDES) tear the ADT session
++            // down and the lock evaporates -> HTTP 423 "resource not locked
++            // (invalid lock handle)". The unlock in step 5 (or the error
++            // cleanup) restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Get code for update (from options or config)
+             const codeToCheck = options?.sourceCode || config.implementationCode || config.sourceCode;
+             // 3. Check inactive version (without sourceCode - implementations include code is not full class code)
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtClass.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtClass.js
+index 1e554d3..36d9fd9 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtClass.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtClass.js
+@@ -605,7 +605,12 @@ class AdtClass {
+             this.logger?.info?.('Step 1: Locking parent class');
+             this.connection.setSessionType('stateful');
+             lockHandle = await (0, lock_1.lockClass)(this.connection, config.className);
+-            this.connection.setSessionType('stateless');
++            // [powerup 4.13.7] Do NOT reset to stateless here: the PUT below
++            // must ride the same stateful session as the lock or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". The unlock in step 3 (or the error cleanup) restores
++            // stateless.
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
+             // 2. Update test classes (uses parent class lock handle)
+             this.logger?.info?.('Step 2: Updating test classes');
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalDefinitions.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalDefinitions.js
+index ede11ff..aff9f93 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalDefinitions.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalDefinitions.js
+@@ -83,6 +83,13 @@ class AdtLocalDefinitions extends AdtClass_1.AdtClass {
+             lockHandle = await super.lock({ className: config.className });
+             state.lockHandle = lockHandle;
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local definitions code
+             const codeToCheck = options?.sourceCode || config.definitionsCode;
+             if (codeToCheck) {
+@@ -178,6 +185,13 @@ class AdtLocalDefinitions extends AdtClass_1.AdtClass {
+             lockHandle = await super.lock({ className: config.className });
+             state.lockHandle = lockHandle;
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local definitions code
+             const codeToCheck = options?.sourceCode || config.definitionsCode;
+             if (codeToCheck) {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalMacros.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalMacros.js
+index 24f19c0..0018f08 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalMacros.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalMacros.js
+@@ -84,6 +84,13 @@ class AdtLocalMacros extends AdtClass_1.AdtClass {
+             lockHandle = await super.lock({ className: config.className });
+             state.lockHandle = lockHandle;
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local macros code
+             const codeToCheck = options?.sourceCode || config.macrosCode;
+             if (codeToCheck) {
+@@ -179,6 +186,13 @@ class AdtLocalMacros extends AdtClass_1.AdtClass {
+             lockHandle = await super.lock({ className: config.className });
+             state.lockHandle = lockHandle;
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local macros code
+             const codeToCheck = options?.sourceCode || config.macrosCode;
+             if (codeToCheck) {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTestClass.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTestClass.js
+index 80bfe03..cba2215 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTestClass.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTestClass.js
+@@ -84,6 +84,13 @@ class AdtLocalTestClass extends AdtClass_1.AdtClass {
+             parentLockHandle = await this.lock({ className: config.className });
+             state.lockHandle = parentLockHandle;
+             this.logger?.info?.('Parent class locked, handle:', parentLockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check test class code
+             if (config.testClassCode) {
+                 this.logger?.info?.('Step 2: Checking test class code');
+@@ -190,6 +197,13 @@ class AdtLocalTestClass extends AdtClass_1.AdtClass {
+             parentLockHandle = await this.lock({ className: config.className });
+             state.lockHandle = parentLockHandle;
+             this.logger?.info?.('Parent class locked, handle:', parentLockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check test class code
+             const codeToCheck = options?.sourceCode || config.testClassCode;
+             if (codeToCheck) {
+diff --git a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTypes.js b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTypes.js
+index b6387fa..77f4100 100644
+--- a/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTypes.js
++++ b/node_modules/@babamba2/mcp-abap-adt-clients/dist/core/class/AdtLocalTypes.js
+@@ -79,6 +79,13 @@ class AdtLocalTypes extends AdtClass_1.AdtClass {
+             this.logger?.info?.('Step 1: Locking parent class');
+             lockHandle = await super.lock({ className: config.className });
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local types code
+             const codeToCheck = options?.sourceCode || config.localTypesCode;
+             const state = {
+@@ -173,6 +180,13 @@ class AdtLocalTypes extends AdtClass_1.AdtClass {
+             this.logger?.info?.('Step 1: Locking parent class');
+             lockHandle = await super.lock({ className: config.className });
+             this.logger?.info?.('Parent class locked, handle:', lockHandle);
++            // [powerup 4.13.7] Keep the ENQUEUE lock alive through the write:
++            // lock() returns with the session reset to stateless, but the check
++            // + PUT below must ride the same stateful session or connection-
++            // recycling backends (e.g. IDES) tear the ADT session down and the
++            // lock evaporates -> HTTP 423 "resource not locked (invalid lock
++            // handle)". unlock() restores stateless.
++            this.connection.setSessionType('stateful');
+             // 2. Check local types code
+             const codeToCheck = options?.sourceCode || config.localTypesCode;
+             const state = {

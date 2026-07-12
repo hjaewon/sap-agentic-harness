@@ -1,7 +1,7 @@
 {
   "name": "@hjaewon/abap-mcp-adt-powerup",
   "mcpName": "io.github.hjaewon/abap-mcp-adt-powerup",
-  "version": "4.13.6",
+  "version": "4.13.7",
   "scripts": {
     "test:init": "node -e \"const fs=require('fs'),s='tests/test-config.yaml',t=s+'.template';if(fs.existsSync(s)){console.log(s+' already exists, skipping (use test:reinit to overwrite)')}else{fs.copyFileSync(t,s);console.log('Created '+s+' — edit lines marked CHANGE')}\"",
     "test:reinit": "node -e \"const fs=require('fs'),s='tests/test-config.yaml',t=s+'.template';fs.copyFileSync(t,s);console.log('Recreated '+s+' from template')\"",
@@ -53,7 +53,7 @@
     "docker:rebuild": "npm run docker:down && npm run docker:build && npm run docker:up",
     "docker:rebuild:package": "npm run docker:down:package && npm run docker:build:package && npm run docker:up:package",
     "docker:rebuild:headerless": "npm run docker:down:headerless && npm run docker:build:headerless && npm run docker:up:headerless",
-    "prepare": "husky"
+    "prepare": "husky && patch-package"
   },
   "keywords": [
     "abap",
@@ -91,30 +91,31 @@
     "@biomejs/biome": "^2.4.6",
     "@modelcontextprotocol/inspector": "^0.21.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "axios": "^1.13.6",
-    "fast-xml-parser": "^5.4.2",
-    "js-yaml": "^4.1.1",
-    "xml-js": "^1.6.11",
-    "zod": "^4.3.6",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.3.5",
+    "axios": "^1.13.6",
     "commander": "^14.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "esbuild": "^0.28.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.3.0",
+    "fast-xml-parser": "^5.4.2",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-util": "^30.2.0",
+    "js-yaml": "^4.1.1",
     "lint-staged": "^16.4.0",
     "open": "^11.0.0",
+    "patch-package": "^8.0.1",
     "serve-handler": "^6.1.7",
     "ts-jest": "^29.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.2",
-    "yaml": "^2.8.1"
+    "xml-js": "^1.6.11",
+    "yaml": "^2.8.1",
+    "zod": "^4.3.6"
   },
   "dependencies": {
     "pino": "^10.1.0",

@@ -117,11 +117,23 @@
   대안은 백로그. 평시 OFF 복원 검증(toggle off·mcp remove·config 청정). 잔여
   5-8 하위 2건(required_capabilities·smoke write 판정)은 [낮음] 유지
 
+- 2026-07-12 | 엔진 4.13.7 — 백로그 11-② 래퍼 내부 stateless 누수 (opus 위임,
+  사용자 "full로 끝까지" 스프린트 Wave 1/5 — GOAL.md) — vendored client 직접
+  패치를 patch-package로 정본화(engine/patches/, npm install 자동 재적용):
+  Local 4계열 create+update 풀체인 재핀·updateTestClasses 리셋 제거 +
+  **UpdateBehaviorImplementation 4.13.5 목록 누락 추가 발굴·수리**. 회귀 7케이스
+  (역-검증 — 패치 원복 시 전부 FAIL 실측), jest 538/0, 재번들(capability no-op),
+  라이브 red→green(UpdateLocalTestClass $TMP — 구 번들 423 → 신 번들 완주),
+  $TMP 정리·고아 잠금 0. 새-컨텍스트 리뷰(opus) PASS(BLOCKER/MAJOR 0). 신규
+  발굴: Delete 로컬 계열 4종 클라이언트 레벨 항상 실패(선재 결함 → 백로그
+  11-⑩), 미도달 풀체인 동일 결함은 upstream 수리 후보
+
 ## Next
 
-- 백로그 5-7(sap-assets 설치 절차 이식, HANDOFF §5 순서). Phase 3(Gated Deploy)
-  선결 = 5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건 — CLAS 배포 경로는
-  수리 3으로 개통됨(§14-4)
+- 엔진 수리 스프린트 Wave 2~5 (GOAL.md, 사용자 "full로 끝까지"): Wave 2 CT 협상
+  계열(11-③·3-7·11-④) → Wave 3 정직성 계열(3-5·3-3·11-⑨) → Wave 4 언어 계열
+  (11-⑧·11-⑥) → Wave 5 조사·확장(11-⑤·3-6). Phase 3(Gated Deploy) 선결 =
+  5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건
 
 ## Attempts & dead ends
 

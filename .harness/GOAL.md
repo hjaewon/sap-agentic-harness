@@ -5,34 +5,40 @@
 
 ## Task
 
-백로그 5-7 (트랙 B) — sap-assets 설치 절차 이식 + FM 부재 시 3계열 SKIPPED 규칙.
-원천: 동결 레포 `D:\claude for SAP\sc4sap-custom\skills\setup\wizard-step-09-abap-objects.md`
-(읽기 전용 — R-004). 목적지: `interactive/core/procedures/`.
+엔진 잔여 결함 수리 스프린트 — HANDOFF §6 백로그 11-②~⑨ 잔여 + 구 백로그 3 잔여 전량
+(사용자 지시 "full로 끝까지", 2026-07-12). 실행은 모델 지정 서브에이전트 위임,
+메인은 오케스트레이션·게이트·커밋.
+
+### Wave 구성 (11건)
+
+| Wave | 항목 |
+|---|---|
+| 1 | 11-② 래퍼 내부 stateless 누수 — vendored client 패치 (UpdateLocalTestClass/Types/Macros/Definitions·UpdateUnitTest·UpdateClassMethod·UpdateCdsUnitTest 영향) |
+| 2 | 11-③ UpdateFunctionGroup raw PUT CT v3 하드코딩 · 3-7 vendored 상수 비대칭 · 11-④ CreateView 400 조사·수리 |
+| 3 | 3-5 DeleteFunctionGroup 조용한 실패 · 3-3 CreateProgram(function_group) 거짓 성공 · 11-⑨ CreateStructure 죽은 잠금 쌍 |
+| 4 | 11-⑧ Create 로그온 언어 불일치 (patch 헬퍼 add-if-missing + 언어 파라미터 일관화) · 11-⑥ isAlreadyExistsError 영어 전용 매칭 |
+| 5 | 11-⑤ UpdateStructure 사전 check 빈 에러 조사·수리 · 3-6 low/CDS unit test Cloud 경로 404 (4.13.1 수리의 low/CDS 확장) |
+
+제외(HANDOFF에 유보 조건 기록됨): 11-⑦(RFC 3계열 — 관찰만), 3-8(보류),
+백로그 1 잔여(서비스키 운용 전 재검토), 백로그 2(.sc4sap 개명 — 동일 유보 사이클).
 
 ## Success criteria
 
-- [x] **신규 절차 문서** `interactive/core/procedures/install-sap-assets.md`:
-      원본 스텝 9의 게이트 로직 보존 — ① tier 게이트(dev만 진행, QA/PRD 전면 거부 +
-      CTS 안내) ② 시스템 dedup(sentinel 파일) ③ 기존재 skip ④ 부분 실패 시 사용자
-      판단(자동 삭제 금지) ⑤ RFC-enabled는 SE37 수동(TFDIR.FMODE ADT 불가) ⑥
-      SAP_VERSION별 소스 선택(S4/ECC)
-- [x] 절차가 참조하는 소스 파일은 전부 `interactive/server/sap-assets/`에 **실재**
-      (미동봉 파일 — 예: zrfc 핸들러 클래스 — 을 설치 대상으로 참조하지 않음)
-- [x] **하네스 중립**: bare capability name(vocabulary.md 계약) 사용, `/sc4sap:` 등
-      특정 하네스 명령·죽은 참조 0 (기존 core/procedures 문체·언어[영어] 정합)
-- [x] **3계열 SKIPPED 규칙**: create-program.md·create-object.md에 "textpool FM 부재
-      또는 RFC 백엔드 미구성 시 Screen·GUI Status·Text Element 3계열 SKIPPED 처리 +
-      `environment_context.known_outages` 기입" 명시 (5-3 스키마 필드와 정합)
-- [x] MIGRATION-MANIFEST.md의 wizard-step-09/setup 해당 행 목적지 갱신
-      (3열 백틱 경로는 실재 검사 대상 — 주의)
-- [x] **게이트 5종 전부 통과**: check-migration-coverage(미분류 0) ·
-      check-links(깨짐 0, 앵커 포함) · verify-engine(OK) · smoke-mcp(155) · doctor
-- [x] 새-컨텍스트 read-only 리뷰 PASS (이 GOAL 기준 대조 — 1차 FAIL[소비측
-      review-checklist 범위 누락 검출] → 수리 → 2차 PASS)
-- [x] HANDOFF 갱신(5-7 완료 + 헤더 "다음 착수" 재지정) + STATE.md 기록 + 커밋
+- [ ] **jest 전량 통과(실패 0)** + 수리마다 회귀 테스트 신설, **역-검증**(수리를
+      되돌리면 해당 테스트 FAIL) 실증
+- [ ] **재번들 런북 준수** (interactive/server/UPDATE-RUNBOOK.md): engine/ 수정 →
+      버전 범프+CHANGELOG → bundle → server 반영 → verify-engine OK → capability
+      diff 기록 (write/runtime 증감 시 sap-reviewer disallowedTools 동기화)
+- [ ] **IDES 라이브 red→green**: 라이브 재현 가능 결함은 구 번들 재현 → 신 번들
+      해소 실증. 재현 불가는 사유 기록 + 코드·테스트 수준 검증으로 한계 명기.
+      write는 $TMP 한정, 임시 객체 전량 삭제 + 고아 잠금 0 (R-003)
+- [ ] **새-컨텍스트 read-only 리뷰 PASS** (Wave별 — 자기 리뷰 금지, FAIL 시 수리 후 재리뷰)
+- [ ] **게이트 5종 green 유지**(HANDOFF §9) + Wave별 커밋 + HANDOFF·STATE 갱신
+- [ ] 환경 실패(ENV/LOCK 마커)를 코드 결함으로 기록하지 않음 (R-001)
 
 ## Verification method
 
-1. 게이트 5종 exit code 실측 (0 또는 문서화된 비차단 warning만)
-2. 신규 문서 내 참조 파일명을 sap-assets 실재 목록과 대조 (누락/유령 0)
-3. 독립 리뷰어(새 컨텍스트, read-only)가 GOAL 기준 항목별 판정
+1. jest·게이트 5종 exit code 실측
+2. 역-검증: 수리 원복 시 신설 테스트 FAIL 재현 로그
+3. 라이브 red→green 증거(구/신 번들 각 실행 결과) 또는 재현 불가 사유
+4. 독립 리뷰어(새 컨텍스트, read-only)가 Wave diff를 이 GOAL 기준으로 항목별 판정

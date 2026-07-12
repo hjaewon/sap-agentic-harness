@@ -13,9 +13,11 @@
 > lock **v2.38.1-91**, 업스트림용 핸드오프 §3c 갱신) + 엔진 **4.13.4~4.13.6**
 > (Update·Create 계열 잠금 세션 수리 누적 19 핸들러, IDES red→green —
 > §6 백로그 9·10·11-① 해소, 잔여 후속 = 백로그 11-②~⑨).
-> **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
-> 실증이 Codex 실사용 전 필수) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
-> 게이트 편입 등) 후.
+> **5-5 우선분·5-8 필수분 완료 (2026-07-12)** — fetch 스크립트 2종 이식 + Codex
+> row-data 하드 차단 정본화(approval fail-open 실증). **진행 중 = 엔진 잔여 결함
+> 수리 스프린트**(2026-07-12, 11건/5 Wave — `.harness/GOAL.md`): Wave 1 완료 =
+> **4.13.7**(11-② vendored stateless 누수 해소, patch-package 정본화 + 신규 발굴
+> 11-⑩). Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰 게이트 편입 등) 후.
 
 ---
 
@@ -537,6 +539,18 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    stateless 리셋 — 핸들러측 사전 핀이 덮여 무효, **vendored client 패치 필요**
    (UpdateLocalTestClass/Types/Macros/Definitions·UpdateUnitTest·UpdateClassMethod·
    UpdateCdsUnitTest 영향).
+   → ✅ **11-② 해소 (4.13.7, 2026-07-12)**: vendored client 직접 패치 —
+   **patch-package로 정본화**(`engine/patches/`, prepare 훅으로 npm install 시
+   자동 재적용, 번들엔 베이크). 수리 = Local 4계열(TestClass/Types/Macros/
+   Definitions) create+update 풀체인 lock 직후 재핀 + AdtClass.updateTestClasses
+   lock~PUT 사이 stateless 리셋 제거 + **UpdateBehaviorImplementation(4.13.5
+   전수 목록 누락 — 추가 발굴·수리, 한 lock 아래 PUT 2회)**. 무수리 판정:
+   UpdateUnitTest(체인 부재 — not supported throw)·UpdateClassMethod(4.13.3
+   수리 경로 위임)·타 래퍼 풀체인(현행 핸들러 전부 lockHandle 전달로 미도달 —
+   upstream 수리 후보)·Legacy 계열(이미 올바름). 회귀 7케이스(역-검증 — 패치
+   원복 시 전부 FAIL 실측), jest 538/0, 재번들(capability no-op), **IDES 라이브
+   red→green**(UpdateLocalTestClass $TMP: 구 번들 423 → 신 번들 완주). 새-컨텍
+   스트 리뷰 PASS. 신규 발굴 → 11-⑩.
 3. UpdateFunctionGroup raw PUT의 CT `groups.v3+xml` 하드코딩 — 4.13.1 discovery
    협상이 Update 경로에 미적용(백로그 7 동류), v2-only 시스템에서
    UnsupportedMediaType.
@@ -556,6 +570,12 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    + 생성/조회 언어 파라미터 일관화. (1번의 '스켈레톤 복구 불가'와 결부)
 9. CreateStructure의 죽은 lock/unlock 쌍 — 아무 요청도 안 감쌈. 제거 또는
    TODO로 남은 DDL update 구현 중 택1.
+10. **Delete 로컬 계열 4종 항상 실패 (4.13.7 감사 발굴, 선재 결함)**:
+    DeleteLocalTestClass/Types/Macros/Definitions — 래퍼 `delete()`가
+    `update(code:'')`로 구현됐는데 `update()`가 빈 코드를 lock 전에 거부
+    ("… code is required") → 클라이언트 레벨에서 삭제 도달 불가. 함께:
+    testclasses include 없는 구버전 클래스는 Update 경로 성립 불가(include
+    생성 ADT POST 미지원) — Create 계열 도구 부재와 묶어 검토.
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.
