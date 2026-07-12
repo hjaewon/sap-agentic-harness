@@ -189,7 +189,13 @@ async function insertIntoMainProgram(connection, mainProgram, includeName, trans
     logger?.debug(`Locking main program: ${mainProgram}`);
     connection.setSessionType('stateful');
     const lockResponse = await (0, utils_1.makeAdtRequestWithTimeout)(connection, `${programBaseUrl}?_action=LOCK&accessMode=MODIFY`, 'POST', 'default', null, undefined, { Accept: ACCEPT_LOCK });
-    connection.setSessionType('stateless');
+    // Keep the session STATEFUL through the source PUT below — resetting to
+    // stateless here let the PUT ride a stateless request, and on backends
+    // that recycle the HTTP connection (e.g. IDES) that tears down the
+    // stateful ADT session, evaporating the lock (HTTP 423 "invalid lock
+    // handle"). Same fix class as UpdateClass 4.13.3 / vsp issue #88 (full
+    // pathology: handleUpdateClass.ts). The unlock finally-block below
+    // restores stateless on both paths.
     const parser = new fast_xml_parser_1.XMLParser({
         ignoreAttributes: false,
         attributeNamePrefix: '',

@@ -108,6 +108,15 @@ define table ${tableName.toLowerCase()} {
             let skeletonApplied = false;
             try {
                 const lockHandle = await client.getTable().lock({ tableName });
+                // Keep the ENQUEUE lock alive for the rest of the chain: lock()
+                // returns with the connection reset to stateless, and on backends
+                // that recycle the HTTP connection (e.g. IDES) a stateless request
+                // while the lock is held tears down the stateful ADT session, so
+                // the lock evaporates and the skeleton PUT fails with HTTP 423
+                // "invalid lock handle". Same fix class as UpdateClass 4.13.3 /
+                // vsp issue #88 (full pathology: handleUpdateClass.ts). unlock()
+                // restores stateless.
+                connection.setSessionType('stateful');
                 try {
                     await client.getTable().update({
                         tableName,

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [4.13.6] - 2026-07-12
+
+### Fixed
+- **Create-family fix for the latent HTTP 423 "resource … is not locked (invalid lock handle)" bug (4.13.3–4.13.5 class): `CreateDomain`, `CreateDataElement`, `CreateTable`, `CreateMetadataExtension`, `CreateBehaviorDefinition`, `CreateInclude`.** These handlers orchestrate an inline create → lock → (attribute-write / skeleton PUT / post-create check / main-program insert) → unlock chain, and the requests issued while the ENQUEUE lock is held went out stateless — `CreateDomain`/`CreateDataElement` were live-proven on IDES during the 4.13.5 verification (both failed mid-chain with `ExceptionResourceInvalidLockHandle`, leaving half-created skeletons that lack description/type attributes and are unrepairable via the read-modify-write Update path). Each handler now keeps the session stateful from its inline lock through the unlock: `CreateDomain`/`CreateDataElement`/`CreateTable` pin after the lock (read-modify-write GET + attribute/skeleton PUT), `CreateMetadataExtension`/`CreateBehaviorDefinition` pin across the post-create `/checkruns` POST (whose statelessness invalidated the subsequent unlock, reporting the create as failed even though it succeeded), and `CreateInclude` no longer resets the session to stateless between locking the main program and PUTting its modified source. `CreateStructure` is deliberately NOT pinned — its lock/unlock pair brackets no request at all (the mechanism does not apply; the dead pair is a cleanup candidate). `CreateTextElement` locks around an RFC textpool write (not a lock-handle-validated ADT PUT) — different pathology, untouched. A parameterized family regression test pins `x-sap-adt-sessiontype: stateful` on every request from each handler's inline lock through its unlock (reverse-verified: all six cases fail without their pins).
+
 ## [4.13.5] - 2026-07-12
 
 ### Fixed

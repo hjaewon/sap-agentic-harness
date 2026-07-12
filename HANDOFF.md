@@ -10,9 +10,9 @@
 > 엔진 4.13.3(UpdateClass 세션 유지, §6 백로그 4). CLAS 배포 경로 개통(§14-4).
 > **백로그 5-7 완료 (2026-07-12)** — install-sap-assets.md 이식 + 3계열 SKIPPED
 > 규칙(기입측+소비측). 같은 날 후속 수리: vsp 전수 감사(누수 2·거짓 성공 4 수리,
-> lock **v2.38.1-91**, 업스트림용 핸드오프 §3c 갱신) + 엔진 **4.13.4·4.13.5**
-> (Update 계열 stateful 핀 누적 13종, IDES red→green — §6 백로그 9·10 해소,
-> Create 계열 등 후속 7건 = **백로그 11**).
+> lock **v2.38.1-91**, 업스트림용 핸드오프 §3c 갱신) + 엔진 **4.13.4~4.13.6**
+> (Update·Create 계열 잠금 세션 수리 누적 19 핸들러, IDES red→green —
+> §6 백로그 9·10·11-① 해소, 잔여 후속 = 백로그 11-②~⑨).
 > **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
 > 실증이 Codex 실사용 전 필수) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
 > 게이트 편입 등) 후.
@@ -504,6 +504,15 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    MetadataExtension/BehaviorDefinition) 동일 1줄 수리 후보. 결부: 반쪽 스켈레톤은
    Update로 복구 불가(patch*Xml이 기존 속성만 치환 — description 부재 스켈레톤은
    영구 불구) → 수리 시 GUI 삭제 후 재생성 안내 필요.
+   → ✅ **11-① 해소 (4.13.6, 2026-07-12)**: 수리 6종 — Domain·DataElement·Table·
+   MetadataExtension·BehaviorDefinition에 stateful 핀 5 + **CreateInclude는 lock
+   직후의 명시적 stateless 리셋을 제거**(재스캔이 raw-lock 2종 CreateInclude·
+   CreateTextElement 추가 발굴). CreateStructure는 잠금이 아무 요청도 감싸지 않는
+   죽은 쌍이라 무수리(→ 11-⑨). Create 계열 테스트 6케이스(역-검증 — 핀 제거+리셋
+   재삽입 시 6케이스 전부 FAIL), jest **531/0**, 재번들(capability no-op). 라이브:
+   CreateDomain·CreateDataElement **red 423 재현 → green 423 소멸**(잔여 실패는
+   별개 신규 결함 11-⑧). $TMP 임시 객체 6종 전량 삭제 검증·고아 잠금 0.
+   잠금 세션 수리 누적 19 핸들러(4.13.3~6: Update 13 + Create 6).
 2. 래퍼 내부 stateless 누수: AdtClass.updateTestClasses 등 wrapper 내부가 lock 후
    stateless 리셋 — 핸들러측 사전 핀이 덮여 무효, **vendored client 패치 필요**
    (UpdateLocalTestClass/Types/Macros/Definitions·UpdateUnitTest·UpdateClassMethod·
@@ -517,7 +526,16 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
 6. isAlreadyExistsError 영어 전용 매칭 — 독어 시스템("ist bereits vorhanden")에서
    UpdateDataElement 사전 검증 오작동.
 7. UpdateTextElement/Screen/GuiStatus는 별개 병리(ADT lock 무-stateful + RFC write) —
-   관찰만, 3계열은 RFC 백엔드 이슈(§3)와 함께 볼 것.
+   관찰만, 3계열은 RFC 백엔드 이슈(§3)와 함께 볼 것. CreateTextElement도 동일
+   계열(4.13.6 재스캔 발굴).
+8. **Create read-modify-write × 로그온 언어 불일치 (라이브 확정, 4.13.6 발굴)**:
+   생성 페이로드 언어(EN) ≠ 시스템 로그온 언어(IDES는 CS)면 생성 직후 GET XML에
+   `adtcore:description` 속성이 아예 없어 patch 헬퍼(기존 속성 치환 전용)가 PUT
+   거부("Die Beschreibung fehlt") — 잠금 수리 후 IDES에서 CreateDomain/
+   CreateDataElement의 지배적 차단 요인. 수리 방향: patch 헬퍼 add-if-missing
+   + 생성/조회 언어 파라미터 일관화. (1번의 '스켈레톤 복구 불가'와 결부)
+9. CreateStructure의 죽은 lock/unlock 쌍 — 아무 요청도 안 감쌈. 제거 또는
+   TODO로 남은 DDL update 구현 중 택1.
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.

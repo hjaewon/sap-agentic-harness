@@ -86,6 +86,17 @@ export async function handleCreateMetadataExtension(
     // Lock
     const lockHandle = await client.getMetadataExtension().lock({ name: name });
 
+    // Keep the ENQUEUE lock alive for the rest of the chain: lock() returns
+    // with the connection reset to stateless, and on backends that recycle
+    // the HTTP connection (e.g. IDES) the stateless post-create /checkruns
+    // POST below tears down the stateful ADT session while the lock is
+    // held, so the lock evaporates and the subsequent unlock fails with
+    // HTTP 423 "invalid lock handle" — the create is then reported as
+    // failed even though it succeeded. Same fix class as UpdateClass
+    // 4.13.3 / vsp issue #88 (full pathology: handleUpdateClass.ts).
+    // unlock() restores stateless.
+    connection.setSessionType('stateful');
+
     try {
       // Post-create syntax check on the staged inactive version.
       // Surfaces ALL compile errors with structured diagnostics.
