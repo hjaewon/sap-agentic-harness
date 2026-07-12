@@ -128,11 +128,22 @@
   발굴: Delete 로컬 계열 4종 클라이언트 레벨 항상 실패(선재 결함 → 백로그
   11-⑩), 미도달 풀체인 동일 결함은 upstream 수리 후보
 
+- 2026-07-12 | 엔진 4.13.8 — Wave 2/5 CT 협상 계열 (opus 위임) — 11-③
+  UpdateFunctionGroup raw PUT에 4.13.1 discovery 협상 적용(잠금 전 협상·v3
+  폴백·legacy 스킵), **라이브 red 415→green**(read-back masterLanguage=CS).
+  구 3-7 상수 비대칭은 흡수 해소 판정(도달 가능 FUGR 쓰기 경로 전부 협상 —
+  vendored 폴백은 도달 불가 죽은 코드, 미수정 근거 CHANGELOG). 11-④ CreateView
+  400은 원인 확정·이관 — CT 계열 아님, 언어 불일치(11-⑧ 뿌리, vendored
+  language="EN" 하드코딩) + 쉘 잔류 없음(구 서술 정정) + handleCreateView가
+  ADT 에러 body를 버리는 부수 결함 발굴(11-⑧에서 함께). jest 540/0(역-검증),
+  capability no-op, 게이트 5종 green, 새-컨텍스트 리뷰(opus) PASS. $TMP
+  실삭제 검증·고아 잠금 0
+
 ## Next
 
-- 엔진 수리 스프린트 Wave 2~5 (GOAL.md, 사용자 "full로 끝까지"): Wave 2 CT 협상
-  계열(11-③·3-7·11-④) → Wave 3 정직성 계열(3-5·3-3·11-⑨) → Wave 4 언어 계열
-  (11-⑧·11-⑥) → Wave 5 조사·확장(11-⑤·3-6). Phase 3(Gated Deploy) 선결 =
+- 엔진 수리 스프린트 Wave 3~5 (GOAL.md, 사용자 "full로 끝까지"): Wave 3 정직성
+  계열(3-5·3-3·11-⑨) → Wave 4 언어 계열(11-⑧+11-④ 뿌리·11-⑥·CreateView 에러
+  body 개선) → Wave 5 조사·확장(11-⑤·3-6). Phase 3(Gated Deploy) 선결 =
   5-11(무인 gated write 전 리뷰 게이트 편입) 포함 3조건
 
 ## Attempts & dead ends

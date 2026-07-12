@@ -14,7 +14,9 @@ import { AbapConnection } from '@babamba2/mcp-abap-connection';.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TOOL_DEFINITION = void 0;
 exports.handleUpdateFunctionGroup = handleUpdateFunctionGroup;
+const adtFunctionGroupContentTypes_1 = require("../../../lib/adtFunctionGroupContentTypes");
 const clients_1 = require("../../../lib/clients");
+const systemContext_1 = require("../../../lib/systemContext");
 const utils_1 = require("../../../lib/utils");
 exports.TOOL_DEFINITION = {
     name: 'UpdateFunctionGroup',
@@ -60,6 +62,20 @@ async function handleUpdateFunctionGroup(context, args) {
         try {
             // Use AdtClient for lock/unlock
             const crudClient = (0, clients_1.createAdtClient)(connection);
+            // Negotiate the metadata-PUT content type from the live ADT discovery
+            // document BEFORE locking (while the session is still stateless). The
+            // raw PUT below hardcodes groups.v3+xml, but systems that only advertise
+            // v2 in discovery (e.g. IDES / S/4HANA 2021) reject v3 with HTTP 415
+            // "ExceptionUnsupportedMediaType" (supported: ...groups.v2+xml). This is
+            // the same negotiation CreateFunctionGroup has used since 4.13.1 —
+            // per-connection cached, so a prior Create/Update in this session adds no
+            // extra round-trip; falls back to the hardcoded v3 default when discovery
+            // is unavailable, and is skipped on legacy stacks (createAdtClient keeps
+            // the Base defaults there anyway).
+            const fgContentTypes = (0, systemContext_1.getSystemContext)().isLegacy
+                ? undefined
+                : await (0, adtFunctionGroupContentTypes_1.negotiateFunctionGroupContentTypes)(connection, logger);
+            const fgUpdateHeaders = fgContentTypes?.functionGroupUpdate?.();
             let lockHandle;
             try {
                 // Lock function group
@@ -105,8 +121,10 @@ async function handleUpdateFunctionGroup(context, args) {
                     timeout: 30000, // 30 seconds default timeout
                     data: updatedXml,
                     headers: {
-                        'Content-Type': 'application/vnd.sap.adt.functions.groups.v3+xml; charset=utf-8',
-                        Accept: 'application/vnd.sap.adt.functions.groups.v3+xml',
+                        'Content-Type': fgUpdateHeaders?.contentType ||
+                            'application/vnd.sap.adt.functions.groups.v3+xml; charset=utf-8',
+                        Accept: fgUpdateHeaders?.accept ||
+                            'application/vnd.sap.adt.functions.groups.v3+xml',
                     },
                 });
             }

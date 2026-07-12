@@ -11,8 +11,10 @@ import { AbapConnection } from '@babamba2/mcp-abap-connection';.
  * Workflow: lock -> get current -> update metadata -> unlock
  */
 
+import { negotiateFunctionGroupContentTypes } from '../../../lib/adtFunctionGroupContentTypes';
 import { createAdtClient } from '../../../lib/clients';
 import type { HandlerContext } from '../../../lib/handlers/interfaces';
+import { getSystemContext } from '../../../lib/systemContext';
 import {
   encodeSapObjectName,
   return_error,
@@ -85,6 +87,21 @@ export async function handleUpdateFunctionGroup(
       // Use AdtClient for lock/unlock
       const crudClient = createAdtClient(connection);
 
+      // Negotiate the metadata-PUT content type from the live ADT discovery
+      // document BEFORE locking (while the session is still stateless). The
+      // raw PUT below hardcodes groups.v3+xml, but systems that only advertise
+      // v2 in discovery (e.g. IDES / S/4HANA 2021) reject v3 with HTTP 415
+      // "ExceptionUnsupportedMediaType" (supported: ...groups.v2+xml). This is
+      // the same negotiation CreateFunctionGroup has used since 4.13.1 —
+      // per-connection cached, so a prior Create/Update in this session adds no
+      // extra round-trip; falls back to the hardcoded v3 default when discovery
+      // is unavailable, and is skipped on legacy stacks (createAdtClient keeps
+      // the Base defaults there anyway).
+      const fgContentTypes = getSystemContext().isLegacy
+        ? undefined
+        : await negotiateFunctionGroupContentTypes(connection, logger);
+      const fgUpdateHeaders = fgContentTypes?.functionGroupUpdate?.();
+
       let lockHandle: string | undefined;
       try {
         // Lock function group
@@ -142,8 +159,11 @@ export async function handleUpdateFunctionGroup(
           data: updatedXml,
           headers: {
             'Content-Type':
+              fgUpdateHeaders?.contentType ||
               'application/vnd.sap.adt.functions.groups.v3+xml; charset=utf-8',
-            Accept: 'application/vnd.sap.adt.functions.groups.v3+xml',
+            Accept:
+              fgUpdateHeaders?.accept ||
+              'application/vnd.sap.adt.functions.groups.v3+xml',
           },
         });
       } finally {

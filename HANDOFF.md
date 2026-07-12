@@ -15,9 +15,11 @@
 > §6 백로그 9·10·11-① 해소, 잔여 후속 = 백로그 11-②~⑨).
 > **5-5 우선분·5-8 필수분 완료 (2026-07-12)** — fetch 스크립트 2종 이식 + Codex
 > row-data 하드 차단 정본화(approval fail-open 실증). **진행 중 = 엔진 잔여 결함
-> 수리 스프린트**(2026-07-12, 11건/5 Wave — `.harness/GOAL.md`): Wave 1 완료 =
+> 수리 스프린트**(2026-07-12, 11건/5 Wave — `.harness/GOAL.md`): Wave 1~2 완료 =
 > **4.13.7**(11-② vendored stateless 누수 해소, patch-package 정본화 + 신규 발굴
-> 11-⑩). Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰 게이트 편입 등) 후.
+> 11-⑩)·**4.13.8**(11-③ FUGR Update CT 협상 + 구 3-7 흡수 해소, 11-④는 CT 아닌
+> 11-⑧ 언어 계열로 판정·이관). Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
+> 게이트 편입 등) 후.
 
 ---
 
@@ -554,7 +556,20 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
 3. UpdateFunctionGroup raw PUT의 CT `groups.v3+xml` 하드코딩 — 4.13.1 discovery
    협상이 Update 경로에 미적용(백로그 7 동류), v2-only 시스템에서
    UnsupportedMediaType.
+   → ✅ **11-③ 해소 (4.13.8, 2026-07-12)**: 잠금 전 협상(4.13.1 Create와 동일
+   함수·per-connection 캐시) → raw PUT 헤더 주입, discovery 불가 시 v3 폴백·
+   legacy 스킵. 회귀 테스트(역-검증), jest 540/0, **라이브 red 415
+   (UnsupportedMediaType, v2-only IDES) → green**(read-back masterLanguage=CS).
+   구 백로그 3-7(상수 비대칭)도 이 수리에 흡수 — 도달 가능한 FUGR 쓰기 경로
+   전부 협상, vendored 폴백은 도달 불가 죽은 코드 판정(미수정 근거 CHANGELOG).
+   새-컨텍스트 리뷰 PASS.
 4. CreateView 400(IDES, 메타데이터 POST 거부 — DDLS 쉘 잔류) — CT 협상 계열 추정.
+   → **원인 확정 (4.13.8 조사, 2026-07-12): CT 계열 아님 — 11-⑧ 언어 불일치
+   계열.** 라이브 에러 body가 "Sprache EN ≠ Mastersprache CS"(DDIC_ADT_DDLS/016)
+   명시 — vendored view/create.js의 `language="EN"` 하드코딩이 뿌리. **쉘 잔류
+   없음**(생성 전 거부 — 구 서술 정정). 수리는 11-⑧에서. 부수 발굴:
+   handleCreateView catch가 ADT 에러 body를 버려 진단을 가림(제네릭 400만
+   전달) — 11-⑧ 수리 시 함께 개선.
 5. UpdateStructure 사전 check가 IDES에서 빈 에러로 결정적 실패(수리 전후 동일 =
    별개 결함) — check 래퍼 응답 해석 조사 필요.
 6. isAlreadyExistsError 영어 전용 매칭 — 독어 시스템("ist bereits vorhanden")에서
@@ -582,6 +597,10 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
 6. **low/CDS unit test 경로 동일 결함**: `RunClassUnitTestsLow`·CDS unit test 실행/조회가
    여전히 Cloud 전용 `/abapunit/runs` 사용 — 온프레미스에서 동일 404 예상 (high만 4.13.1로 수리됨).
 7. **vendored 상수 비대칭**: `ACCEPT_FUNCTION_GROUP`(v2,v1) vs `CT_FUNCTION_GROUP`(v3) — 업스트림 결함.
+   → ✅ **해소 판정 (4.13.8, 2026-07-12)**: 11-③ 수리에 흡수 — 비대칭의 발현
+   경로(v2-only 시스템 쓰기 실패)는 Create(4.13.1)·Update(4.13.8) 협상으로 전부
+   해소. 잔여 vendored 폴백은 도달 불가 죽은 코드(미수정 — speculative 변경
+   회피, 근거 CHANGELOG Notes).
 8. **abapunit 엔드포인트 discovery 협상**(Cloud `/api/abapunit/runs` 병행 지원) — Codex 리뷰
    제안, 온프레미스 포크라 보류.
 
