@@ -9,9 +9,10 @@
 > vsp v2.38.1-89(가드 오탐 강등·잠금 누수·copy 거짓 성공, COMMANDS.md ⑤-6/7) +
 > 엔진 4.13.3(UpdateClass 세션 유지, §6 백로그 4). CLAS 배포 경로 개통(§14-4).
 > **백로그 5-7 완료 (2026-07-12)** — install-sap-assets.md 이식 + 3계열 SKIPPED
-> 규칙(기입측+소비측). 같은 날 잔여 수리 2건: vsp RenameObject 잠금 누수(7a2ef66,
-> lock v2.38.1-90) + 엔진 **4.13.4**(UpdateInterface·UpdateProgram 잠금 세션 유지,
-> IDES red→green — §6 백로그 9 해소, 잔여 감사는 신규 백로그 10).
+> 규칙(기입측+소비측). 같은 날 후속 수리: vsp 전수 감사(누수 2·거짓 성공 4 수리,
+> lock **v2.38.1-91**, 업스트림용 핸드오프 §3c 갱신) + 엔진 **4.13.4·4.13.5**
+> (Update 계열 stateful 핀 누적 13종, IDES red→green — §6 백로그 9·10 해소,
+> Create 계열 등 후속 7건 = **백로그 11**).
 > **다음 착수 = 백로그 5-8**(노출 정책 — Codex row-data 승인
 > 실증이 Codex 실사용 전 필수) — Phase 3(Gated Deploy)은 선결 3조건(5-11 리뷰
 > 게이트 편입 등) 후.
@@ -485,6 +486,38 @@ MCP_ENV_PATH·cwd .env)은 tier 미해석 시 `UNKNOWN`=readonly 강제로 fail-
    사이 중간 stateless 요청 존재 여부 핸들러별 확인 필요. 사전 check 없는 Update
    계열(Table/Structure/FunctionGroup/Domain/DataElement)은 저위험 후보. 감사
    방식은 이번과 동일한 red→green 권장. CreateClass 생성 직후 잠금 건은 별개로 잔존.
+   → ✅ **백로그 10 해소 (4.13.5, 2026-07-12)**: Update 핸들러 10종(View·Table·
+   Structure·Domain·DataElement·FunctionGroup·FunctionModule·ServiceDefinition·
+   MetadataExtension·BehaviorDefinition — 뒤 2종은 인라인 lock 분기만) 전부 stateful
+   핀 + 계열 회귀 테스트 10케이스(역-검증 — 핀 일괄 제거 시 10케이스 개별 FAIL).
+   jest **525/0**, 런북 재번들(capability no-op), **라이브 red→green: Table·Domain
+   에서 423 재현→해소 실증**. PUT-first 계열(FM·SRVD·DDLX·BDEF)은 라이브 423
+   미재현이나 post-check가 unlock 전에 stateless로 나가 같은 세션 붕괴에 노출 +
+   래퍼 문서가 stateful을 요구하는 정본 프로토콜이라 핀 유지. UpdateInclude는
+   기존 핀 보유(안전 확인). Update 계열 stateful 핀 누적 13종(4.13.3~5).
+
+**엔진 백로그 11 — 4.13.5 감사 부산물 (2026-07-12, 미착수)**:
+
+1. **Create 계열 동일 423 병리 — 라이브 실증됨**: CreateDomain·CreateDataElement가
+   IDES에서 create→lock→속성설정 체인 중 InvalidLockHandle 실패(반쪽 스켈레톤
+   잔류). 인라인 lock 체인 Create 6종(Table/Structure/Domain/DataElement/
+   MetadataExtension/BehaviorDefinition) 동일 1줄 수리 후보. 결부: 반쪽 스켈레톤은
+   Update로 복구 불가(patch*Xml이 기존 속성만 치환 — description 부재 스켈레톤은
+   영구 불구) → 수리 시 GUI 삭제 후 재생성 안내 필요.
+2. 래퍼 내부 stateless 누수: AdtClass.updateTestClasses 등 wrapper 내부가 lock 후
+   stateless 리셋 — 핸들러측 사전 핀이 덮여 무효, **vendored client 패치 필요**
+   (UpdateLocalTestClass/Types/Macros/Definitions·UpdateUnitTest·UpdateClassMethod·
+   UpdateCdsUnitTest 영향).
+3. UpdateFunctionGroup raw PUT의 CT `groups.v3+xml` 하드코딩 — 4.13.1 discovery
+   협상이 Update 경로에 미적용(백로그 7 동류), v2-only 시스템에서
+   UnsupportedMediaType.
+4. CreateView 400(IDES, 메타데이터 POST 거부 — DDLS 쉘 잔류) — CT 협상 계열 추정.
+5. UpdateStructure 사전 check가 IDES에서 빈 에러로 결정적 실패(수리 전후 동일 =
+   별개 결함) — check 래퍼 응답 해석 조사 필요.
+6. isAlreadyExistsError 영어 전용 매칭 — 독어 시스템("ist bereits vorhanden")에서
+   UpdateDataElement 사전 검증 오작동.
+7. UpdateTextElement/Screen/GuiStatus는 별개 병리(ADT lock 무-stateful + RFC write) —
+   관찰만, 3계열은 RFC 백엔드 이슈(§3)와 함께 볼 것.
 5. **DeleteFunctionGroup 조용한 실패** (4.13.1 검증 중 3회 실측): deletion 서비스가 실패를
    HTTP 200 + `del:isDeleted="false"` + E-메시지로 반환하는데 vendored delete가 하드코딩
    `success:true`로 대체 — 잠금 등 삭제 실패가 성공으로 보고됨.

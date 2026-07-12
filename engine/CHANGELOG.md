@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [4.13.5] - 2026-07-12
+
+### Fixed
+- **Family-wide fix for the latent HTTP 423 "resource … is not locked (invalid lock handle)" bug (4.13.3/4.13.4 class) across every remaining high-level Update handler that orchestrates an inline lock → write chain: `UpdateView`, `UpdateServiceDefinition`, `UpdateFunctionModule`, `UpdateFunctionGroup`, `UpdateMetadataExtension`, `UpdateBehaviorDefinition`, `UpdateTable`, `UpdateStructure`, `UpdateDomain`, `UpdateDataElement`.** Every client wrapper's `lock()` acquires the ENQUEUE lock in a stateful request but returns with the connection reset to **stateless**, and the low-level update branch (`options.lockHandle` provided) performs the raw write with no session pin — so the write PUT went out stateless, as did the intermediate requests several handlers issue between lock and PUT (pre-write `/checkruns` POSTs for view/table/structure, read-modify-write GETs for domain/data element/function group — the vendored `updateDomain`/`updateDataElement` even document "requires stateful session" in their own comments). On backends that recycle the HTTP connection (e.g. IDES), SAP routes a stateless request through a fresh work process, tears the stateful ADT session down, the lock evaporates, and the write fails with an *invalid lock handle*. Each handler now re-asserts `setSessionType('stateful')` immediately after its inline lock; `unlock()` restores stateless. For `UpdateMetadataExtension`/`UpdateBehaviorDefinition` the pin applies only when the handler locked inline — caller-supplied `lock_handle` flows manage their own session. A parameterized family regression test pins `x-sap-adt-sessiontype: stateful` on every request from the lock through the write for all ten handlers (reverse-verified: all ten cases fail without their pins). Known remaining (library-level, not handler-fixable): `AdtClass.updateTestClasses` and the wrappers' own full-chain update paths (no `lockHandle` passed) reset to stateless internally between lock and PUT — affects the local-include/test-class handlers; requires a vendored-client patch and is tracked separately.
+
 ## [4.13.4] - 2026-07-12
 
 ### Fixed

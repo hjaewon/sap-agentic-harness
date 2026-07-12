@@ -85,6 +85,15 @@
   (runExecute exit 0·Rename 부분 성공·CreateClassWithTests)은 COMMANDS ⑤-6 기록.
   touched 패키지 테스트 green(실패 3패키지는 clean HEAD 동일 — 환경성 실증)
 
+- 2026-07-12 | 엔진 4.13.5 — 백로그 10 전량 (opus 위임, 사용자 "발굴분도 수리"
+  지시) — Update 핸들러 10종 stateful 핀 + 계열 테스트 10케이스(역-검증), jest
+  525/0, 런북 재번들. 라이브 red→green: Table·Domain 423 재현→해소. PUT-first
+  계열(FM·SRVD·DDLX·BDEF)은 라이브 미재현이나 unlock 노출+프로토콜 정본 근거로
+  핀 유지. $TMP 임시 객체 8/8 정리, 고아 잠금 0. 감사 부산물 7건(Create 계열
+  동일 병리 **라이브 실증** 포함) → HANDOFF §6 백로그 11 기록. 별건: 업스트림
+  사용자용 vsp-423-fix-handoff.md에 §3c(오늘 vsp 수리분, 포크 전용 파일 제외
+  검증) 추가
+
 ## Next
 
 - 백로그 5-7(sap-assets 설치 절차 이식, HANDOFF §5 순서). Phase 3(Gated Deploy)

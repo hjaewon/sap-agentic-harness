@@ -96,6 +96,16 @@ export async function handleUpdateView(context: HandlerContext, params: any) {
         `View locked: ${viewName} (handle=${lockHandle ? `${lockHandle.substring(0, 8)}...` : 'none'})`,
       );
 
+      // Keep the ENQUEUE lock alive for the rest of the chain: lock()
+      // returns with the connection reset to stateless, and on backends
+      // that recycle the HTTP connection (e.g. IDES) any stateless request
+      // between lock and PUT — or the PUT itself — tears down the stateful
+      // ADT session, so the lock evaporates and the write fails with HTTP
+      // 423 "invalid lock handle". Same fix class as UpdateClass 4.13.3 /
+      // vsp issue #88 (full pathology: handleUpdateClass.ts). unlock()
+      // restores stateless.
+      connection.setSessionType('stateful');
+
       // Pre-write syntax check on the proposed DDL source.
       // Surfaces ALL compile errors with structured diagnostics via
       // the inline-artifact /checkruns path so the broken source never

@@ -109,6 +109,16 @@ export async function handleUpdateServiceDefinition(
           .getServiceDefinition()
           .lock({ serviceDefinitionName });
 
+        // Keep the ENQUEUE lock alive for the rest of the chain: lock()
+        // returns with the connection reset to stateless, and on backends
+        // that recycle the HTTP connection (e.g. IDES) any stateless request
+        // between lock and PUT — or the PUT itself — tears down the stateful
+        // ADT session, so the lock evaporates and the write fails with HTTP
+        // 423 "invalid lock handle". Same fix class as UpdateClass 4.13.3 /
+        // vsp issue #88 (full pathology: handleUpdateClass.ts). unlock()
+        // restores stateless.
+        connection.setSessionType('stateful');
+
         // Update source code
         await client.getServiceDefinition().update(
           {
