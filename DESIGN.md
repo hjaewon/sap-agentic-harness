@@ -1,4 +1,4 @@
-# SAP Agentic Harness — 설계서 v2.1
+# SAP Agentic Harness — 설계서 v2.2
 
 > **상태: 설계 확정 (2026-07-09). 구현 미착수. Codex(0.143.0)·Fable 5 독립 이중 리뷰 반영(v2.1).**
 >
@@ -13,6 +13,11 @@
 > v2.1 변경(이중 리뷰 반영): 배포 명령 실측 정정(§3·§8.3·§15-V6) · offline 게이트
 > exit 의미론 정정(§8.1) · 자격증명 스코핑 신설(§8.4) · TDD 기계 강제 한계 명시(§7) ·
 > drift 정규화 상세화(§6) · verify 실패 마커 규약(§9) · Phase 0을 0a/0b로 분리(§13).
+>
+> v2.2 변경(2026-07-13, 무인 리뷰 게이트 — HANDOFF §5-11 해소 설계): gated write
+> 체인에 새-컨텍스트 리뷰 게이트 편입 — plan-레벨 리뷰 스텝 + 스텝 자신의 verify가
+> verdict 검사(필수 3조항). §8.3 정책 추가 · §13 Phase 3 선결 해소·완료 기준 확장 ·
+> 에스코트 조항. 스펙 정본: `docs/reference/designs/2026-07-13-unattended-review-gate.md`.
 
 ## 0. 한 문장 요약
 
@@ -251,6 +256,15 @@ CLI의 `lint`/`parse`는 `--file`/`--stdin` 사용 시 자체로 오프라인이
 
 - spec 승인 이후에만 진입. package allowlist + transport 정책 필수.
 - write 이후 하네스가 독립 verify: **deploy → activate → drift check(§6) → ATC → unit test**.
+- **새-컨텍스트 리뷰 게이트 (v2.2)**: 기계 verify가 못 잡는 시맨틱 결함(INNER vs LEFT
+  JOIN 급 — 트랙 B E2E 실증, HANDOFF §4.1)을 **첫 vsp write 스텝 전에** 차단한다.
+  plan-레벨 리뷰 스텝을 삽입하고 그 스텝 **자신의** verify가 verdict 파일
+  (`phases/{p}/review-verdict.json`)을 검사한다. 필수 3조항: ① 등식형 변경 검사
+  (엔진 bookkeeping 제외 dirty 집합 == 정확히 {verdict 파일} — 부분집합형은 뚫림)
+  ② 검사 로직 봉인(verify 명령 인라인 또는 위임 스크립트 sha256 핀 — verify 스냅샷은
+  명령 문자열만 보호) ③ HEAD-sha 바인딩(verdict.reviewed_head == 리뷰 시점 HEAD —
+  feat 커밋 sha는 세션 종료 후 엔진이 생성하므로 선제 위조 불가). 엔진 무수정(D-018).
+  스펙 정본: `docs/reference/designs/2026-07-13-unattended-review-gate.md`.
 - 실패는 LESSONS.md에 기록.
 
 verify 예시:
@@ -455,10 +469,18 @@ packs/modules/fi/
 
 ### Phase 3: Gated Deploy
 - spec 승인 게이트 + package allowlist + transport 정책 (SAFETY-PROFILES.md)
-- deploy → activate → **drift check(§6)** → ATC → unit test verify 체인 구축
+- **새-컨텍스트 리뷰 게이트(§8.3 v2.2)** → deploy → activate → **drift check(§6)** →
+  ATC → unit test verify 체인 구축 — 리뷰 게이트 구현(리뷰 스텝 관례·검사기·체크리스트
+  이식)은 이 Phase 작업에 포함 (설계 확정:
+  `docs/reference/designs/2026-07-13-unattended-review-gate.md`)
 - 환경 실패 분류 규약 적용 (§9)
+- 선결 3건(HANDOFF §5-11) 전부 해소됨: 0b 마커 실측(§14-3 ✅ 2026-07-11) · drift
+  실측(§14-2 ✅ 2026-07-11) · 리뷰 게이트(위 설계로 해소, 구현은 본 Phase)
 - **완료 기준**: 객체 1건이 전체 체인을 통과해 SAP에 존재하고, drift check가 SE80 수동
-  변경을 실제로 검출함을 1회 실증
+  변경을 실제로 검출함을 1회 실증하며, **리뷰 게이트가 씨앗 시맨틱 결함(INNER vs LEFT
+  JOIN 급)을 실제 차단함을 1회 실증**
+- **에스코트 조항**: 위 리뷰 게이트 차단 실증 전까지 gated write는 사람 셰퍼딩으로만
+  수행 — 실증 후 무인 전환
 
 ### Phase 4: Domain Packs
 - FI/CO부터 이중 구조(§12)로 시작, sc4sap 지식 선별 이식

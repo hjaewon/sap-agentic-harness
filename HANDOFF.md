@@ -35,7 +35,11 @@
 > 계약(lock 커밋 절차문 직접 소비)으로 docs/PRD.md·ARCHITECTURE.md 신설(thin+pointer,
 > 주입 합계 ~32.7KB < 48KB), ADR.md는 미신설(DECISIONS.md 유지 — D-012 부분 갱신을
 > D-020으로 기록). 워커·리뷰어 전부 모델 지정 서브에이전트(opus), 새-컨텍스트 리뷰
-> PASS(MINOR 2 수리 반영). **다음 착수**: ③ Phase 3 선결 설계(5-11 리뷰 게이트 편입).
+> PASS(MINOR 2 수리 반영). **③ Phase 3 선결 설계 완료 (2026-07-13, D-021)** —
+> 5-11 리뷰 게이트 = (b′) plan-레벨 리뷰 스텝(자기-verify 게이트)+필수 3조항+에스코트,
+> 스펙 docs/reference/designs/2026-07-13-unattended-review-gate.md, DESIGN §8.3·§13
+> 반영. 분석·검증·정정 3왕복(opus×2) 후 사용자 택1. **Phase 3 선결 3건 전부 해소 —
+> 다음 = Phase 3 착수(리뷰 게이트 구현 포함) 또는 소형 유지보수(agy 핀·11-⑩).**
 > **업스트림 핸드오프** = `engine/UPSTREAM-FIX-HANDOFF.md`(영어 자립형,
 > 4.13.2~4.13.12 전량) — 포크 클론(D:\Claude for SAP\abap-mcp-adt-powerup,
 > 4.13.1 동결)에 적용용.
@@ -447,7 +451,17 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - **주 머신 재개 시 `node interactive/adapters/claude/hooks/install-hooks.mjs --project`
   재실행 필수** (fail-closed 훅 + matcher 갱신 배선).
 
-### 5-11. 트랙 A 무인 gated write 선결 — 새-컨텍스트 리뷰 게이트 편입 [2026-07-11 이중 판단 수렴]
+### 5-11. 트랙 A 무인 gated write 선결 — 새-컨텍스트 리뷰 게이트 편입 — ✅ 설계 완료 (2026-07-13, D-021)
+
+- **해소**: (b′) plan-레벨 리뷰 스텝(자기-verify 게이트) + 필수 3조항(등식형 변경
+  검사·검사 로직 인라인/sha256 핀·reviewed_head 바인딩) + 에스코트 조항(씨앗 결함
+  라이브 차단 1회 실증까지 사람 셰퍼딩). 스펙 =
+  `docs/reference/designs/2026-07-13-unattended-review-gate.md`, 결정 기록 = D-021,
+  설계 반영 = DESIGN.md §8.3·§13. 분석→독립 검증(원안 (b)의 위조 창 BLOCKER 적중)→
+  정정 재검증((b′) 조건부 성립) 3왕복 + 사용자 택1. 엔진 승격(A)은 기각 아닌 이연
+  (재론 트리거 = (b′) 잔여의 실전 실증). **선결 3건 전부 해소 — Phase 3 착수 가능.**
+  구현(verdict 스키마·검사 스크립트·harness-plan 관례·체크리스트 이식)은 Phase 3
+  작업의 일부. 이하 원문 보존:
 
 - **근거**: "execute.py가 ABAP에 맞나" 검토에서 메인 + Fable 5 새-컨텍스트 리뷰가 독립
   수렴한 공백 — 트랙 B E2E가 실증했듯 문법·ATC·활성화 전부 통과한 시맨틱 결함(INNER vs

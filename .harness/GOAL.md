@@ -5,43 +5,40 @@
 
 ## Task
 
-**② 트랙 A 지식 문서 부트스트랩 (harness-docs Mode A 계약 준수, 알림 3회째 해소)** —
-사용자 확정 착수 순서의 두 번째. 메인=오케스트레이션만, 작업=모델 지정 서브에이전트
-위임(사용자 지시 2026-07-13). 절차 정본 = final-harness `skills/harness-docs/SKILL.md`
-(플러그인 미설치 — lock 커밋 8f7f13b의 절차문을 직접 소비).
+**③ Phase 3 선결 설계 (백로그 5-11) — 무인 gated write 체인에 새-컨텍스트 리뷰 게이트
+편입 방식 설계.** harness-design 계약의 스코프드 적용(그린필드 아님 — 택지 3개 기제시):
+탐색(증거 기반) → 택지 구체화 → 독립 검토 → **사용자 택1** → 스펙 기록
+(`docs/reference/designs/`) + D-021 + DESIGN.md §8.3/§13 갱신. 메인=오케스트레이션만,
+분석·검토·스펙 작성=모델 지정 서브에이전트 (사용자 지시 패턴 유지).
 
-### 산출물 (D-012 원문 대조 후 확정)
+### 배경 (5-11 원문)
 
-- `docs/PRD.md` — 목표·비목표·사용자·기능 우선순위 (신설)
-- `docs/ARCHITECTURE.md` — 스택·두 트랙 경계·**파일 지도**(디렉토리별 1줄)·불변식 (신설)
-- **ADR.md는 신설하지 않음** — D-012의 유효 부분(DECISIONS.md가 ADR 역할, 이중 체계
-  금지) 준수. D-012의 "3종 기각" 부분 갱신은 **DECISIONS.md 새 엔트리 append**로만.
-- HANDOFF §7 파일 지도 + 헤더(② 완료) + STATE 갱신
+트랙 B E2E 실증: 문법·ATC·활성화 전부 통과한 시맨틱 결함(INNER vs LEFT JOIN)은 기계
+verify가 못 잡고 새-컨텍스트 리뷰만 잡는다(HANDOFF §4.1). 무인 엔진의 완료 판정은 기계
+verify뿐 → gated write 체인(DESIGN §8.3: deploy→activate→drift→ATC→unit)에 이 구멍이
+열려 있음. **편입 전까지 무인 write는 켜지 않는다.**
 
-### 하드 룰 (harness-docs SKILL.md)
+### 택지 (5-11 기제시 — 증거로 구체화 후 사용자 택1)
 
-- 문서당 ~300줄 이하, **top-level docs/*.md 합계 48KB 미만**(현 DECISIONS.md 20.8KB
-  포함 — 엔진이 무인 스텝마다 전량 주입, 64KB에서 기동 거부)
-- `{중괄호}` 플레이스홀더 금지(엔진이 해당 문서 스킵)
-- 코드/타 문서가 이미 말하는 사실은 중복 금지 — 포인터만(DESIGN.md·HANDOFF·DECISIONS
-  와의 3중 중복이 D-012의 기각 사유였음 — thin+pointer 구조가 해소책)
-- `.harness/`·`phases/`·동결 레포 불가침, DECISIONS.md는 append만
+(a) 엔진 verifier 프롬프트 강화 (b) 별도 리뷰 스텝 (c) 사람 셰퍼딩 유지
 
 ## Success criteria
 
-- [x] docs/PRD.md(55줄)·docs/ARCHITECTURE.md(87줄) 실재 + 각 300줄 이하 + 중괄호 0
-- [x] top-level docs/*.md 합계 33.5KB < 48KB 실측 (D-020 append 포함)
-- [x] 파일 지도 실측 트리 기반 — 리뷰어가 인용 경로 전량 실재 + "예정" 항목 미존재 확인
-- [x] ADR.md 미신설(리뷰어 docs/ 실측 확인) + D-020 append(정정 3건 반영 후)
-- [x] **새-컨텍스트 read-only 리뷰 PASS** — opus, 엔진 소스(execute.py)까지 실측 대조,
-      BLOCKER/MAJOR 0 (MINOR 2 수리 반영: 게이트 블록→포인터, D-020 문구)
-- [x] 게이트 유지 + HANDOFF §7·헤더·STATE 갱신
-- [x] 메인은 오케스트레이션·게이트·커밋만 — 초안=opus 워커, 검증=opus 새-컨텍스트
-      리뷰어, MINOR 수리=워커 재위임(SendMessage)
+- [x] 택지별 메커니즘 엔진 실소스 근거 구체화 — file:line 인용, "opus 사후 리뷰" 실체
+      규명(엔진 내장 `_run_review` 비게이트 — 완료 마킹 후 실행·verdict 미소비)
+- [x] 트랙 B 리뷰 자산 재사용 판정 — 체크리스트 기준·verdict 스키마는 이식 가능,
+      도구 계약은 정반대(MCP↔vsp CLI)라 치환 필요
+- [x] 나머지 선결 2건 기완료 판정(0b 마커 DESIGN:478 · §14-2 drift :477, export만
+      보류) — 리뷰 게이트가 마지막 선결이었음
+- [x] **독립 검토 3왕복** — 원안 (b) 위조 창 BLOCKER 적중 → (b′) 정정 → 조건부 성립
+      + 필수 3조항 확정 + A와 1:1 비교
+- [x] **사용자 택1** = (b′) 강화판 (12살 설명 재제시 후 결정, 2026-07-13)
+- [x] 스펙 196줄(§5 계약 11섹션·AC 5건 testable) + D-021 append + DESIGN v2.2
+      (§8.3·§13 — 선결 3건 전부 해소, 완료 기준에 씨앗 결함 차단 1회 실증 추가)
+- [x] HANDOFF(§5-11 종결·헤더)·STATE 갱신 + 게이트 유지 + 커밋
 
 ## Verification method
 
-1. 파일 실재·줄수·바이트 합계·중괄호 grep 실측
-2. 독립 리뷰어(새 컨텍스트, read-only)가 초안을 corpus(DESIGN.md·HANDOFF·DECISIONS·
-   phases)와 대조해 사실 오류·중복·규칙 위반 판정
+1. 독립 검토자가 분석의 엔진 인용(file:line) 실소스 대조
+2. 스펙이 harness-design §5 섹션 계약(Goal/Non-Goals/…/Decisions made) 충족하는지 확인
 3. 게이트 exit code 실측
