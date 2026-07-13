@@ -33,7 +33,7 @@
 루트:
 ```
 HANDOFF.md              프로젝트 전체 상태·재개 지침 정본 (상태 바뀔 때마다 갱신)
-DESIGN.md               트랙 A 설계 정본 v2.1 (§16 부트스트랩부터 시작)
+DESIGN.md               트랙 A 설계 정본 (§16 부트스트랩부터 시작)
 CLAUDE.md · AGENTS.md   세션 시작 규약 + 루프 하네스(트랙 B) 진입점
 docs/DECISIONS.md       append-only 결정 로그 D-001~ (ADR 역할, 무인 주입 대상)
 docs/PRD.md             스코프·비목표·품질 모델 (무인 주입 대상, thin+pointer)
@@ -48,6 +48,9 @@ interactive/            트랙 B 플러그인 루트 (아래 세부)
 adapters/               트랙 A 의존 lock 2종 + vsp/ 어댑터 문서(COMMANDS·VERIFY-PATTERNS·
                         SAFETY-PROFILES.md — 리뷰 스텝 read-only 프로파일·allowlist)
 domain/                 트랙 A 도메인 규칙 시드 — 현재 abap/만(CHECKLIST·RULES.seed, S-001~025)
+packs/                  트랙 A 모듈 지식팩(Phase 4~) — modules/README.md(이중 구조 규약) ·
+                        modules/fi/(CONSULTANT.md 포인터 허브 + RULES.seed.md FI-001~005;
+                        지식 정본은 interactive/core/knowledge/modules/ — thin+pointer)
 scripts/                무인 엔진 step executor(execute.py) + SAP verify 래퍼
                         (quality-gate-sap·verify-sap·vsp-env.ps1) + test_execute·test_hooks
                         + 리뷰 게이트 검사기(check-review-verdict.ps1·test-check-
@@ -74,8 +77,7 @@ interactive/scripts/               게이트 스크립트 (check-links·check-mi
 .claude-plugin/ .agents/ (루트)    마켓플레이스 (source: ./interactive)
 ```
 
-미존재(로드맵 예정): `packs/`(모듈 지식팩, Phase 4) · `domain/cds·rap·amdp`(Phase 1+).
-실측 시 없는 것이 정상.
+미존재(로드맵 예정): `domain/cds·rap·amdp`(Phase 1+). 실측 시 없는 것이 정상.
 
 ## 불변식 (요약 — 전문은 HANDOFF §8 · .harness/RULES.md)
 

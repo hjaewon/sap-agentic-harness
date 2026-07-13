@@ -5,48 +5,51 @@
 
 ## Task
 
-**트랙 A Phase 3(Gated Deploy) 착수 — A-청크: 무인 리뷰 게이트 구현 (오프라인 완결분).**
-스펙 정본 = `docs/reference/designs/2026-07-13-unattended-review-gate.md` (D-021, AC 5건).
-이 청크의 범위 = AC 1·2·3·4 (git·엔진만 필요) + SAFETY-PROFILES.md + 체크리스트 이식.
-AC 5(라이브 씨앗 결함 차단 실증)와 §13 완료 기준 ①②는 B-청크(커넥티드, vsp 빌드 선결)로
-분리 — A 완료 후 사용자 재결정. 메인=오케스트레이션만, 작업=모델 지정 서브에이전트
-(스텝 1~3 opus 병렬, 스텝 4·6 sonnet, 스텝 5 리뷰 opus read-only).
+**트랙 A Phase 4(Domain Packs) 착수 — FI 팩 이중 구조 부트스트랩(오프라인 1단계).**
+구조 정본 = DESIGN §12(이중 구조)·§13(Phase 4 완료 기준). 지식 원천 =
+`interactive/core/knowledge/modules/FI/`(이식 정본 6파일 — **무수정·무복사, 링크로만
+참조**). 사용자 확정 결정(2026-07-13): ① 팩은 thin+pointer 최소 3파일로 시작하되
+**챕터 분리 트리거를 README와 DESIGN §12에 명시**(사람 기억이 아니라 문서가 기억)
+② 규칙 승격은 씨앗 결함 주입 경로 ③ 파일럿 = GL 미결항목 리포트(ZR_FI_GL_OPEN, $TMP).
+이번 청크 범위 = 오프라인 산출물(팩 3파일 + DESIGN §12 반영)까지. CONSULT 실사용(①)과
+씨앗 주입→규칙 승격(②)은 커넥티드 후속 청크. 메인=오케스트레이션, 작업=모델 지정
+서브에이전트(작성 sonnet, 리뷰 opus read-only).
 
 ### 산출물
 
-1. **검사기** `scripts/check-review-verdict.ps1` — 필수 3조항 구현
-   (① verdict=="PASS" ② reviewed_head==HEAD ③ 등식형 dirty 검사, bookkeeping 제외
-   집합은 스펙 열거 그대로). PS 5.1 호환, `git status --porcelain -uall`
-   (미추적 디렉토리 접힘 함정 — STATE.md Attempts 2026-07-11 실증).
-2. **재현 테스트** — 임시 git fixture에서 AC1 위조 3종(stale PASS · 리뷰어 코드 동시
-   수정 · HEAD 불일치)·AC2 정상 경로·AC4 검사기 1바이트 변조(sha256 핀)를 exit code로 판정.
-3. **리뷰 스텝 템플릿 + 체크리스트** — 트랙 B `interactive/core/procedures/
-   review-checklist.md` 12항목 이식(MCP→vsp CLI read 치환) + 시맨틱 항목 신규(JOIN
-   카디널리티·spec 정합 등), verdict 스키마(`review-verdict.json`, reviewed_head 필수),
-   verify 명령 관례(sha256 핀 갱신 절차 포함).
-4. **SAFETY-PROFILES.md** — spec 승인 게이트 + package allowlist + transport 정책 +
-   모드별 명령 allowlist(차단: query/execute/source write·edit/install/deploy/copy/
-   transport 계열) + 차단 검증 절차(리뷰 스텝 read-only 시나리오 포함 — 스펙 Assumption #2).
-5. **AC3 엔진 통합 재현** — 미니 오프라인 phase에서 FAIL verdict → 재시도 → error
-   종료·write 스텝 미도달을 엔진 콘솔 로그·index status로 실측.
-6. 문서 계약(HANDOFF 헤더·STATE.md·ARCHITECTURE 파일 지도) + 5종 게이트 + 커밋.
+1. `packs/modules/README.md` — 이중 구조 규약: CONSULT 본체는 무인 step에 주입 금지,
+   RULES.seed→`.harness/RULES.md` 승격은 사람 승인 게이트(PROTOCOL.md) 경유,
+   **챕터 분리 트리거**("CONSULT 세션이 개별 앵커를 요구하면 그때 TABLES.md 등을
+   분리한다"), 팩이 실전 지식 축적처라는 성장 방향(DESIGN §12 독자 진화 문단).
+2. `packs/modules/fi/CONSULTANT.md` — thin 허브: FI 지식 6파일+sap-fi-consultant
+   페르소나 포인터(상대 링크 유효) + 트랙 A 고유 함정/결정훅(ACDOCA vs BSEG,
+   GGB0 우선, row-data 경계 등) + 후보 규칙 색인.
+3. `packs/modules/fi/RULES.seed.md` — FI 고유 후보 5건(FI-001~005), 기존
+   `domain/abap/RULES.seed.md` 포맷 준수. **중복 금지**: S-009/010/011/013을
+   재작성하지 않고 인용.
+4. DESIGN.md §12 소폭 반영 — thin+pointer 구현 채택 + 분리 트리거 명기(수술적 편집,
+   원안 구조 예시는 "완전형"으로 보존).
+5. 새-컨텍스트 리뷰(opus, read-only) + 게이트 + 문서 계약(HANDOFF·STATE·ARCHITECTURE
+   파일 지도) + 커밋.
 
 ## Success criteria
 
-- [x] AC1: 위조 시나리오 3종 각각 검사기 exit 1 (재현 테스트 통과)
-- [x] AC2: 정상 PASS verdict(정확히 그 파일만 dirty, reviewed_head 일치) → exit 0
-- [x] AC4: 검사기 1바이트 변조 → sha256 핀 불일치 → exit 1
-- [x] AC3: 엔진 실행에서 FAIL verdict → 재시도 소진 → error 종료, write 스텝 미도달
-      (엔진 콘솔·index status 실측)
-- [x] 체크리스트: 트랙 B 12항목 전부 이식(vsp read 치환) + 시맨틱 항목 ≥1 신규,
-      verdict 스키마가 스펙 Key entities와 항목별 일치
-- [x] SAFETY-PROFILES.md: DESIGN §8.4 요구 4건(주입 스코핑·read-only 기본·allowlist·
-      .gitignore) 전부 실행 가능 수준으로 커버
-- [x] 새-컨텍스트 리뷰(opus, read-only) PASS — MAJOR 0
-- [x] 게이트 5종 green + 문서 계약 갱신 + 커밋
+- [x] 팩 3파일 존재, CONSULTANT.md의 모든 상대 링크가 실재 파일을 가리킴(링크 검사
+      실측 — check-links packs: 8링크 0깨짐 + 리뷰어 파일시스템 재확인)
+- [x] 기존 지식 6파일·동결 레포 무수정 (git diff interactive/core/knowledge 0건,
+      sc4sap-custom 무접촉 — 워커·리뷰어 이중 실측)
+- [x] RULES.seed.md: FI-001~005가 부정형 규칙+실패 모드+출처 포맷 준수, S-009/010/
+      011/013 내용 재작성 0건(인용만 — 리뷰 전수 대조)
+- [x] 분리 트리거가 packs/modules/README.md와 DESIGN.md §12 양쪽에 명시됨
+- [x] DESIGN.md 변경이 §12+헤더(v2.3 이력)에 국한(git diff 3 hunks 실측)
+- [x] 새-컨텍스트 리뷰(opus, read-only) PASS — MAJOR 0 (MINOR 3: FI-002 문구
+      정밀화 수리 반영, 인접 2건은 중복 아님 판정·관찰만)
+- [x] 게이트 통과(coverage·links·verify-engine·smoke 155 green, doctor는 기존
+      agy 드리프트 1건뿐 — 이번 작업 무관) + HANDOFF/STATE 갱신 + 커밋
 
 ## Verification method
 
-1. 재현 테스트 실행 — exit code 실측 (자기보고 불신)
-2. AC3는 엔진 콘솔 로그·`phases/{p}/index.json` status 직접 확인
-3. 독립 리뷰어가 스펙 AC·D-021·DESIGN §8.3 대비 산출물 전체 판정
+1. 링크 유효성: check-links.mjs를 packs에 적용(미지원 시 수동 존재 검사 실측)
+2. 무수정 보증: `git status --porcelain -uall`로 변경 파일 목록이 산출물 목록과
+   정확히 일치하는지 대조
+3. 독립 리뷰어(opus)가 DESIGN §12·§13 완료 기준·중복 금지 경계 대비 산출물 전체 판정

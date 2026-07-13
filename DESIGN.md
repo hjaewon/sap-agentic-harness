@@ -1,4 +1,4 @@
-# SAP Agentic Harness — 설계서 v2.2
+# SAP Agentic Harness — 설계서 v2.3
 
 > **상태: 설계 확정 (2026-07-09). 구현 미착수. Codex(0.143.0)·Fable 5 독립 이중 리뷰 반영(v2.1).**
 >
@@ -18,6 +18,9 @@
 > 체인에 새-컨텍스트 리뷰 게이트 편입 — plan-레벨 리뷰 스텝 + 스텝 자신의 verify가
 > verdict 검사(필수 3조항). §8.3 정책 추가 · §13 Phase 3 선결 해소·완료 기준 확장 ·
 > 에스코트 조항. 스펙 정본: `docs/reference/designs/2026-07-13-unattended-review-gate.md`.
+>
+> v2.3 변경(2026-07-13, Domain Packs 구현 노트 — Phase 4 착수): §12에 thin+pointer
+> 시작 형태 + 챕터 분리 트리거 명시. 규약 정본 = `packs/modules/README.md`.
 
 ## 0. 한 문장 요약
 
@@ -406,6 +409,13 @@ packs/modules/fi/
   RULES.seed.md    ← RULES 정예 후보: 실패에서 증류된, 무인 step에 강제할 가치가
                       있는 소수 규칙만 (예: "ECC 대상 개발에 S/4 전용 syntax 금지")
 ```
+
+**구현 노트 (결정 2026-07-13)**: 위 구조는 완전형(목표 형태)이다. 실제 구현은
+**thin+pointer**로 시작한다 — 지식 정본이 이미 `interactive/core/knowledge/
+modules/<MOD>/`에 있으므로 복사하지 않고 `CONSULTANT.md`가 링크로 가리키기만
+하며, TABLES.md/TCODES.md/SPRO.md 등 개별 챕터 파일은 아직 만들지 않는다.
+**챕터 분리 트리거**: CONSULT 세션이 특정 챕터를 반복적으로 개별 참조하게 되면
+그때 해당 챕터를 분리한다. 이 규약의 정본은 `packs/modules/README.md`.
 
 - **CONSULT 본체**는 무인 step에 주입되지 않는다. 사람 소유 세션의 CONSULT 단계에서만 참조.
 - **RULES 정예**는 LESSONS→RULES 승격 게이트(사람 승인)를 통과한 것만 `.harness/RULES.md`에

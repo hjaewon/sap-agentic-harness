@@ -312,15 +312,32 @@
   실측 완료)" 명기. 무인 전환 실행 여부(RV4 갭 감수 vs 리뷰/write phase 분리
   선행)는 사용자 판단으로 남김(발명 금지). 문서 갱신: SAFETY-PROFILES.md §①·⑥·⑦.
 
+- 2026-07-13 | **Phase 4 착수 — FI 팩 오프라인 부트스트랩 완료 (메인=오케스트레이션,
+  설계 opus·작성 sonnet·리뷰 opus read-only)** — 설계 발견: FI/CO 지식은 트랙 B가
+  이미 interactive/core/knowledge/modules/FI(6파일)+페르소나로 이식 완료 → Phase 4는
+  "이식"이 아니라 "접착+증류". 사용자 확정 3건: ① thin+pointer 최소 3파일(복사 0,
+  링크만 — 챕터 분리 트리거를 README·DESIGN §12 양쪽에 명시) ② 규칙 승격=씨앗 결함
+  주입 ③ 파일럿=ZR_FI_GL_OPEN(GL 미결항목, $TMP). 산출: packs/modules/README.md
+  (이중 구조 규약·무인 주입 경계·분리 트리거·성장 방향)·fi/CONSULTANT.md(지식
+  포인터 7+결정훅 4: ACDOCA vs BSEG·BAPI 전기·GGB0 우선·row-data 경계)·
+  fi/RULES.seed.md(FI-001~005, S-009/010/011/013 재작성 0 — 인용만)·DESIGN v2.3
+  (§12 구현 노트, 수술적 — 타 섹션 diff 0). 워커가 초안 출처 5건 실측 교정(무근거
+  필드명 삭제·무관 R-003 참조 제거 등). 새-컨텍스트 리뷰(opus) **PASS**(MAJOR 0,
+  MINOR 3 — FI-002 "호환 뷰/빈 값" 문구를 원천 정확도로 정밀화 수리, FI-002↔S-010·
+  FI-004↔S-007 인접은 중복 아님 판정·관찰). 게이트: links(packs 8링크 0깨짐,
+  interactive 588 green)·coverage·verify-engine(4.13.12)·smoke155 green, doctor는
+  기존 agy 드리프트 1건뿐(1.0.16→1.1.1, 환경성·이번 작업 무관)
+
 ## Next
 
-- 사용자 확정 순서 전부 완료: ~~①~~ ✅ 4.13.12 → ~~②~~ ✅ D-020 → ~~③~~ ✅ D-021 →
-  ~~Phase 3 A-청크~~ ✅ 무인 리뷰 게이트 구현 → ~~Phase 3 B-청크~~ ✅ 커넥티드
-  실증(AC5 라이브 차단 + 완료 기준 ①②③ 전부 실측) → ~~SAFETY-PROFILES §⑥~~ ✅
-  차단 검증 V1~V5+RV1~RV4 실측(에스코트 해제 3조건 전부 충족). **Phase 3 완료 +
-  무인 전환 조건 전부 충족.** 다음 후보 = Phase 4(Domain Packs) 또는 무인 전환
-  실행(RV4 갭 감수 여부 결정) 또는 소형 잔여 정리(엔진 11-⑩ 설계 판단 · doctor
-  agy 핀 갱신 · vsp source read lock command_contract 편입 검토) — 사용자 판단 대기.
+- **Phase 4 진행 중** — 오프라인 1단계 완료(리뷰 PASS·커밋). 다음 = 커넥티드 청크
+  (SAP 연결 필요 — 착수 전 사용자 확인): ① CONSULT 실사용 — 파일럿 ZR_FI_GL_OPEN
+  계획 세션이 packs/modules/fi/CONSULTANT.md를 로드해 계획 결정(ACDOCA 채택·함정·
+  스코프)을 실제로 바꾼 기록을 PLANNING.md에 남김(DESIGN §13 Phase 4 완료 기준 ①)
+  ② 씨앗 결함 주입(S/4 대상 BSEG 금액 읽기) → 커넥티드 채점/리뷰 검출 → LESSONS
+  → FI-002 승격(완료 기준 ②, R-001 준수 — CODE_FAIL 마커만). 소형 잔여 후보
+  (엔진 11-⑩ 설계 판단 · doctor agy 핀 갱신 · vsp source read lock
+  command_contract 편입 검토)는 존속.
 
 ## Attempts & dead ends
 
