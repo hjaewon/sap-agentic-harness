@@ -5,60 +5,43 @@
 
 ## Task
 
-엔진 백로그 **11-⑪·11-⑫ 수리 (1 Wave 묶음, 릴리스 4.13.12)** — 사용자 확정 착수 ①
-(HANDOFF 헤더 2026-07-13). 스프린트 패턴: 메인이 워커, 역-검증·라이브 red→green·
-새-컨텍스트 리뷰. 완료 시 UPSTREAM-FIX-HANDOFF §5·§7 갱신 + Known-remaining #2 제거.
+**② 트랙 A 지식 문서 부트스트랩 (harness-docs Mode A 계약 준수, 알림 3회째 해소)** —
+사용자 확정 착수 순서의 두 번째. 메인=오케스트레이션만, 작업=모델 지정 서브에이전트
+위임(사용자 지시 2026-07-13). 절차 정본 = final-harness `skills/harness-docs/SKILL.md`
+(플러그인 미설치 — lock 커밋 8f7f13b의 절차문을 직접 소비).
 
-### 대상
+### 산출물 (D-012 원문 대조 후 확정)
 
-- **11-⑪ — UpdateTable 사전 check가 새 DDL이 아닌 저장본만 검사 (§7 structure 동류).**
-  vendored `table/AdtTable.js` `check()`가 `runTableCheckRun(…, undefined, version)`로
-  `config.ddlCode`를 드랍. **추가 발견(2026-07-13 코드 정독)**: table의
-  `runTableCheckRun`은 structure의 `checkStructure`와 달리 응답을 parse/throw하지
-  않고 raw 응답만 반환 → `AdtTable.check`가 항상 `errors:[]` 반환 → 핸들러
-  `checkNewCodePassed` 항상 true. 즉 ddlCode 전달만으로는 무동작(나쁜 update 여전히
-  통과). **honest 수리 = ① check-with-source 전달 + ② parse+throw (structure 미러,
-  benign-skip·never-bare 포함).** patch-package 2편집 예상.
+- `docs/PRD.md` — 목표·비목표·사용자·기능 우선순위 (신설)
+- `docs/ARCHITECTURE.md` — 스택·두 트랙 경계·**파일 지도**(디렉토리별 1줄)·불변식 (신설)
+- **ADR.md는 신설하지 않음** — D-012의 유효 부분(DECISIONS.md가 ADR 역할, 이중 체계
+  금지) 준수. D-012의 "3종 기각" 부분 갱신은 **DECISIONS.md 새 엔트리 append**로만.
+- HANDOFF §7 파일 지도 + 헤더(② 완료) + STATE 갱신
 
-- **11-⑫ — 잔여 create 페이로드 EN 하드코딩 (§5 언어 인프라 기계적 확장).**
-  vendored create.js EN 하드코딩 9종: Class·Interface·Program·Package·Table·
-  Structure·SRVD(serviceDefinition)·DDLX(metadataExtension)·DCL(accessControl).
-  비-EN 로그온(KR-DEV=KO)에서 설명이 EN 슬롯에 저장돼 비어 보임(실수요=포크 KO
-  핸드핵 19곳). 수리 = 4.13.10 `resolveLogonLanguage` 인프라를 각 핸들러+빌더+
-  래퍼+types로 확장. FUGR은 11-⑫ 명시 밖(§5 green 실증)·enhancement/tabletype/
-  service는 핸들러 라우팅 없음(죽은 코드) — 제외, 근거 기록.
+### 하드 룰 (harness-docs SKILL.md)
+
+- 문서당 ~300줄 이하, **top-level docs/*.md 합계 48KB 미만**(현 DECISIONS.md 20.8KB
+  포함 — 엔진이 무인 스텝마다 전량 주입, 64KB에서 기동 거부)
+- `{중괄호}` 플레이스홀더 금지(엔진이 해당 문서 스킵)
+- 코드/타 문서가 이미 말하는 사실은 중복 금지 — 포인터만(DESIGN.md·HANDOFF·DECISIONS
+  와의 3중 중복이 D-012의 기각 사유였음 — thin+pointer 구조가 해소책)
+- `.harness/`·`phases/`·동결 레포 불가침, DECISIONS.md는 append만
 
 ## Success criteria
 
-- [x] **jest 전량 통과(실패 0)** + 두 수리 각각 회귀 테스트 신설, **역-검증** 실증
-      — jest **599/0**(5 skipped), 11-⑪ 두 편집 각각 원복 시 FAIL·11-⑫ 스레딩 원복
-      시 FAIL 실측
-- [x] **재번들 런북 준수** — dist→interactive 반영, verify-engine OK(4.13.12),
-      capability diff **155 no-op**(스키마/도구 무증감), VERSION/integrity 갱신
-- [x] **KR-DEV(KO) 라이브 red→green** — 11-⑪ = 나쁜 DDL 구 번들 `success:true`
-      (거짓 성공) → 신 번들 정직 에러+write 차단, good DDL 통과(over-block 없음).
-      11-⑫ = KO 페이로드 create-수락 확인(class·table). 설명 landing readback은
-      도구 한계(SearchObject 클래스 short text 미반환)로 불가 — 페이로드 역-검증
-      (unit)+§5 라이브 메커니즘 재사용으로 근거. $TMP 4종 삭제 검증(Z*SAH412* 무결과)
-- [x] **새-컨텍스트 read-only 리뷰 PASS** — general-purpose 프레시 컨텍스트,
-      BLOCKER/MAJOR 0(MINOR = CheckTableLow parity, 의도됨)
-- [x] **게이트 green** — coverage 0·links 0·verify-engine OK·smoke 155; doctor는
-      agy 드리프트 1건(1.0.16→1.1.1, 환경·무관·R-001)
-- [x] **문서 계약** — CHANGELOG 4.13.12 · UPSTREAM §5·§7 갱신 + Known-remaining #2
-      제거 · HANDOFF §6·헤더 · STATE 갱신
-- [x] 환경 실패를 코드 결함으로 기록하지 않음(R-001) — agy 드리프트는 환경으로 분류
-
-## Scope guards (CLAUDE.md 준수)
-
-- 11-⑫는 §5가 "관용 실증"으로 의도적으로 남긴 경로 — 확장 근거는 실수요(KO 핸드핵).
-  명시 9종만, 죽은 코드·명시 밖(FUGR)은 근거와 함께 제외.
-- 각 핸들러의 실제 create 호출 형태를 개별 확인 후 주입(맹목적 일괄 치환 금지).
-- 동결 레포(sc4sap-*)·private/ 미접촉. 실데이터 2종 자동승인 금지. KR-DEV=DEV tier
-  write만(R-003).
+- [x] docs/PRD.md(55줄)·docs/ARCHITECTURE.md(87줄) 실재 + 각 300줄 이하 + 중괄호 0
+- [x] top-level docs/*.md 합계 33.5KB < 48KB 실측 (D-020 append 포함)
+- [x] 파일 지도 실측 트리 기반 — 리뷰어가 인용 경로 전량 실재 + "예정" 항목 미존재 확인
+- [x] ADR.md 미신설(리뷰어 docs/ 실측 확인) + D-020 append(정정 3건 반영 후)
+- [x] **새-컨텍스트 read-only 리뷰 PASS** — opus, 엔진 소스(execute.py)까지 실측 대조,
+      BLOCKER/MAJOR 0 (MINOR 2 수리 반영: 게이트 블록→포인터, D-020 문구)
+- [x] 게이트 유지 + HANDOFF §7·헤더·STATE 갱신
+- [x] 메인은 오케스트레이션·게이트·커밋만 — 초안=opus 워커, 검증=opus 새-컨텍스트
+      리뷰어, MINOR 수리=워커 재위임(SendMessage)
 
 ## Verification method
 
-1. jest·게이트 5종 exit code 실측
-2. 역-검증: 수리 원복 시 신설 테스트 FAIL 재현 로그
-3. 라이브 red→green 증거(구/신 번들 각 실행 결과) 또는 재현 불가 사유(R-001 마커)
-4. 독립 리뷰어(새 컨텍스트, read-only)가 diff를 이 GOAL 기준으로 항목별 판정
+1. 파일 실재·줄수·바이트 합계·중괄호 grep 실측
+2. 독립 리뷰어(새 컨텍스트, read-only)가 초안을 corpus(DESIGN.md·HANDOFF·DECISIONS·
+   phases)와 대조해 사실 오류·중복·규칙 위반 판정
+3. 게이트 exit code 실측

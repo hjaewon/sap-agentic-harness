@@ -214,12 +214,25 @@
   coverage/links/verify-engine/smoke155 green, doctor는 agy 드리프트 1건(1.0.16→
   1.1.1, 환경·무관·R-001)
 
+- 2026-07-13 | **② 지식 문서 부트스트랩 완료 (D-020, 메인=오케스트레이션·작업=opus
+  서브에이전트 위임)** — harness-docs Mode A 계약을 lock 커밋(8f7f13b) 절차문에서
+  직접 소비(플러그인 이 머신 미설치). 산출: docs/PRD.md(55줄/3.6KB)·
+  docs/ARCHITECTURE.md(87줄/6.1KB — 파일 지도는 실측 트리 기반, 미존재 항목은 "예정"
+  표기) 신설 + D-020 append(D-012의 PRD·ARCHITECTURE 기각분 갱신, **ADR.md 미신설
+  유지**). 주입 합계 33.5KB < 48KB, 중괄호 플레이스홀더 0. **새-컨텍스트 리뷰
+  PASS**(opus, read-only — 엔진 주입 glob·48/64KB 수치까지 execute.py 실측 대조,
+  HANDOFF/DESIGN 68/40KB 실측). 리뷰 발견 MINOR 2 수리 반영(게이트 블록→포인터,
+  D-020 문구 3건 정정 후 append). 워커가 지시문 오류도 실측 정정(§8 "8규칙"→7개).
+  HANDOFF §7·헤더 갱신
+
 ## Next
 
 - 사용자 확정 순서(HANDOFF 헤더): ~~① 엔진 11-⑪·⑫ 수리~~ ✅ 완료(4.13.12) →
-  ② 트랙 A 지식 문서 갱신(harness-docs — 알림 3회째) → ③ Phase 3 선결 설계
-  (5-11 리뷰 게이트 편입). 유보: 엔진 11-⑩(설계 판단) · doctor agy 핀 갱신
-  (1.1.1 설치 스모크 재실행 후 compatibility.json — 별도 유지보수)
+  ~~② 트랙 A 지식 문서 갱신~~ ✅ 완료(D-020) → **③ Phase 3 선결 설계(5-11 리뷰
+  게이트 편입)** — 무인 gated write 투입 전 새-컨텍스트 리뷰 게이트를 무인 체인에
+  편입하는 방식 설계(엔진 verifier 강화 vs 별도 리뷰 스텝 vs 사람 셰퍼딩 택1).
+  유보: 엔진 11-⑩(설계 판단) · doctor agy 핀 갱신(1.1.1 설치 스모크 재실행 후
+  compatibility.json — 별도 유지보수)
 
 ## Attempts & dead ends
 
