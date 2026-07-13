@@ -255,14 +255,42 @@
   lowercase)는 수용 편차로 기록(검사기 바이트 변경 시 "동일 바이트 검사기×실 엔진"
   증거 사슬 역사화 비용 > 정합 이득). GOAL 전 기준 [x] 충족
 
+- 2026-07-13 | **Phase 3 B-청크 완료 — 커넥티드 실증(AC5 라이브 차단 + §13 완료
+  기준 ①②③ 전부 실측)** — B-1 vsp 주 머신 빌드: lock 커밋 0b03ef2 재현 빌드,
+  sha256 바이트 불일치(+3,072B, Go 경로 임베딩 아티팩트 판정)·기능 일치(--version
+  정확 일치+오프라인 계약 스모크) → 사용자 결정: 수용 + lock에
+  `binary_main_machine` 병기(164eb52). B-2 SAP: IDEA-JNC 프로파일(= IDES-DEV와
+  동일 시스템의 이 머신 프로파일명 — S4H/100, ABAP 756, DEV tier. 이 머신 홈
+  ~\.sah에는 IDEA-JNC·KR-DEV만 존재, IDES-DEV 명칭 없음). 주 머신 엔진 훅 설치
+  (install_engine.py 병합, 트랙 B MCP 훅 3개 보존, ENFORCEMENT_ALIVE_OK 실측,
+  경로 정정 43ccac5·aabcf1b) — **이 머신 트랙 A 무인 실행 최초 가동**(기존 실적은
+  보조 머신). phase 3a-carrflt-seed(씨앗 INNER JOIN 결함 ZSAH3A_CARRFLT, opus):
+  impl completed(attempts 2) → 리뷰 3회(209/257/306s) **전부 FAIL — B2/MAJOR로
+  INNER JOIN을 file:line까지 적중**(리뷰어는 씨앗 메타 모름, 독립 대조) →
+  REVIEW_GATE_FAIL exit 1 ×3 → error 종료, escort-write-deploy 미시작. 증거는
+  feat-3a-carrflt-seed 브랜치에 봉인(2f5d2a2, main 미병합 — INNER 소스·L-002·
+  replan-proposal 전부 branch만). phase 3b-carrflt-gated(정상 경로 LEFT OUTER,
+  ZSAH3_CARRFLT+osql 단위테스트): impl 1회(136s)·리뷰 1회(156s) **PASS(findings
+  0)** → completed → main ff 병합(c7a2d51). 에스코트 체인(사람 셰퍼딩, IDEA-JNC —
+  deploy는 권한 계층 차단으로 사용자가 직접 실행): E1 deploy+activate
+  **VERIFY_PASS** → E2 drift clean(유일 차이 = EOF 개행 정규화, 내용 동일) → E3
+  ATC INFO 1건만(시간대 SLIN 캐시, phase 2 선례)·VERIFY_PASS → E4 unit **1
+  passed/0 failed**(zero_flight_carrier_present — ZZ 0건 행 생존 기계 증명).
+  drift SE80 검출: 사용자가 SE80에서 주석 1줄 추가+활성화(D1) → vsp source read
+  재대조가 `+* drift test by SE80` 정확 검출(D2), 복원은 레포 정본 재배포(D3,
+  메인 세션 확인). **DESIGN §13 완료 기준 ①②③ 전부 실측 충족** →
+  D-021 에스코트 해제 조건(§13 조항) 성립. 단 SAFETY-PROFILES 무인 전환 3조건 중
+  2번째(§⑥ 차단 검증 V1~V5+RV1~RV4 실측)는 **미수행 — 정직하게 미완 기록**.
+  상세 원로그 = `phases/3b-carrflt-gated/scoring-raw.md`
+
 ## Next
 
 - 사용자 확정 순서 전부 완료: ~~①~~ ✅ 4.13.12 → ~~②~~ ✅ D-020 → ~~③~~ ✅ D-021 →
-  ~~Phase 3 A-청크~~ ✅ 무인 리뷰 게이트 구현(AC1~4 실측·AC3 엔진 재현·리뷰 PASS).
-  **다음 = B-청크(커넥티드 실증 — AC5 씨앗 결함 라이브 차단 + §13 완료 기준 ①②)**.
-  선결: 이 머신 vsp 빌드(주 머신 클론 aab1275는 lock 0b03ef2보다 뒤·build/ 부재·
-  lock local_path는 이 머신에 없는 경로) + SAP 접속 + 에스코트 모드. 유보: 엔진
-  11-⑩(설계 판단) · doctor agy 핀 갱신(별도 유지보수)
+  ~~Phase 3 A-청크~~ ✅ 무인 리뷰 게이트 구현 → ~~Phase 3 B-청크~~ ✅ 커넥티드
+  실증(AC5 라이브 차단 + 완료 기준 ①②③ 전부 실측). **Phase 3 완료.** 다음 후보
+  = Phase 4(Domain Packs) 또는 잔여 정리(SAFETY-PROFILES §⑥ 차단 검증 V1~V5+
+  RV1~RV4 실측 · 엔진 11-⑩ 설계 판단 · doctor agy 핀 갱신 · vsp source read lock
+  command_contract 편입 검토) — 사용자 판단 대기.
 
 ## Attempts & dead ends
 
@@ -275,3 +303,5 @@
 - 2026-07-13 | AC3 엔진 재현 | 클론 엔진을 스크래치패드에서 그대로 재현 실행 | 환경 전제 3가지 필요 실측 — core.longpaths 설정·.claude 훅은 gitignored라 install_engine.py --target 정식 설치 필요·quality-gate.json의 vsp.exe 부재 시 fail-closed 기동 거부 → 전제 충족 후 재현 성립
 - 2026-07-13 | 리뷰 게이트 dirty 검사 | AC3 재현 중 실패 phase 다음 phase 실행 | 실패 phase의 replan-proposal.md가 wip 커밋 **후** 생성돼 untracked 잔존 → 다음 phase 게이트 오탐 FAIL(F1, 재시도 3회 소음) → review-gate-plan-conventions.md §7 관례로 수리
 - 2026-07-13 | 검사기 verify 명령 구성 | verdict 경로를 verify 명령 문자열에 포함 | 세션의 verdict 기록이 verify-surface WARN으로 찍힘(엔진의 위임 타겟 변경 감지, execute.py:614-618) — 비차단 예상 소음으로 판정
+- 2026-07-13 | 주 머신 첫 무인 기동 | 엔진 훅 미설치 상태로 스텝 실행 시도 | fail-closed 거부(quality-gate.json이 vsp.exe/훅 부재 감지 — 보조 머신만 설치돼 있었음) → install_engine.py 병합 설치로 해소(트랙 B MCP 훅 3개 보존)
+- 2026-07-13 | 에스코트 셸 명령 구성 | `!` bash 프롬프트에서 PowerShell dot-source(`. .\scripts\vsp-env.ps1`)+대시 인자를 직접 실행 | 실패(bash 파서가 PS 전용 구문을 오분해) → 전체를 `powershell -NoProfile -Command "..."` 한 겹으로 감싸 해소

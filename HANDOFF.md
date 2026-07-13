@@ -3,17 +3,18 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-13. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **현재 재개점 (2026-07-13)**: 트랙 A **Phase 3 A-청크(무인 리뷰 게이트 구현) 완료**
-> — AC1~4 실측 성립(로컬 재현 테스트 13/13 + AC3 엔진 통합 재현) + Assumption #1
-> 실측 일치(PASS 경로 초과 dirty 0) + 새-컨텍스트 리뷰 PASS(MAJOR 0, MINOR 2 — F1
-> 관례 명문화로 수리·F2 수용 편차). 산출물: `scripts/check-review-verdict.ps1`
-> (검사기)·`scripts/test-check-review-verdict.ps1`(재현 테스트)·
-> `docs/reference/templates/` 3파일(review-step.md·review-verdict.schema.json·
-> review-gate-plan-conventions.md)·`adapters/vsp/SAFETY-PROFILES.md`. **다음 =
-> B-청크(AC5 씨앗 결함 라이브 차단 + §13 완료 기준 ①②, 에스코트)** — 선결: 이
-> 머신 vsp 빌드(lock 0b03ef2 대조) · SAP 접속. 소형 유보: 엔진 11-⑩(설계 판단) ·
-> doctor agy 핀(1.1.1 스모크 후 compatibility.json) · vsp source read lock
-> command_contract 편입 검토(선택적 하드닝).
+> **현재 재개점 (2026-07-13)**: 트랙 A **Phase 3 완료** — 리뷰 게이트 구현(A-청크,
+> 오전) + 커넥티드 라이브 실증(B-청크, 오후). D-021 스펙 AC 5건 전부 성립(AC1~4
+> 오프라인 + **AC5 씨앗 결함 라이브 차단**) + DESIGN §13 Phase 3 완료 기준 ①②③
+> 전부 실측(리뷰 PASS 객체가 SAP 전체 write 체인 통과·SE80 drift 검출·씨앗
+> 시맨틱 결함 차단) → **에스코트 해제 조건 성립**(단 SAFETY-PROFILES §⑦ 무인
+> 전환 3조건 중 2번째 "§⑥ 차단 검증 V1~V5+RV1~RV4 실측"은 정직하게 미수행 —
+> 무인 전환은 이 항목까지 충족 후). 부수: 주 머신 vsp 빌드(lock 0b03ef2 재현,
+> `binary_main_machine` 병기) + 엔진 훅 설치로 **이 머신 트랙 A 무인 실행 최초
+> 개통**. 다음 후보 = **Phase 4(Domain Packs)** 또는 잔여 정리(SAFETY-PROFILES
+> §⑥ V1~V5+RV1~RV4 실측 · 엔진 11-⑩ 설계 판단 · doctor agy 핀 갱신 · vsp source
+> read lock command_contract 편입 검토) — 사용자 판단 대기. 상세 =
+> `.harness/STATE.md` · `phases/3b-carrflt-gated/scoring-raw.md`.
 > **트랙 A Phase 2 완료 (2026-07-12)** — 답사→계획 변경 기록(§13 완료 기준 충족) +
 > 무인 완주(2 steps, verify 실패 0, 리뷰 위반 0) + connected 채점 **5 PASS/0 FAIL**.
 > 채점이 발굴한 CLAS 배포 결함 3건은 **당일 전량 수리·라이브 검증 완료** —
@@ -63,6 +64,19 @@
 > review-gate-plan-conventions.md §7 관례 명문화로 수리, F2는 수용 편차로 기록).
 > AC5(씨앗 결함 라이브 차단)와 §13 완료 기준 ①②는 B-청크(커넥티드, 에스코트)로
 > 분리 — 선결은 이 머신 vsp 빌드(lock 0b03ef2 대조)·SAP 접속.
+> **Phase 3 B-청크 완료 (2026-07-13, 커넥티드 라이브 실증)** — B-1 vsp 주 머신
+> 빌드: lock 커밋 0b03ef2 재현(sha256 바이트 불일치는 Go 경로 임베딩 아티팩트
+> 판정·기능 완전 일치) → lock에 `binary_main_machine` 병기. B-2 주 머신 엔진 훅
+> 설치(트랙 B MCP 훅 3개 보존) — **이 머신 트랙 A 무인 실행 최초 가동**. phase
+> `3a-carrflt-seed`(씨앗 INNER JOIN 결함): 리뷰 게이트 3회 시도 **전부 FAIL**
+> (B2/MAJOR로 INNER JOIN을 file:line까지 적중, 리뷰어는 씨앗 메타 모름) → error
+> 종료·write 미도달 — **AC5(씨앗 결함 라이브 차단) 실증**, 증거는
+> `feat-3a-carrflt-seed` 브랜치 봉인(2f5d2a2, main 미병합). phase
+> `3b-carrflt-gated`(정상 경로 LEFT OUTER): impl·리뷰 1회씩 PASS → main 병합
+> (c7a2d51) → 에스코트 체인 E1~E4(deploy+activate·drift clean·ATC INFO만·unit 1
+> passed/0 failed) + SE80 drift 검출 D1~D2(`+* drift test by SE80` 정확 포착)
+> 전부 실증 — **DESIGN §13 완료 기준 ①②③ 전부 실측 충족**. 원로그 =
+> `phases/3b-carrflt-gated/scoring-raw.md`.
 > **업스트림 핸드오프** = `engine/UPSTREAM-FIX-HANDOFF.md`(영어 자립형,
 > 4.13.2~4.13.12 전량) — 포크 클론(D:\Claude for SAP\abap-mcp-adt-powerup,
 > 4.13.1 동결)에 적용용.
@@ -108,9 +122,14 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │           + ATC INFO만 + graph가 ZCL 참조 포착. 채점 중 실측: **CLAS 배포 3결함**
 │           (deploy LOCK 거부+잠금 누수 · copy 거짓 성공 — COMMANDS.md ⑤-6/7 ·
 │           R-006, 엔진 UpdateClass 423 계열 — §6 백로그 4). 클래스는 GUI 수동 주입.
-│           백로그 5-7·5-11(D-021) 해소 후 **Phase 3 A-청크(무인 리뷰 게이트 구현)
-│           완료(2026-07-13)** — AC1~4 실측(로컬 13/13+AC3 엔진 재현)+새-컨텍스트
-│           리뷰 PASS. 다음 = B-청크(AC5 라이브 차단 실증, vsp 빌드·SAP 접속 선결)
+│           백로그 5-7·5-11(D-021) 해소 후 **Phase 3 완료(2026-07-13)** — A-청크
+│           (무인 리뷰 게이트 구현: AC1~4 실측·새-컨텍스트 리뷰 PASS) + B-청크
+│           (커넥티드 라이브 실증: 3a-carrflt-seed 리뷰 게이트가 씨앗 INNER JOIN
+│           결함을 3회 전부 FAIL 차단=AC5, 3b-carrflt-gated 정상 경로가 에스코트
+│           체인 E1~E4+SE80 drift 검출 D1~D2 전부 통과). **DESIGN §13 완료 기준
+│           ①②③ 전부 실측**, 에스코트 해제 조건 성립(§⑥ 차단 검증 실측만 잔여).
+│           주 머신 vsp 빌드 완료(lock 0b03ef2 재현)+엔진 훅 설치로 무인 실행
+│           개통. 다음 = Phase 4(Domain Packs) 또는 잔여 정리
 │
 └── [트랙 B] 대화형 트랙 — ★ L0~L5 구현 완료, E2E 대기  ←←← 현재 작업 지점
       위치: interactive/ (= 3사 공통 플러그인 루트)
@@ -129,7 +148,7 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 | `D:\claude for SAP\sc4sap-custom` | **동결** (지식 수정 금지) — 이식 원천. Claude 풀버전 플러그인이지만 lite가 대체 |
 | `D:\claude for SAP\sc4sap-lite` | **동결·이관됨** — interactive/로 subtree 병합 완료. README에 이관 표기. 삭제해도 무방(사용자 판단) |
 | `hjaewon/abap-mcp-adt-powerup` | **→ `engine/`으로 편입 (2026-07-11, D-017)** — 엔진 소스 정본은 이제 레포 내 `engine/`(재현 빌드 바이트 일치 검증). GitHub 포크·로컬 클론은 히스토리 아카이브. 엔진 이슈는 §6 — engine/에서 수리 |
-| `D:\claude for SAP\vsp\vsp-custom` (주) / `D:\Claude for SAP\vsp-custom` (보조) | **트랙 A의 유일한 SAP 접점·검증/배포 백엔드** (핵심 의존 — 업스트림 oisee/vibing-steampunk 차용). **소유 전략 D-018 확정: 분리 유지 + 부트스트랩 시 버전 lock** (편입 기각 — 소비 계약=CLI 바이너리, 업스트림 활발). 보조 머신에서 검증 lock 생성 완료(2026-07-11, `adapters/vsp/vsp.lock.json` — aab1275, build/vsp.exe sha256 고정), 주 머신은 미빌드 (Go 1.26.4 설치됨) |
+| `D:\claude for SAP\vsp\vsp-custom` (주) / `D:\Claude for SAP\vsp-custom` (보조) | **트랙 A의 유일한 SAP 접점·검증/배포 백엔드** (핵심 의존 — 업스트림 oisee/vibing-steampunk 차용). **소유 전략 D-018 확정: 분리 유지 + 부트스트랩 시 버전 lock** (편입 기각 — 소비 계약=CLI 바이너리, 업스트림 활발). 보조 머신 검증 lock(2026-07-11, `adapters/vsp/vsp.lock.json` — aab1275, build/vsp.exe sha256 고정). **주 머신 빌드 완료(2026-07-13)** — lock 커밋 0b03ef2 재현(sha256 바이트 불일치 +3,072B는 Go 경로 임베딩 아티팩트 판정, `--version`/오프라인 계약 스모크 기능 완전 일치), lock에 `binary_main_machine` 병기(사용자 결정: 수용). **SAP 프로파일명 사실**: 이 머신 프로파일 홈(`~\.sah`)에는 `IDEA-JNC`·`KR-DEV`만 존재 — `IDEA-JNC` = `IDES-DEV`와 동일 시스템(S4H/100)의 이 머신 프로파일명, `IDES-DEV` 명칭은 이 머신에 없음 |
 | final-harness: `D:\claude-practice\claude-fable-final` (주) / `D:\AI PROJECT\claude-final` (보조) | 트랙 A 하네스 엔진 — **자체 제작 독립 제품**(fable-harness 후속, sah 밖 사용처 가능). **D-018: 분리 유지 확정** — 버전은 여기 박제하지 않음(부패 실증). §15-F 재검증·lock **완료(2026-07-11)**: v0.17.3(8f7f13b)까지 전량 유지, `adapters/final-harness.lock.json`. **프로젝트 최종 완료 선언(사용자, 2026-07-13)** — 주 머신 클론 실측: HEAD=8f7f13b=origin/master(0/0)·클린·plugin.json v0.17.3 → **lock과 완전 일치, 재검증 불요**. 플러그인 설치는 여전히 보조 머신만(주 머신 enabledPlugins엔 sap-agentic-harness뿐 — ② harness-docs 착수 시 이 머신 설치 필요) |
 
 ## 2. 지금까지의 타임라인 (2026-07-10~11, 커밋은 본 레포 main)
