@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "review-verdict.schema.json",
+  "title": "Track A Unattended Review Verdict",
+  "description": "Written by the fresh-context review step to phases/{p}/review-verdict.json (2026-07-13-unattended-review-gate.md, Key entities). The review step judges only; it writes NOTHING except this file. The gate is the review step's OWN verify: scripts/check-review-verdict.ps1 (sha256-pinned in the plan's verify command) checks (1) verdict=='PASS', (2) reviewed_head==current HEAD, (3) the bookkeeping-excluded dirty set equals exactly {review-verdict.json}. Ported from interactive/core/procedures/schemas/review-result.schema.json (track B). Delta vs track B: reviewed_spec_sha256 REMOVED (track B pinned the spec by hash; track A pins the whole committed repo state by HEAD sha instead); reviewed_head ADDED (necessary clause #3 — binds the verdict to the impl feat commit the engine creates AFTER the impl session ends, so it cannot be pre-forged); optional timestamp/iteration DROPPED (the engine owns retry accounting, not the verdict).",
+  "type": "object",
+  "required": ["verdict", "reviewed_head", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL"],
+      "description": "FAIL when one or more MAJOR findings exist. PASS when zero MAJOR findings (MINOR findings may still be listed). The checker gates on verdict=='PASS'."
+    },
+    "reviewed_head": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "Output of `git rev-parse HEAD` read at review time (40-hex lowercase). The checker compares it against the current HEAD; a mismatch fails the gate. The impl step's feat commit sha is created by the engine AFTER the impl session ends, so an impl session cannot pre-forge this value."
+    },
+    "findings": {
+      "type": "array",
+      "description": "Every violation found, MINOR and MAJOR. Empty array on a clean PASS.",
+      "items": {
+        "type": "object",
+        "required": ["bucket", "severity", "object", "finding"],
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "enum": ["B1", "B2", "B3", "B4"],
+            "description": "Checklist bucket: B1 ALV+UI (checklist S1-S2), B2 Logic Hygiene + business-logic correctness (S3, S8, and the semantic items S13-S15), B3 Structure+Naming (S4-S7), B4 Platform+Config (S9-S12). The new semantic items (JOIN cardinality / spec conformance / boundary correctness) tag as B2."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["MINOR", "MAJOR"],
+            "description": "MINOR = non-blocking. MAJOR = blocks the gate (>= 1 MAJOR forces verdict FAIL)."
+          },
+          "object": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name of the object (or src/ file) the violation was found in."
+          },
+          "finding": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What is violated, citing the checklist item / convention and the offending code location or excerpt."
+          }
+        }
+      }
+    }
+  }
+}

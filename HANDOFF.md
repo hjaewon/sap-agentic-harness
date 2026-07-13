@@ -3,11 +3,17 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-13. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **현재 재개점 (2026-07-13)**: 사용자 확정 순서 ①(엔진 4.13.12)·②(지식 문서
-> D-020)·③(Phase 3 선결 설계 D-021) 전부 완료 — **트랙 A Phase 3(Gated Deploy)
-> 착수 가능**. Phase 3 = 리뷰 게이트 구현(스펙: docs/reference/designs/
-> 2026-07-13-unattended-review-gate.md, AC 5건) + §13 완료 기준. 소형 유보:
-> 엔진 11-⑩(설계 판단) · doctor agy 핀(1.1.1 스모크 후 compatibility.json).
+> **현재 재개점 (2026-07-13)**: 트랙 A **Phase 3 A-청크(무인 리뷰 게이트 구현) 완료**
+> — AC1~4 실측 성립(로컬 재현 테스트 13/13 + AC3 엔진 통합 재현) + Assumption #1
+> 실측 일치(PASS 경로 초과 dirty 0) + 새-컨텍스트 리뷰 PASS(MAJOR 0, MINOR 2 — F1
+> 관례 명문화로 수리·F2 수용 편차). 산출물: `scripts/check-review-verdict.ps1`
+> (검사기)·`scripts/test-check-review-verdict.ps1`(재현 테스트)·
+> `docs/reference/templates/` 3파일(review-step.md·review-verdict.schema.json·
+> review-gate-plan-conventions.md)·`adapters/vsp/SAFETY-PROFILES.md`. **다음 =
+> B-청크(AC5 씨앗 결함 라이브 차단 + §13 완료 기준 ①②, 에스코트)** — 선결: 이
+> 머신 vsp 빌드(lock 0b03ef2 대조) · SAP 접속. 소형 유보: 엔진 11-⑩(설계 판단) ·
+> doctor agy 핀(1.1.1 스모크 후 compatibility.json) · vsp source read lock
+> command_contract 편입 검토(선택적 하드닝).
 > **트랙 A Phase 2 완료 (2026-07-12)** — 답사→계획 변경 기록(§13 완료 기준 충족) +
 > 무인 완주(2 steps, verify 실패 0, 리뷰 위반 0) + connected 채점 **5 PASS/0 FAIL**.
 > 채점이 발굴한 CLAS 배포 결함 3건은 **당일 전량 수리·라이브 검증 완료** —
@@ -45,6 +51,18 @@
 > 스펙 docs/reference/designs/2026-07-13-unattended-review-gate.md, DESIGN §8.3·§13
 > 반영. 분석·검증·정정 3왕복(opus×2) 후 사용자 택1. **Phase 3 선결 3건 전부 해소 —
 > 다음 = Phase 3 착수(리뷰 게이트 구현 포함) 또는 소형 유지보수(agy 핀·11-⑩).**
+> **Phase 3 A-청크 완료 (2026-07-13, 무인 리뷰 게이트 구현)** — D-021 스펙의 AC
+> 1~4를 오프라인 완결로 구현: 검사기 `scripts/check-review-verdict.ps1`(필수 3조항
+> — 등식형 dirty 검사·sha256 핀·reviewed_head 바인딩) + 재현 테스트
+> `scripts/test-check-review-verdict.ps1`(13케이스 전건 통과) + 리뷰 스텝 템플릿·
+> verdict 스키마·harness-plan 관례 3파일(`docs/reference/templates/`) +
+> `adapters/vsp/SAFETY-PROFILES.md`(DESIGN §8.4 4건 커버). **AC3 엔진 통합 재현
+> 성립**(scratchpad 클론 실엔진: FAIL verdict→재시도 소진→error 종료·write 스텝
+> 미도달) + **Assumption #1 실측 일치**(PASS 경로 초과 dirty 0, 제외 집합 개정
+> 불요). 새-컨텍스트 리뷰(opus, read-only) **PASS**(MAJOR 0, MINOR 2 — F1은
+> review-gate-plan-conventions.md §7 관례 명문화로 수리, F2는 수용 편차로 기록).
+> AC5(씨앗 결함 라이브 차단)와 §13 완료 기준 ①②는 B-청크(커넥티드, 에스코트)로
+> 분리 — 선결은 이 머신 vsp 빌드(lock 0b03ef2 대조)·SAP 접속.
 > **업스트림 핸드오프** = `engine/UPSTREAM-FIX-HANDOFF.md`(영어 자립형,
 > 4.13.2~4.13.12 전량) — 포크 클론(D:\Claude for SAP\abap-mcp-adt-powerup,
 > 4.13.1 동결)에 적용용.
@@ -90,8 +108,9 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 │           + ATC INFO만 + graph가 ZCL 참조 포착. 채점 중 실측: **CLAS 배포 3결함**
 │           (deploy LOCK 거부+잠금 누수 · copy 거짓 성공 — COMMANDS.md ⑤-6/7 ·
 │           R-006, 엔진 UpdateClass 423 계열 — §6 백로그 4). 클래스는 GUI 수동 주입.
-│           다음: 백로그 5-7. Phase 3(Gated Deploy) 선결 3조건 중 리뷰 게이트
-│           편입은 백로그 5-11
+│           백로그 5-7·5-11(D-021) 해소 후 **Phase 3 A-청크(무인 리뷰 게이트 구현)
+│           완료(2026-07-13)** — AC1~4 실측(로컬 13/13+AC3 엔진 재현)+새-컨텍스트
+│           리뷰 PASS. 다음 = B-청크(AC5 라이브 차단 실증, vsp 빌드·SAP 접속 선결)
 │
 └── [트랙 B] 대화형 트랙 — ★ L0~L5 구현 완료, E2E 대기  ←←← 현재 작업 지점
       위치: interactive/ (= 3사 공통 플러그인 루트)

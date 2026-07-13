@@ -5,40 +5,48 @@
 
 ## Task
 
-**③ Phase 3 선결 설계 (백로그 5-11) — 무인 gated write 체인에 새-컨텍스트 리뷰 게이트
-편입 방식 설계.** harness-design 계약의 스코프드 적용(그린필드 아님 — 택지 3개 기제시):
-탐색(증거 기반) → 택지 구체화 → 독립 검토 → **사용자 택1** → 스펙 기록
-(`docs/reference/designs/`) + D-021 + DESIGN.md §8.3/§13 갱신. 메인=오케스트레이션만,
-분석·검토·스펙 작성=모델 지정 서브에이전트 (사용자 지시 패턴 유지).
+**트랙 A Phase 3(Gated Deploy) 착수 — A-청크: 무인 리뷰 게이트 구현 (오프라인 완결분).**
+스펙 정본 = `docs/reference/designs/2026-07-13-unattended-review-gate.md` (D-021, AC 5건).
+이 청크의 범위 = AC 1·2·3·4 (git·엔진만 필요) + SAFETY-PROFILES.md + 체크리스트 이식.
+AC 5(라이브 씨앗 결함 차단 실증)와 §13 완료 기준 ①②는 B-청크(커넥티드, vsp 빌드 선결)로
+분리 — A 완료 후 사용자 재결정. 메인=오케스트레이션만, 작업=모델 지정 서브에이전트
+(스텝 1~3 opus 병렬, 스텝 4·6 sonnet, 스텝 5 리뷰 opus read-only).
 
-### 배경 (5-11 원문)
+### 산출물
 
-트랙 B E2E 실증: 문법·ATC·활성화 전부 통과한 시맨틱 결함(INNER vs LEFT JOIN)은 기계
-verify가 못 잡고 새-컨텍스트 리뷰만 잡는다(HANDOFF §4.1). 무인 엔진의 완료 판정은 기계
-verify뿐 → gated write 체인(DESIGN §8.3: deploy→activate→drift→ATC→unit)에 이 구멍이
-열려 있음. **편입 전까지 무인 write는 켜지 않는다.**
-
-### 택지 (5-11 기제시 — 증거로 구체화 후 사용자 택1)
-
-(a) 엔진 verifier 프롬프트 강화 (b) 별도 리뷰 스텝 (c) 사람 셰퍼딩 유지
+1. **검사기** `scripts/check-review-verdict.ps1` — 필수 3조항 구현
+   (① verdict=="PASS" ② reviewed_head==HEAD ③ 등식형 dirty 검사, bookkeeping 제외
+   집합은 스펙 열거 그대로). PS 5.1 호환, `git status --porcelain -uall`
+   (미추적 디렉토리 접힘 함정 — STATE.md Attempts 2026-07-11 실증).
+2. **재현 테스트** — 임시 git fixture에서 AC1 위조 3종(stale PASS · 리뷰어 코드 동시
+   수정 · HEAD 불일치)·AC2 정상 경로·AC4 검사기 1바이트 변조(sha256 핀)를 exit code로 판정.
+3. **리뷰 스텝 템플릿 + 체크리스트** — 트랙 B `interactive/core/procedures/
+   review-checklist.md` 12항목 이식(MCP→vsp CLI read 치환) + 시맨틱 항목 신규(JOIN
+   카디널리티·spec 정합 등), verdict 스키마(`review-verdict.json`, reviewed_head 필수),
+   verify 명령 관례(sha256 핀 갱신 절차 포함).
+4. **SAFETY-PROFILES.md** — spec 승인 게이트 + package allowlist + transport 정책 +
+   모드별 명령 allowlist(차단: query/execute/source write·edit/install/deploy/copy/
+   transport 계열) + 차단 검증 절차(리뷰 스텝 read-only 시나리오 포함 — 스펙 Assumption #2).
+5. **AC3 엔진 통합 재현** — 미니 오프라인 phase에서 FAIL verdict → 재시도 → error
+   종료·write 스텝 미도달을 엔진 콘솔 로그·index status로 실측.
+6. 문서 계약(HANDOFF 헤더·STATE.md·ARCHITECTURE 파일 지도) + 5종 게이트 + 커밋.
 
 ## Success criteria
 
-- [x] 택지별 메커니즘 엔진 실소스 근거 구체화 — file:line 인용, "opus 사후 리뷰" 실체
-      규명(엔진 내장 `_run_review` 비게이트 — 완료 마킹 후 실행·verdict 미소비)
-- [x] 트랙 B 리뷰 자산 재사용 판정 — 체크리스트 기준·verdict 스키마는 이식 가능,
-      도구 계약은 정반대(MCP↔vsp CLI)라 치환 필요
-- [x] 나머지 선결 2건 기완료 판정(0b 마커 DESIGN:478 · §14-2 drift :477, export만
-      보류) — 리뷰 게이트가 마지막 선결이었음
-- [x] **독립 검토 3왕복** — 원안 (b) 위조 창 BLOCKER 적중 → (b′) 정정 → 조건부 성립
-      + 필수 3조항 확정 + A와 1:1 비교
-- [x] **사용자 택1** = (b′) 강화판 (12살 설명 재제시 후 결정, 2026-07-13)
-- [x] 스펙 196줄(§5 계약 11섹션·AC 5건 testable) + D-021 append + DESIGN v2.2
-      (§8.3·§13 — 선결 3건 전부 해소, 완료 기준에 씨앗 결함 차단 1회 실증 추가)
-- [x] HANDOFF(§5-11 종결·헤더)·STATE 갱신 + 게이트 유지 + 커밋
+- [x] AC1: 위조 시나리오 3종 각각 검사기 exit 1 (재현 테스트 통과)
+- [x] AC2: 정상 PASS verdict(정확히 그 파일만 dirty, reviewed_head 일치) → exit 0
+- [x] AC4: 검사기 1바이트 변조 → sha256 핀 불일치 → exit 1
+- [x] AC3: 엔진 실행에서 FAIL verdict → 재시도 소진 → error 종료, write 스텝 미도달
+      (엔진 콘솔·index status 실측)
+- [x] 체크리스트: 트랙 B 12항목 전부 이식(vsp read 치환) + 시맨틱 항목 ≥1 신규,
+      verdict 스키마가 스펙 Key entities와 항목별 일치
+- [x] SAFETY-PROFILES.md: DESIGN §8.4 요구 4건(주입 스코핑·read-only 기본·allowlist·
+      .gitignore) 전부 실행 가능 수준으로 커버
+- [x] 새-컨텍스트 리뷰(opus, read-only) PASS — MAJOR 0
+- [x] 게이트 5종 green + 문서 계약 갱신 + 커밋
 
 ## Verification method
 
-1. 독립 검토자가 분석의 엔진 인용(file:line) 실소스 대조
-2. 스펙이 harness-design §5 섹션 계약(Goal/Non-Goals/…/Decisions made) 충족하는지 확인
-3. 게이트 exit code 실측
+1. 재현 테스트 실행 — exit code 실측 (자기보고 불신)
+2. AC3는 엔진 콘솔 로그·`phases/{p}/index.json` status 직접 확인
+3. 독립 리뷰어가 스펙 AC·D-021·DESIGN §8.3 대비 산출물 전체 판정

@@ -39,13 +39,19 @@ docs/DECISIONS.md       append-only 결정 로그 D-001~ (ADR 역할, 무인 주
 docs/PRD.md             스코프·비목표·품질 모델 (무인 주입 대상, thin+pointer)
 docs/ARCHITECTURE.md    이 문서 — 구조·파일 지도·불변식 (무인 주입 대상)
 docs/superpowers/       설계 스냅샷 아카이브 (docs/*.md glob 밖 = 무인 미주입)
+docs/reference/templates/ 리뷰 게이트 산출물(비재귀 docs/*.md glob 밖 = 무인 미주입) —
+                        review-step.md(리뷰 스텝 지시문)·review-verdict.schema.json·
+                        review-gate-plan-conventions.md(harness-plan 배선 관례)
 engine/                 MCP 엔진 소스 정본 — TS 소스·tests·번들 도구·patches·
                         UPSTREAM-FIX-HANDOFF.md·CHANGELOG (D-017 편입, 플러그인 표면 밖)
 interactive/            트랙 B 플러그인 루트 (아래 세부)
-adapters/               트랙 A 의존 lock 2종 + vsp/ 어댑터 문서(COMMANDS·VERIFY-PATTERNS)
+adapters/               트랙 A 의존 lock 2종 + vsp/ 어댑터 문서(COMMANDS·VERIFY-PATTERNS·
+                        SAFETY-PROFILES.md — 리뷰 스텝 read-only 프로파일·allowlist)
 domain/                 트랙 A 도메인 규칙 시드 — 현재 abap/만(CHECKLIST·RULES.seed, S-001~025)
 scripts/                무인 엔진 step executor(execute.py) + SAP verify 래퍼
                         (quality-gate-sap·verify-sap·vsp-env.ps1) + test_execute·test_hooks
+                        + 리뷰 게이트 검사기(check-review-verdict.ps1·test-check-
+                        review-verdict.ps1)
 src/                    하네스가 만든 ABAP 소스, abapGit 호환 파일명
                         (현재 3건: zsah1_workdays · zcl_sah2_workdays · zsah2_duedate)
 phases/                 무인 엔진 phase 기록 (0-example · 1-workdays-util · 2-duedate-reuse;
@@ -68,8 +74,8 @@ interactive/scripts/               게이트 스크립트 (check-links·check-mi
 .claude-plugin/ .agents/ (루트)    마켓플레이스 (source: ./interactive)
 ```
 
-미존재(로드맵 예정): `packs/`(모듈 지식팩, Phase 4) · `adapters/vsp/SAFETY-PROFILES.md`
-(Phase 3) · `domain/cds·rap·amdp`(Phase 1+). 실측 시 없는 것이 정상.
+미존재(로드맵 예정): `packs/`(모듈 지식팩, Phase 4) · `domain/cds·rap·amdp`(Phase 1+).
+실측 시 없는 것이 정상.
 
 ## 불변식 (요약 — 전문은 HANDOFF §8 · .harness/RULES.md)
 

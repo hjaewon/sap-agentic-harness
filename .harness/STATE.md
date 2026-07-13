@@ -238,12 +238,31 @@
   DESIGN v2.2(§8.3·§13, 선결 3건 전부 해소) + D-021 + HANDOFF §5-11 종결.
   에스코트 조항: 씨앗 결함 라이브 차단 1회 실증까지 사람 셰퍼딩
 
+- 2026-07-13 | **Phase 3 A-청크 완료 — 무인 리뷰 게이트 구현 (메인=오케스트레이션,
+  작업=opus×4+sonnet×2)** — 산출물: 검사기 `scripts/check-review-verdict.ps1`(필수
+  3조항 구현, sha256 7B4F211F…FA0223) + 재현 테스트 `scripts/test-check-review-
+  verdict.ps1`(13케이스 전건 통과) + `docs/reference/templates/`(review-step.md —
+  트랙 B 12항목 이식+시맨틱 §13~15 신규 · review-verdict.schema.json ·
+  review-gate-plan-conventions.md) + `adapters/vsp/SAFETY-PROFILES.md`(DESIGN §8.4
+  4건 커버). 실측: AC1~4 로컬 테스트 **13/13** + **AC3 엔진 통합 재현 성립**
+  (scratchpad 클론 실엔진: FAIL verdict→3회 재시도 소진→error 종료→write 스텝
+  미도달, attempt_secs [26,48,42]) + **Assumption #1 일치**(PASS 경로 초과 dirty 0,
+  제외 집합 개정 불요, 리뷰 스텝 verify 시점 attempt_secs [23]). 새-컨텍스트 리뷰
+  (opus, read-only) **PASS — MAJOR 0, MINOR 2**: F1(실패 phase replan-proposal.md
+  잔존이 다음 phase 게이트를 오탐시키는 경로 미문서화)은
+  review-gate-plan-conventions.md §7 관례 명문화로 수리(제외 집합 확대는 타
+  phase 경로 주입 표면이라 기각) / F2(검사기 reviewed_head 대소문자 관대, 스키마는
+  lowercase)는 수용 편차로 기록(검사기 바이트 변경 시 "동일 바이트 검사기×실 엔진"
+  증거 사슬 역사화 비용 > 정합 이득). GOAL 전 기준 [x] 충족
+
 ## Next
 
-- 사용자 확정 순서 전부 완료: ~~①~~ ✅ 4.13.12 → ~~②~~ ✅ D-020 → ~~③~~ ✅ D-021.
-  **Phase 3(Gated Deploy) 착수 가능** — 선결 3건 전부 해소. Phase 3 작업에 리뷰
-  게이트 구현(verdict 스키마·검사 스크립트·harness-plan 관례·체크리스트 이식 —
-  스펙 AC 5건) 포함. 유보: 엔진 11-⑩(설계 판단) · doctor agy 핀 갱신(별도 유지보수)
+- 사용자 확정 순서 전부 완료: ~~①~~ ✅ 4.13.12 → ~~②~~ ✅ D-020 → ~~③~~ ✅ D-021 →
+  ~~Phase 3 A-청크~~ ✅ 무인 리뷰 게이트 구현(AC1~4 실측·AC3 엔진 재현·리뷰 PASS).
+  **다음 = B-청크(커넥티드 실증 — AC5 씨앗 결함 라이브 차단 + §13 완료 기준 ①②)**.
+  선결: 이 머신 vsp 빌드(주 머신 클론 aab1275는 lock 0b03ef2보다 뒤·build/ 부재·
+  lock local_path는 이 머신에 없는 경로) + SAP 접속 + 에스코트 모드. 유보: 엔진
+  11-⑩(설계 판단) · doctor agy 핀 갱신(별도 유지보수)
 
 ## Attempts & dead ends
 
@@ -253,3 +272,6 @@
 - 2026-07-11 | lint 실측 | 규칙 7종 스니펫별 exit code | E 4종(line_length>255·empty_statement·max_one_statement·preferred_compare_operator), W 3종(obsolete·colon·naming, len 120~255도 W) — §14-8 --strict 검토 근거
 - 2026-07-11 | 실패 패턴 | 403을 ENV로 분류하던 휴리스틱 | 실측상 403의 유일 사례가 ENQUEUE 락 — LOCK 우선 검사로 교정
 - 2026-07-11 | deploy | 문법 오류 소스 deploy | 오류에도 객체 생성됨(exit 1이지만 서버 잔존) — 배포 성공≠코드 정상, $TMP에 ZSAH0B_BROKEN 잔존
+- 2026-07-13 | AC3 엔진 재현 | 클론 엔진을 스크래치패드에서 그대로 재현 실행 | 환경 전제 3가지 필요 실측 — core.longpaths 설정·.claude 훅은 gitignored라 install_engine.py --target 정식 설치 필요·quality-gate.json의 vsp.exe 부재 시 fail-closed 기동 거부 → 전제 충족 후 재현 성립
+- 2026-07-13 | 리뷰 게이트 dirty 검사 | AC3 재현 중 실패 phase 다음 phase 실행 | 실패 phase의 replan-proposal.md가 wip 커밋 **후** 생성돼 untracked 잔존 → 다음 phase 게이트 오탐 FAIL(F1, 재시도 3회 소음) → review-gate-plan-conventions.md §7 관례로 수리
+- 2026-07-13 | 검사기 verify 명령 구성 | verdict 경로를 verify 명령 문자열에 포함 | 세션의 verdict 기록이 verify-surface WARN으로 찍힘(엔진의 위임 타겟 변경 감지, execute.py:614-618) — 비차단 예상 소음으로 판정
