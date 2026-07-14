@@ -559,6 +559,19 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - **경계**: 순수 abapGit(서버가 GitHub를 직접 pull)은 GUI 수동이라 무인 verify 계약
   밖 — 하네스 백엔드는 vsp 유지(D-001), 사람 배포 대안으로만 검토.
 
+### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — 등록 (2026-07-14)
+
+- **트리거**: **Phase 4 완주 후** 착수(사용자 결정 2026-07-14). 레포 public 전환으로
+  Actions 사용 가능해짐(origin hjaewon/sap-agentic-harness).
+- **내용**: `.github/workflows/`에 오프라인/구조 게이트만 CI로 — check-migration-
+  coverage · check-links · verify-engine · smoke-mcp(155) · doctor(CLI 부재 SKIP) +
+  windows 러너로 test-check-review-verdict.ps1(13케이스). 트랙 B/구조 회귀 방어용.
+- **경계 (중요)**: 트랙 A의 SAP-라이브 verify는 **CI 불가** — 엔진 phase(execute.py)는
+  vsp.exe를 살아있는 SAP(IDEA-JNC)에 붙여 실행하므로 러너에 바이너리·자격증명·접근망
+  부재. CI는 오프라인 게이트 층만 커버(SAP write/에스코트/ATC/unit은 로컬 전용 유지).
+- **참고**: 별개 레포 final-harness 엔진의 CI(수동 트리거 전환 이력)와 혼동 금지 —
+  D-018로 분리된 레포. 본 항목은 sah 레포 전용.
+
 ### 5-6. 다국어 README — ✅ 결정 완료 (2026-07-11): 재작성 안 함
 
 - 개인 도구라 다국어 README 소비자 없음 + 코어(영어)·운영 문서(한국어) 역할 분담으로
