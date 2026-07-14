@@ -1,15 +1,19 @@
 # Offline structure/integrity gates (backlog 5-13).
 #
-# Scope: repo-deterministic gates only. Track A's real verify (vsp against a
-# live SAP system) CANNOT run here - the runner has no vsp binary, credentials,
-# or network to the SAP box; those stay local/escorted (HANDOFF 5-13).
-# doctor.mjs is intentionally excluded: it is a machine-local diagnostic
-# (installed CLI versions, plugin install, hook wiring) - meaningless on a
-# runner. Run it locally instead.
+# Scope: repo-self-contained gates only. Two local-only gates are intentionally
+# EXCLUDED because they read state that does not exist on a runner:
+#   - check-migration-coverage.mjs -> scans the external frozen source repo
+#     sc4sap-custom (absolute local path SC4SAP_SRC); absent in CI -> crash.
+#   - doctor.mjs -> machine-local diagnostic (installed CLI versions, plugin
+#     install, hook wiring); meaningless on a runner.
+# Run both locally instead (CLAUDE.md gate list).
 #
-# Empirically validated (2026-07-14) against a clean autocrlf=false checkout:
-# all five gates pass, so no .gitattributes / npm install is needed (the
-# keyring runtime-deps are vendored in the repo).
+# Track A's real verify (vsp against a live SAP system) also CANNOT run here -
+# the runner has no vsp binary, credentials, or network to the SAP box; those
+# stay local/escorted (HANDOFF 5-13).
+#
+# The four gates below are repo-self-contained (relative paths, vendored
+# keyring incl. linux-x64-gnu prebuild) and confirmed green on the runner.
 name: offline-gates
 
 on:
@@ -27,20 +31,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      # exit 1 = unclassified/missing destination (blocking);
-      # exit 2 = dead rules only (non-blocking warning, per CLAUDE.md);
-      # exit 0 = clean.
-      - name: check-migration-coverage
-        run: |
-          node interactive/scripts/check-migration-coverage.mjs || {
-            code=$?
-            if [ "$code" -eq 2 ]; then
-              echo "::warning::check-migration-coverage exit 2 (dead rules, non-blocking)"
-            else
-              exit "$code"
-            fi
-          }
 
       - name: check-links
         run: node interactive/scripts/check-links.mjs interactive

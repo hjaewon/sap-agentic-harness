@@ -363,6 +363,7 @@
 ## Attempts & dead ends
 
 <!-- one line per attempt, appended: date | task | what was tried | outcome -->
+- 2026-07-14 | CI 게이트 검증 | 클린 클론(autocrlf=false)에서 5게이트 exit 0 확인 후 CI에 5종 투입 | 첫 push에서 check-migration-coverage만 FAIL — 이 게이트는 절대 외부경로(SC4SAP_SRC=D:/.../sc4sap-custom)를 읽어 클론 위치와 무관하게 로컬 레포 참조(사각지대). 러너엔 그 경로 부재→크래시. 교훈: 외부 절대경로 읽는 스크립트는 클린-클론으로 CI 적합성 검증 불가 → 실제 러너가 유일한 판정. check-migration-coverage·doctor는 CI 제외(로컬 전용)
 - 2026-07-14 | 에스코트 E1 | PS 세션 내에서 `powershell -File scripts/verify-sap.ps1 -- deploy ...`(3b 런북 형태) | 실패 — PositionalParameterNotFound(부모 PS가 `--`/자식 -File 인자 오분해). PS 세션 내에서는 `& .\scripts\verify-sap.ps1 deploy ...`(호출 연산자·자격증명 세션 상속)로 정정
 - 2026-07-14 | 에스코트 E2 drift | `vsp source read ... > file` 후 `git diff --no-index` | git이 "Binary files differ" 오인 — PS `>`가 UTF-16 LE로 기록(첫바이트 255,254). 인코딩·개행 정규화 후 -ceq 대조 → 내용 동일(clean). 대안: `Out-File -Encoding utf8`
 - 2026-07-11 | quality-gate | git status --porcelain(기본)로 미추적 수집 | 실패 — 신규 디렉토리가 "src/" 한 줄로 접혀 내부 .abap 미탐 → -uall로 수리
