@@ -573,13 +573,22 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - **경계**: 순수 abapGit(서버가 GitHub를 직접 pull)은 GUI 수동이라 무인 verify 계약
   밖 — 하네스 백엔드는 vsp 유지(D-001), 사람 배포 대안으로만 검토.
 
-### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — 등록 (2026-07-14)
+### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — ✅ 구현·로컬검증 완료, GitHub 실행은 push 후 확인 (2026-07-14)
 
-- **트리거**: **Phase 4 완주 후** 착수(사용자 결정 2026-07-14). 레포 public 전환으로
-  Actions 사용 가능해짐(origin hjaewon/sap-agentic-harness).
-- **내용**: `.github/workflows/`에 오프라인/구조 게이트만 CI로 — check-migration-
-  coverage · check-links · verify-engine · smoke-mcp(155) · doctor(CLI 부재 SKIP) +
-  windows 러너로 test-check-review-verdict.ps1(13케이스). 트랙 B/구조 회귀 방어용.
+- **산출**: `.github/workflows/offline-gates.yml` — **ubuntu-latest** 단일 job,
+  트리거 = push(main)·pull_request·workflow_dispatch. 게이트 5종:
+  ① check-migration-coverage(exit 2=죽은 규칙 비차단 경고 처리, exit 1만 실패)
+  ② check-links(interactive) ③ verify-engine(번들 무결성) ④ smoke-mcp
+  ⑤ test-check-review-verdict.ps1(pwsh, 13케이스). `npm ci` 불요(keyring
+  runtime-deps 커밋됨), `.gitattributes` 불요.
+- **doctor.mjs 제외 (설계 결정)**: 머신-로컬 진단(설치된 CLI 버전·플러그인·훅 배선)
+  이라 러너에서 무의미 — 로컬 전용 유지. 실측(2026-07-14): 이 머신 doctor는
+  Codex 0.144.3≠0.144.1·AG 1.1.1≠1.0.16 핀 드리프트로 FAIL(번들①·훅③은 OK) —
+  이건 별도 소형 잔여(doctor 핀 갱신)이며 CI와 무관.
+- **로컬 검증 (2026-07-14)**: 클린 클론(autocrlf=false = ubuntu 러너 근사)에서
+  5게이트 전부 exit 0 실측. exit-2 비차단 bash 스니펫 단위 테스트(0→통과·2→경고·
+  1→실패) + YAML 파싱 통과. **GitHub Actions 실제 green은 push 후 확인**(push는
+  사용자 판단).
 - **경계 (중요)**: 트랙 A의 SAP-라이브 verify는 **CI 불가** — 엔진 phase(execute.py)는
   vsp.exe를 살아있는 SAP(IDEA-JNC)에 붙여 실행하므로 러너에 바이너리·자격증명·접근망
   부재. CI는 오프라인 게이트 층만 커버(SAP write/에스코트/ATC/unit은 로컬 전용 유지).
