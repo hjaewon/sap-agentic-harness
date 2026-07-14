@@ -573,7 +573,7 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - **경계**: 순수 abapGit(서버가 GitHub를 직접 pull)은 GUI 수동이라 무인 verify 계약
   밖 — 하네스 백엔드는 vsp 유지(D-001), 사람 배포 대안으로만 검토.
 
-### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — ✅ 구현·로컬검증 완료, GitHub 실행은 push 후 확인 (2026-07-14)
+### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — ✅ 완료·러너 green 실측 (2026-07-14, run ddd3878)
 
 - **산출**: `.github/workflows/offline-gates.yml` — **2-job**(네이티브 런타임별
   분리), 트리거 = push(main)·pull_request·workflow_dispatch.
@@ -598,7 +598,8 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   — 테스트가 Windows 전용(`powershell.exe` 자식 호출·백슬래시 경로)이라 Linux pwsh에서
   깨짐. 핀 sha256은 무관(파일 LF 일관·런타임 자체 계산). → PS 테스트를 windows-latest
   로 분리(2-job). **교훈: 외부 절대경로·플랫폼 전용 스크립트는 로컬(Windows) 검증만으론
-  CI 적합성 판정 불가 — 실제 러너가 유일한 판정.**
+  CI 적합성 판정 불가 — 실제 러너가 유일한 판정.** ③ 2-job으로 **양 job green 실측**
+  (run ddd3878: node-gates 3종·ps-gate 1종 전부 success).
 - **경계 (중요)**: 트랙 A의 SAP-라이브 verify는 **CI 불가** — 엔진 phase(execute.py)는
   vsp.exe를 살아있는 SAP(IDEA-JNC)에 붙여 실행하므로 러너에 바이너리·자격증명·접근망
   부재. CI는 오프라인 게이트 층만 커버(SAP write/에스코트/ATC/unit은 로컬 전용 유지).
