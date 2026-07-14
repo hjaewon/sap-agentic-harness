@@ -575,11 +575,15 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 
 ### 5-13. 오프라인 게이트 CI 워크플로 (GitHub Actions) — ✅ 구현·로컬검증 완료, GitHub 실행은 push 후 확인 (2026-07-14)
 
-- **산출**: `.github/workflows/offline-gates.yml` — **ubuntu-latest** 단일 job,
-  트리거 = push(main)·pull_request·workflow_dispatch. 게이트 **4종**:
-  ① check-links(interactive) ② verify-engine(번들 무결성) ③ smoke-mcp
-  ④ test-check-review-verdict.ps1(pwsh, 13케이스). `npm ci` 불요(keyring
-  runtime-deps 커밋됨, linux-x64-gnu 프리빌드 포함), `.gitattributes` 불요.
+- **산출**: `.github/workflows/offline-gates.yml` — **2-job**(네이티브 런타임별
+  분리), 트리거 = push(main)·pull_request·workflow_dispatch.
+  - `node-gates`(**ubuntu-latest**): ① check-links ② verify-engine(번들 무결성)
+    ③ smoke-mcp. `npm ci` 불요(keyring runtime-deps 커밋됨, linux-x64-gnu
+    프리빌드 포함), `.gitattributes` 불요. **러너 green 실측**(run 29307259656).
+  - `ps-gate`(**windows-latest**): ④ test-check-review-verdict.ps1(13케이스).
+    이 테스트는 엔진이 실제로 쓰는 방식(Windows `powershell.exe` 자식 프로세스 +
+    백슬래시 픽스처 경로)으로 체커를 구동하므로 **Windows 네이티브가 설계 의도** —
+    Linux pwsh 이식 대신 windows 러너에서 실행(스크립트 무수정).
 - **CI 제외 2종 (설계 결정 — 둘 다 러너에 없는 상태 읽음)**:
   ① **check-migration-coverage.mjs** — 외부 동결 레포 `sc4sap-custom`(절대경로
   `SC4SAP_SRC` 기본값 `D:/claude for SAP/sc4sap-custom`)을 스캔하므로 러너에서 크래시.
@@ -587,11 +591,14 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   전용 게이트로 유지(CLAUDE.md 게이트 목록). 참고: 이 머신 doctor는 Codex
   0.144.3≠0.144.1·AG 1.1.1≠1.0.16 핀 드리프트로 FAIL(번들·훅은 OK) — 별도 소형
   잔여(doctor 핀 갱신).
-- **첫 CI 실행 교훈 (2026-07-14)**: 초판은 5종(check-migration-coverage 포함)이었고
-  로컬 클린 클론에서 통과했으나 **첫 push CI에서 check-migration-coverage만 FAIL**
-  (run 29307084698) — 클린-클론 검증의 사각지대: 이 게이트가 **절대 외부 경로**를
-  읽어 클론 위치와 무관하게 항상 로컬 sc4sap-custom을 참조했음(로컬에선 존재→통과).
-  해당 스텝 제거 후 4종으로 재-push하여 러너 green 확인.
+- **CI 브링업 교훈 (2026-07-14, 실패 2회 후 확정)**: ① 초판 5종(ubuntu 단일)에서
+  **check-migration-coverage FAIL**(run 29307084698) — 절대 외부경로(sc4sap-custom)
+  의존, 클린-클론 검증 사각지대(클론 위치 무관하게 로컬 참조→로컬 통과). 제거. ②
+  4종(ubuntu 단일)에서 **PS verdict 테스트 FAIL**(run 29307259656 — node 3종은 green)
+  — 테스트가 Windows 전용(`powershell.exe` 자식 호출·백슬래시 경로)이라 Linux pwsh에서
+  깨짐. 핀 sha256은 무관(파일 LF 일관·런타임 자체 계산). → PS 테스트를 windows-latest
+  로 분리(2-job). **교훈: 외부 절대경로·플랫폼 전용 스크립트는 로컬(Windows) 검증만으론
+  CI 적합성 판정 불가 — 실제 러너가 유일한 판정.**
 - **경계 (중요)**: 트랙 A의 SAP-라이브 verify는 **CI 불가** — 엔진 phase(execute.py)는
   vsp.exe를 살아있는 SAP(IDEA-JNC)에 붙여 실행하므로 러너에 바이너리·자격증명·접근망
   부재. CI는 오프라인 게이트 층만 커버(SAP write/에스코트/ATC/unit은 로컬 전용 유지).

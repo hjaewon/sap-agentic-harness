@@ -12,8 +12,13 @@
 # the runner has no vsp binary, credentials, or network to the SAP box; those
 # stay local/escorted (HANDOFF 5-13).
 #
-# The four gates below are repo-self-contained (relative paths, vendored
-# keyring incl. linux-x64-gnu prebuild) and confirmed green on the runner.
+# Two jobs, split by native runtime:
+#   node-gates (ubuntu) - check-links, verify-engine, smoke-mcp. Repo-self-
+#     contained (relative paths, vendored keyring incl. linux-x64-gnu prebuild).
+#   ps-gate (windows) - the review-verdict checker test drives the real checker
+#     the way the ENGINE does (Windows powershell.exe, backslash fixture paths);
+#     it is Windows-native by design, so it runs on windows-latest rather than
+#     being ported to Linux pwsh.
 name: offline-gates
 
 on:
@@ -23,7 +28,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  gates:
+  node-gates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,6 +46,11 @@ jobs:
       - name: smoke-mcp (tool surface)
         run: node interactive/scripts/smoke-mcp.mjs
 
+  ps-gate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: review-verdict checker tests
-        shell: pwsh
-        run: ./scripts/test-check-review-verdict.ps1
+        shell: powershell
+        run: .\scripts\test-check-review-verdict.ps1
