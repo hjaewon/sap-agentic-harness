@@ -3,15 +3,19 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-14. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **현재 재개점 (2026-07-13)**: 트랙 A **Phase 4(Domain Packs) 진행 중 — 오프라인
-> 1단계(FI 팩 부트스트랩, c2def6d) + 커넥티드 준비(CONSULT 답사·4a/4b 계획,
-> 6ff695e) 완료. 다음 액션 = 사용자 터미널에서 무인 엔진 기동**:
-> `python scripts/execute.py 4a-glopen-seed` (SAP 자격증명 없는 일반 셸, 모델
-> opus — 3a와 동일 방식). 기대 = impl completed → **리뷰 3회 전부 FAIL**(체크리스트
-> §16: S/4 금액 소스=FI-002) → error 종료·step2 미도달(FI 씨앗 차단 실증). 그 후
-> 순서: LESSONS 기록 → **FI-002를 R-007로 승격**(§13 완료 기준 ②) + 4a 잔존물
-> 정리(replan-proposal, conventions §7) → `4b-glopen-gated` 실행(리뷰 PASS 기대)
-> → 에스코트 배포(deploy→drift→atc→unit, 4b PLANNING §6 런북).
+> **현재 재개점 (2026-07-14)**: 트랙 A **Phase 4(Domain Packs) 진행 중 — 4a 씨앗
+> 차단 실증 + FI-002→R-007 승격 완료(§13 완료 기준 ② 충족). 다음 액션 = 사용자
+> 터미널에서 `python scripts/execute.py 4b-glopen-gated`** (main에서, SAP 자격증명
+> 없는 일반 셸, 모델 opus). 기대 = impl(ACDOCA·rldnr='0L') → 리뷰 게이트 PASS →
+> completed. 그 후 에스코트 배포(deploy→drift→atc→unit, 4b PLANNING §6 런북,
+> IDEA-JNC 자격증명 셸) + 문서 계약 갱신 + Phase 4 완료 판정(①+② 충족 확인).
+> **4a-glopen-seed 완료 (2026-07-14, 기대 결말 그대로 실측)**: impl 1회 완료(vsp
+> lint exit 0·유닛 green) → **리뷰 3회 전부 FAIL**(B2/MAJOR — BSEG→ACDOCA를
+> file:line 적중, 리뷰어는 씨앗 메타 무지) → error 종료·step2 미도달. 기계 확정 =
+> SEED_BLOCK_OK(인버스 검증) + src 무변경. 증거 = `feat-4a-glopen-seed` 봉인
+> (646c691, main 미병합 — 3a 패턴. main의 phases/index.json엔 4a가 pending으로
+> 남아 SessionStart 알림에 '4a 실행 대기'가 계속 뜨는 것이 정상 — 무시).
+> L-002 기록 + R-007 승격 + 팩 씨앗 승격 표기 + 잔존물 봉인 전부 완료.
 > **Phase 4 이후 방향 확정(D-022, 2026-07-14)**: 상류 final-harness가 lock 이후
 > v0.18.0~v0.19.1(Direct 기본값·Guided run-계약 중간층·무인=container/VM 필수)로
 > 이동 실측 — Phase 4는 현행 lock(v0.17.3)으로 완주하고, 완주 후 **트랙 A 대화형

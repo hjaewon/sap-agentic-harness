@@ -346,14 +346,16 @@
 
 ## Next
 
-- **Phase 4 커넥티드 실행 대기 — 다음 액션(사용자 터미널, 자격증명 없는 셸)**:
-  ① `python scripts/execute.py 4a-glopen-seed` (opus — 3a 방식) — 기대: impl
-  completed → 리뷰 3회 전부 FAIL(§16) → error·step2 미도달(FI 씨앗 차단 실증).
-  ② 결과 확인 후 메인 세션: LESSONS 기록 → **FI-002를 R-007로 승격**(완료 기준
-  ②, R-001 준수) + 4a 잔존물 정리(replan-proposal — conventions §7 관례).
-  ③ `python scripts/execute.py 4b-glopen-gated` — 기대: 리뷰 PASS → completed.
+- **Phase 4 커넥티드 — ①② 완료(2026-07-14)**: ① 4a 실행 = 기대 결말 그대로
+  (impl 1회 완료 → 리뷰 3회 전부 FAIL·B2/MAJOR file:line 적중 → error·step2
+  미도달). 기계 확정 SEED_BLOCK_OK + src 무변경, 증거 feat-4a-glopen-seed 봉인
+  (646c691, main 미병합). ② L-002 기록 + FI-002→R-007 승격(완료 기준 ②) +
+  잔존물 봉인 완료. **다음 액션**:
+  ③ `python scripts/execute.py 4b-glopen-gated` (main, 자격증명 없는 셸, opus) —
+  기대: impl(ACDOCA·rldnr='0L') → 리뷰 PASS → completed.
   ④ 에스코트 런북(4b PLANNING §6, IDEA-JNC 자격증명 셸): deploy → drift(source
-  read 대조) → atc → unit. ⑤ 문서 계약 갱신 + Phase 4 완료 판정(①+② 충족 확인).
+  read 대조) → atc → unit. ⑤ 문서 계약 갱신 + Phase 4 완료 판정(①+② 충족 확인)
+  → 완주 후 = 대화형(Guided) 재기준 정식 결정(D-022).
   소형 잔여 후보(엔진 11-⑩ · doctor agy 핀 · vsp source read lock 편입 검토)는
   존속.
 
