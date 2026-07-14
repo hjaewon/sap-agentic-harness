@@ -353,12 +353,19 @@
   리뷰 PASS→main 병합(55b4ea3)→에스코트 E1~E4 전부 통과(deploy VERIFY_PASS·drift
   clean[정규화 후 내용 동일]·ATC INFO 2건만·unit 1 passed). 원로그 =
   phases/4b-glopen-gated/scoring-raw.md.
-- **다음 = 트랙 A 대화형(Guided) 재기준 정식 결정 (D-022 후속)**: 상류 final-harness
-  v0.18~v0.19.1(Direct 기본값·Guided run-계약·무인=격리 필수) 재기준을 정식 결정으로.
-  선결 = 상류 안정화 확인(당일에도 릴리스 중) → §15-F 재검증 → 재lock 여부 →
-  .harness/·AGENTS.md·리뷰 게이트 템플릿·SAFETY-PROFILES·docs 연쇄 갱신(별도 Phase급).
-- 소형 잔여 후보(Phase 4와 무관, 존속): 백로그 5-13(오프라인 게이트 CI, Phase 4
-  완주 후 = 지금 착수 가능) · 엔진 11-⑩ · doctor agy 핀 · vsp source read lock 편입.
+- **✅ 재기준 방향 확정(D-023)+Codex 정정(D-024)+단계 1 분석+설계서 초안 (2026-07-14)**:
+  트랙 A 실행 모델 = **Direct 기본 + Guided 명시 승격 + Engine attended 특수**(무인 강등).
+  v0.19.2(929685a)=후보 pin. **⚠️ RV4 미봉합**(authority-gate에 vsp 부재)→unattended
+  SAP write 금지. 단계 1 산출물 2개 커밋됨:
+  `docs/reference/designs/2026-07-14-v019-engine-analysis.md`(Codex F1~F7 재정의·RV4
+  실측 — **재실행 금지**) + `.../2026-07-14-track-a-v019-rebase.md`(모드 매핑 설계서 초안).
+  트랙 B 훅 3개 마이그레이션 안전 실측. 상류는 v0.19.3으로 이동.
+- **다음 = 설계서 검토**(원하면 Codex 이중검토) → 확정 시 개정 5단계: 1)잔여(정확 SHA
+  929685a 동결+기준선·롤백) 2)주머신 설치+smoke 3)복제본 마이그레이션 후 Engine
+  업그레이드 4)문서 연쇄 갱신 5)파일럿 2건+기술 게이트 후 최종 lock. 정본=설계서+D-024.
+- 소형 잔여 후보(재기준과 무관, 존속): **백로그 5-13 CI ✅ 완료**(2-job green, run
+  ddd3878) · 엔진 11-⑩ · doctor 핀 드리프트(codex 0.144.3·agy 1.1.1) · vsp source
+  read lock 편입 · 5-5 fetch 참조.
 
 ## Attempts & dead ends
 

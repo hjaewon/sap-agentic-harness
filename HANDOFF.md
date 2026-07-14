@@ -9,12 +9,20 @@
 > 아니라 후보 pin** — 최종 lock은 staging 마이그레이션+파일럿+기술 게이트 통과 후.
 > **⚠️ RV4(자격증명 있는 리뷰 세션의 vsp deploy 실행)는 v0.19.2에서도 미봉합**
 > (authority-gate deploy 목록에 vsp 부재 실측) → unattended SAP write 계속 금지.
-> **다음 액션 = 개정 5단계의 단계 1**: 1) 후보 SHA 동결+기준선·롤백 확보 →
-> 2) 주 머신 설치+격리 smoke → 3) 복제본 마이그레이션 후 실제 Engine 업그레이드
-> (트랙 B MCP 훅 3개 불변·retired test 제거만 합격) → 4) 문서·Policy·legacy 연쇄
-> 갱신(AGENTS·CLAUDE·PRD·ARCHITECTURE·DESIGN 다수 §·legacy catalog 봉인) →
-> 5) 파일럿 2건+기술 게이트(vsp deploy 음성시험 포함) 후 최종 lock. 상세=**D-024
-> 원문**(정정 4건·개정 단계), 방향 근거=D-023.
+> **진행 현황 = 단계 1 분석 완료 + 설계서 초안 나옴(사용자 검토 대기)**. 단계 1의
+> read-only 엔진 분석 = `docs/reference/designs/2026-07-14-v019-engine-analysis.md`
+> (Codex, 929685a blob — F1~F7 재정의·마이그레이션 표면·RV4 확정, 코드 좌표 완비).
+> 그 위에 **모드 매핑 정본 설계서 = `docs/reference/designs/2026-07-14-track-a-v019-
+> rebase.md`**(SAP 활동→3축 매핑·AGENTS 재작성안·RV4 자격증명 스코핑·legacy catalog·
+> 문서 연쇄 변경 목록·후보 pin·파일럿 2건). **⚠️ Codex 분석 재실행 금지 — 이미 완료·
+> 보존됨.** 단계 1 신규 발견: 트랙 B 훅 3개는 node라 마이그레이션 안전(legacy-6 비충돌
+> 실측) · 상류는 그새 v0.19.3으로 이동(0.19.2엔 retired 삭제 로직 없음). **다음 액션 =
+> 설계서 검토(원하면 Codex 이중검토) → 확정 시 단계 1 잔여(정확 SHA 929685a 동결+
+> 기준선·롤백)부터**: 2) 주 머신 설치+격리 smoke → 3) 복제본 마이그레이션 후 실제
+> Engine 업그레이드(트랙 B MCP 훅 3개 불변·retired test 제거만 합격) → 4) 문서·Policy·
+> legacy 연쇄 갱신(AGENTS·CLAUDE·PRD·ARCHITECTURE·DESIGN 다수 §·legacy catalog 봉인)
+> → 5) 파일럿 2건+기술 게이트(vsp deploy 음성시험 포함) 후 최종 lock. 상세=**설계서 +
+> D-024 원문**(정정 4건·개정 단계), 방향 근거=D-023.
 > **Phase 4(Domain Packs) 완료 ✅ (2026-07-14)**: 완료 기준 ①(팩 CONSULT 실사용 =
 > recon 결정 델타 5건) + ②(LESSONS 유래 규칙 승격 = 4a 씨앗→L-002→R-007) 충족 +
 > 에스코트 보강(4a 씨앗 차단 + 4b 정상 배포). 소형 잔여(재기준과 무관): 엔진 11-⑩ ·
