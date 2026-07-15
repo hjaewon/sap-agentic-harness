@@ -1,3 +1,10 @@
+# FROZEN LEGACY — Historical Singleton GOAL
+
+> 2026-07-15 migration: 아래 내용은 과거 singleton Task Loop 기록으로 동결했다.
+> 새 작업은 이 파일을 쓰지 않으며 삭제·덮어쓰기·과거 내용 재작성 금지다. Guided는
+> `.harness/runs/<run-id>/`의 run-scoped goal/state/review를, Engine은 승인된
+> contract/manifest를 사용한다.
+
 # Current Goal
 
 <!-- Overwritten at the start of each task (Task Loop step 2).

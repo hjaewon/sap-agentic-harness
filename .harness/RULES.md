@@ -1,7 +1,9 @@
 # Rules
 
 <!-- Cap: 40 rules (engine warns above; the only hard startup gate is 16KB
-     total). Add or merge only via the Memory Loop
+     total). F3 proactive audit starts at >=30 rules or >=12KB; this is a
+     maintenance trigger, not a hard gate. Engine behavior remains >40 rules
+     WARN and >16KB hard startup refusal. Add or merge only via the Memory Loop
      (.harness/PROTOCOL.md). One line each:
 
 - R-NNN [area] short imperative rule (from L-NNN)

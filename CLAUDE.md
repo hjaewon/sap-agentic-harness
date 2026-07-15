@@ -5,11 +5,14 @@
 SAP ABAP 개발을 AI 하네스로 수행하는 **단일 레포 · 두 트랙**. 철학: **차용 후 완전
 소유**(sc4sap 지식 이식, 엔진 편입 D-017) · 가볍지만 강력하게 · 3사 하네스 중립.
 
-- **트랙 A — 무인 하네스 (미착수)** = final-harness 엔진(자체 제작, 별도 레포) +
-  **vsp-custom CLI**. vsp-custom은 트랙 A의 **유일한 SAP 접점이자 검증/배포 백엔드** —
-  하네스의 verify 루프가 vsp CLI 실행으로 성립하므로 **이것 없이는 트랙 A 자체가
-  무의미**하다 (DESIGN.md §3 — powerup 엔진은 트랙 A에서 쓰지 않음). 두 의존의 소유
-  전략은 **D-018 확정: 분리 유지 + 부트스트랩 시 버전 lock** (편입 기각).
+- **트랙 A — 하네스 트랙** = Direct(기본) + Guided(명시 승격) + final-harness
+  **Engine attended**(자체 제작, 별도 레포)와 **vsp-custom CLI**. unattended는 단순
+  미착수가 아니라 D-025·재기준 v2 §7 해제 전 **`sealed`**다. 사람 소유 Direct/Guided의
+  SAP 적용은 트랙 B MCP·사람 vsp CLI·사용자 abapGit 모두 허용된다. vsp-custom은
+  **Engine의 SAP 실행 백엔드이자 적용 경로와 독립인 트랙 A 완료 증거 백엔드**이며,
+  사람 작업의 유일한 SAP 접점은 아니다(DESIGN.md §3 — powerup 엔진은 트랙 A에서 쓰지
+  않음). 두 외부 의존의 소유 전략은 **D-018 확정: 분리 유지 + 부트스트랩 시 버전
+  lock** (편입 기각).
 - **트랙 B — 대화형 플러그인 (검증 완료)** = `interactive/` — 하네스 중립 코어(지식 217·
   페르소나 26·절차 15·정책) + MCP 서버 번들 + 어댑터 3사(Claude/Codex/Antigravity).
   번들의 소스 정본은 레포 내 **`engine/`**(D-017 편입) — 엔진 수리→재번들→반영은

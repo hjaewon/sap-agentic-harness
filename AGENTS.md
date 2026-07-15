@@ -1,42 +1,57 @@
-## Loop Harness
+## Track A Routing
 
-This project uses a learning loop harness. State lives in `.harness/`.
+Assign each action one **execution structure** and one orthogonal **SAP Policy
+profile**; split mixed actions. Source:
+`docs/reference/designs/2026-07-15-track-a-rebase-v2.md` §§3-8 and D-025.
 
-Interactive sessions only: if the prompt says this session runs under the
-step engine (unattended execution), skip this loop entirely and do not
-write to `.harness/` - the engine verifies, records, and reverts
-session-authored memory edits on its own.
+### Execution structure
 
-Size each request before starting. Escalation lanes are proposal-only -
-recommend and wait for the user's yes; the default lane announces itself
-in one line and proceeds (the user can always redirect). Most specific
-match wins; unsure which lane fits IS weight ambiguity - take the
-stop-and-ask lane:
+Apply this order. File, step, and verification counts never affect routing.
 
-- Trivial (a question, or a small at-a-glance-verifiable edit) -> answer
-  directly; skip this loop.
-- Work that splits into several independently verifiable steps -> propose
-  planning it as an unattended engine phase (harness-plan skill in Claude
-  Code) instead of running it through this loop.
-- Goals, scope, or the design itself unsettled (a seed idea, not a task
-  yet) -> propose crystallizing it first (harness-design skill in Claude
-  Code); the approved spec then feeds the docs and planning skills.
-- Design already decided, only needs recording in the knowledge docs ->
-  propose the harness-docs skill (in Claude Code) instead of this loop.
-- Only the execution weight/size is ambiguous -> stop and ask before
-  doing anything.
-- Otherwise (substantive interactive work) -> say so in one line and run
-  the loop below.
+- **Engine attended** — only for an approved new-style contract/manifest that
+  covers bounded steps, retries, a seed, or a batch. The sole entry is
+  `scripts/run-track-a.ps1`; raw `scripts/execute.py` invocation is prohibited.
+  Missing wrapper or contract means Engine is unavailable, with no bypass.
+- **Guided** — only for explicit elevation or durable evidence: SAP-code
+  completion, closing Direct-P3, pause/resume, or explicit fresh review.
+  Goal/state/review stay under `.harness/runs/<run-id>/` only.
+- **Direct** — the default for other current-session questions, code, docs/meta
+  maintenance, and local checks. Already-decided multi-file or multi-step docs
+  remain Direct. Ask only for missing scope/authority; never escalate by weight.
 
-For every substantive task taken in this lane:
+Direct creates no harness run artifacts. No new mode writes the frozen singleton
+`.harness/GOAL.md` or `.harness/STATE.md`. `unattended=sealed` and is not a
+routing option.
 
-1. **CONSULT** - read `.harness/RULES.md`; matching rules are hard constraints.
-   Also consult the relevant project-root core docs when present:
-   `docs/PRD.md` for scope, `docs/ARCHITECTURE.md` for structure and the
-   file map, `docs/ADR.md` for prior decisions.
-2. **GOAL** - write verifiable success criteria to `.harness/GOAL.md` before implementing.
-3. **EXECUTE** - work in small steps; log attempts in `.harness/STATE.md`.
-4. **VERIFY** - check the result against GOAL.md with an independent reviewer (subagent or fresh session), never self-review.
-5. **RECORD** - update STATE.md; on any failure worth remembering or any user correction, run the memory loop in `.harness/PROTOCOL.md`: FAIL -> INVESTIGATE -> VERIFY -> RULE -> CONSULT.
+### SAP Policy profile
 
-Full procedure: `.harness/PROTOCOL.md`. Never bulk-rewrite `LESSONS.md` or `RULES.md`.
+Choose the highest effect: **P4 > P3 > P2 > P1 > P0**.
+
+- **P0 offline** — local/repo work; no SAP connection.
+- **P1 connected-read** — metadata/source/ATC/health; no row data or mutation.
+- **P2 real-data extraction** — before each `GetTableContents`, `GetSqlQuery`,
+  or vsp `query`, show scope, fields, and row cap; get human approval. No
+  batch, subagent, or auto-approval.
+- **P3 write/execute** — SAP state/code change or execution; DEV-only gates.
+- **P4 transport** — package/request create, assignment, release, or import.
+  Direct-P4 has no supported entry; follow v2 §4.2 ownership.
+
+Tools are paths, not axes. Human Direct/Guided P3 may use Track B MCP, human vsp
+CLI, or user-operated abapGit; Engine workers use vsp CLI only. Reviewers may
+use P0/P1 but perform no transport operation, including reads.
+
+Direct SAP code is `DRAFT`; Direct-P3 is `PROVISIONAL_WRITE`. Completion needs
+a Guided-P3 exact-subject `R-PASS` plus vsp-backed `V-PASS`. Non-SAP documents
+and metadata can still finish in Direct.
+
+### Mode-independent constraints
+
+Before substantive work in any structure, read `.harness/RULES.md`; matching
+rules are hard constraints. Consult `docs/PRD.md`, `docs/ARCHITECTURE.md`, and
+`docs/DECISIONS.md` when relevant. Real-data, tier, and escort gates are Policy,
+not modes.
+
+Record exactly: `attended-only`, `unattended=sealed`,
+`historical_rv4_classifier=open`, `sap_mutation_boundary=unverified` (scope:
+reviewer + all attended children). Practice/escort does not close RV4. Details:
+`adapters/vsp/SAFETY-PROFILES.md`; until its §11 migration, v2/D-025 controls.
