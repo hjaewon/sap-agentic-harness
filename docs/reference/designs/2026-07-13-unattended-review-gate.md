@@ -1,5 +1,8 @@
 # 무인 gated write 새-컨텍스트 리뷰 게이트 — (b′) plan-레벨 리뷰 스텝
 
+> **v0.17 legacy**: 본문은 phase-only 리뷰 게이트의 역사 증거로 보존한다.
+> 현 실행·리뷰 계약은 `2026-07-15-track-a-rebase-v2.md` §5·§11이 대체한다.
+>
 > 2026-07-13 확정 (사용자 택1 + 독립 검증 조건부 성립 판정). DESIGN.md v2.2 §8.3·§13
 > Phase 3에 반영. 엔진 인용은 final-harness lock(`adapters/final-harness.lock.json`)
 > 워킹트리의 `skills/harness-init/templates/engine/scripts/execute.py` file:line 기준.
