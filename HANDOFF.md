@@ -24,13 +24,47 @@
 > DEV allow/pass는 no-op smoke이고 unresolved/QA deny만 tier 차단 증거다. 적용 경로와
 > 무관하게 완료 도장은 vsp CLI source read·syntax/activation·unit/ATC만; abapGit은
 > 명시 트리거가 생길 때 재론. **⚠️ v0.19.2 분석 재실행 금지 — 보존 분석 재사용.**
-> **§11 연쇄 진척**: 덩어리 1(AGENTS·CLAUDE·`.harness/*`)은 `c895598`로
-> 커밋 완료. 덩어리 2/5(DESIGN 정본 연결·PRD·ARCHITECTURE·HANDOFF 잔여·
-> v0.17 legacy 헤더)는 본 worktree에 반영 완료했고 미커밋이다.
-> **다음 액션**: 사용자가 지정하는 §11 잔여 덩어리 3~5 → clean detached 6de63ba
+> **§11 연쇄 진척 (덩어리 5개 중 2 완료 — 전부 커밋됨, 워킹트리 클린)**:
+> **덩어리 1 = `c895598`** (AGENTS 전면 교체·CLAUDE·`.harness/*`) — 라우팅이
+> 3구조×P0~P4로. **"파일·step·검증 수는 라우팅에 영향 없음"** 명문화로 구 레인 규칙
+> (여러 step→무인 phase 제안)이 일으킨 실측 마찰 봉합. `.harness/GOAL.md`·`STATE.md`는
+> **동결(legacy)** — 신규 작업은 여기 쓰지 않는다(내용 보존, 헤더만 +7/-0).
+> **덩어리 2 = `2967d63`** (DESIGN §2·§3·§5·§8·§13·§15-F·§16 + PRD·ARCHITECTURE +
+> HANDOFF 잔여 + 07-13 설계서 legacy 헤더). §3의 "대화형 세션은 사람 소유" 원문 보존,
+> MCP 차단 근거를 **Engine headless step 한정**으로 정밀화.
+> **D-026 = `57c5a80`** — 결정 로그를 **`docs/reference/DECISIONS.md`로 이전**
+> (`git mv`, 내용 무변경 = rename +60/-0은 D-026 append뿐). 사유: 엔진이 top-level
+> `docs/*.md` 전량을 매 스텝 주입(비재귀 glob, `execute.py:2321-2323`@6de63ba ·
+> WARN 48KB · **기동 거부 64KB**)하는데 합계가 57,747(거부선 88%)에 달했고 그중 77%가
+> 결정 로그였다 — append-only라 감소 불가. **주입 57,747 → 13,121 bytes(거부선 20%)**.
+> `docs/` 최상위 = PRD·ARCHITECTURE 2종만. **`docs/ADR.md`는 여전히 미신설**(D-012·
+> D-020 이중 체계 금지 유효 — 위치 변경일 뿐). 의도적 미갱신: `phases/**`·
+> `interactive/**`(§11 diff 0 요구)·07-15 리뷰 기록 2건(작성 시점 증거).
+> **§11 잔여 = 덩어리 3·4·5**: ③ `SAFETY-PROFILES.md` §①~⑧ 전면 재작성 +
+> `VERIFY-PATTERNS.md`(role별 credential 분리) ④ 리뷰 계약·**코드**(`review-step.md`·
+> `review-gate-plan-conventions.md`·`review-verdict.schema.json`·
+> `check-review-verdict.ps1`+test — 여기부터 테스트 동반) ⑤ lock v2 스키마
+> (`safety_state` 포함)·`legacy-phase-policy.json` 신설·**`scripts/run-track-a.ps1`
+> 신설**·`LEGACY-CATALOG.md` 신설.
+> **⚠️ 현재 Engine 진입 불가 (의도된 fail-closed)**: 덩어리 1의 AGENTS.md가 유일
+> 진입점을 `scripts/run-track-a.ps1`로 못박았는데 그 wrapper는 덩어리 5에서 만든다.
+> 그때까지 SessionStart 알림의 `python scripts/execute.py <phase>` 안내는 **무시**한다
+> (AGENTS.md가 raw execute를 금지 — 알림 제거도 덩어리 5).
+> **권고**: 덩어리 3~5 완료 후 **새-컨텍스트 독립 리뷰 1회**(덩어리마다 말고 한 번에).
+> 근거 = 07-15 실증: 작성자 자체검증 18/18 뒤에도 독립 리뷰가 MAJOR 6건 검출.
+> **다음 액션**: §11 덩어리 3 → 4 → 5 → 독립 리뷰 → clean detached 6de63ba
 > test/staging install/복제본 migration → §12 G1~G14 + 파일럿 A/B + P4 T1~T5
 > (`READY_FOR_RELEASE`, 실제 release 없음) → 증거 exact SHA 바인딩 후 PROMOTE. 실제 전달
 > run만 사람 T6 release·T7 STMS import를 추가한다. 상세는 v2 설계서 + D-025 원문.
+> **사용자 대기 항목 3건**: ① **상류 설계 결함 확인** — `adapters/final-harness/
+> UPSTREAM-DOCS-LIFECYCLE-GAP.md`(영어 자립형, 상류 세션에 붙여넣기용): `harness-docs`가
+> ADR.md에 영구 append와 ~300줄 상한을 동시 요구하나 초과 시 처분 부재(전문 134줄에
+> archive/split/prune 0건); 상류 미검출 이유 = 자기 엔진 도그푸딩 안 함(@6de63ba에
+> `.harness/`·`scripts/execute.py` 부재, `docs/`는 INSTALL.md뿐). ② **`vsp transport
+> list/get` read-only 1회 실측**(자격증명 셸 필요 — 출력 형상 미확인이라 P4 계약이
+> 여기 의존, G14 대상). ③ **상류 워킹트리 dirty 20파일 처분**(`install_engine.py`·
+> `execute.py` 포함 — 본인 작업분인지 확인 필요, 덩어리 5/staging 전 선결). ④ push
+> 여부(오늘 커밋 5건 전부 로컬).
 > **Phase 4(Domain Packs) 완료 ✅ (2026-07-14)**: 완료 기준 ①(팩 CONSULT 실사용 =
 > recon 결정 델타 5건) + ②(LESSONS 유래 규칙 승격 = 4a 씨앗→L-002→R-007) 충족 +
 > 에스코트 보강(4a 씨앗 차단 + 4b 정상 배포). 소형 잔여(재기준과 무관): 엔진 11-⑩ ·
