@@ -14,9 +14,9 @@
 //   --check : 파일을 쓰지 않고 현재 커밋된 스냅샷과 재생성 결과가 같은지만 비교(재현성 검사)
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { sha256, hashTarget } from './lib/target-hash.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROV = path.join(ROOT, 'provenance');
@@ -60,8 +60,6 @@ const EXPECT_ZERO = {
   '.sc4sap/**': 'untracked MCP 런타임 상태 — git tree에 없음',
   '.claude/settings.local.json': 'untracked 로컬 권한 상태 — git tree에 없음',
 };
-
-const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 
 function assertNoPrivate(paths, where) {
   const bad = paths.filter((p) => PRIVATE_ROOTS.some((r) => p === r.replace(/\/$/, '') || p.startsWith(r)));
@@ -138,26 +136,7 @@ for (const e of entries) {
 
 // ── 3. 목적지(우리 자산) 해시 ───────────────────────────────────────────────
 // copy/transform 규칙의 목적지 토큰 → interactive/ 기준 실재 + 내용 해시.
-// 디렉터리 토큰은 tree hash(정렬된 'relpath sha256' 라인들의 sha256).
-function hashTarget(token) {
-  const abs = path.join(ROOT, token);
-  if (!fs.existsSync(abs)) return null;
-  const st = fs.statSync(abs);
-  if (st.isFile()) return { kind: 'file', sha256: sha256(fs.readFileSync(abs)) };
-  const files = [];
-  (function walk(d) {
-    for (const ent of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
-      if (ent.name === 'node_modules' || ent.name === '.git') continue;
-      const full = path.join(d, ent.name);
-      if (ent.isDirectory()) walk(full);
-      else files.push(full);
-    }
-  })(abs);
-  files.sort();
-  const lines = files.map((f) => `${path.relative(abs, f).replaceAll('\\', '/')} ${sha256(fs.readFileSync(f))}\n`);
-  return { kind: 'tree', files: files.length, sha256: sha256(lines.join('')) };
-}
-
+// 해시 계약은 lib/target-hash.mjs 공유 (EOL 정규화 — 체크아웃 독립).
 const mapped = rules.map((r) => {
   const sources = perRule.get(r.pattern);
   const rec = {
@@ -179,7 +158,7 @@ const mapped = rules.map((r) => {
   const tokens = [...r.note.matchAll(/`([^`]+)`/g)].map((m) => m[1]).filter((t) => !t.includes('*'));
   rec.deferred = deferred;
   rec.targets = tokens.map((t) => {
-    const h = hashTarget(t);
+    const h = hashTarget(ROOT, t);
     return h ? { token: t, ...h } : { token: t, missing: true };
   });
   return rec;

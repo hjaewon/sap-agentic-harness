@@ -51,7 +51,7 @@
           "token": "adapters/claude/",
           "kind": "tree",
           "files": 13,
-          "sha256": "a9cdb2a0a447a669721c898b0d72f3c73498b58f892930c819bc1cf775a660e2"
+          "sha256": "3daa17e8cfcfe98bd3029233bdae3b7b2f19e94bf84b1a1f09dcb27929ddb0b6"
         }
       ]
     },
@@ -78,7 +78,7 @@
           "token": "core/knowledge/modules/",
           "kind": "tree",
           "files": 94,
-          "sha256": "74dc385b3cf8740e75ffb847514fadb6516deb4788c8527ab0b09b6660d0102a"
+          "sha256": "052b5e64e1568130cb942327069788ba157de6438b47e29115b72438a48ee708"
         }
       ]
     },
@@ -93,7 +93,7 @@
           "token": "core/knowledge/industry/",
           "kind": "tree",
           "files": 15,
-          "sha256": "8dff40407e825e10793a538210482ab484a7712158bb33df765f86e8b637ae90"
+          "sha256": "74f9c8ddee19caec0e0e72cf773400cd7a33ed45aa2fe4c308c058a25f09f565"
         }
       ]
     },
@@ -108,7 +108,7 @@
           "token": "core/knowledge/country/",
           "kind": "tree",
           "files": 17,
-          "sha256": "88524c1f83f5b2142511c87d1eb990fc7f31e856efc1ab10d5d25c8a95ff0857"
+          "sha256": "324348c45a75accf78f5c08bcc353357ad3ce60e9b6612d8b9a22acbb43289f1"
         }
       ]
     },
@@ -127,7 +127,7 @@
           "token": "core/knowledge/modules/BC/",
           "kind": "tree",
           "files": 2,
-          "sha256": "d741ac582df22217db6b3b949b3ea336b25763d471f8738dddd2926366f47dc7"
+          "sha256": "5d51045b0761ef0cc00b467432d94d256dc4d4d3c9b6255f1bd0b4ffb7efd372"
         }
       ]
     },
@@ -170,7 +170,7 @@
           "token": "core/personas/",
           "kind": "tree",
           "files": 27,
-          "sha256": "dfba9f75d015c35af4f25ca9aae269c9fa1a63a554034ce73dad13680dfe5bf5"
+          "sha256": "f7896029ca99cc847a0f812e3b102fbceee2e4b77485c1ec7cd4b9b4859ce314"
         }
       ]
     },
@@ -185,7 +185,7 @@
           "token": "core/knowledge/abap/reference/",
           "kind": "tree",
           "files": 31,
-          "sha256": "0cfde4d491101147d29e29619d22a56407a32f20ee3c1a1ae0d5ef2562a84e8d"
+          "sha256": "bb4fb84164899ef1829537897408c5db46a1a293f77458f5770298c223186b9c"
         }
       ]
     },
@@ -200,7 +200,7 @@
           "token": "core/knowledge/abap/templates/ecc/",
           "kind": "tree",
           "files": 3,
-          "sha256": "6cb8a50ed9c86ffb2aea8d3872571e189f7b032854349e63deb1952367ddfbce"
+          "sha256": "553db3aeaeffd34a37953bbf6ae63af9f1ffd068d9a70ae2a77514ec97846424"
         }
       ]
     },
@@ -240,12 +240,12 @@
         {
           "token": "core/procedures/troubleshooting.md",
           "kind": "file",
-          "sha256": "ff99c24b7504b633e3357ed6e9ce62f66369a34cd3d93ddc81063d418783a7e4"
+          "sha256": "391c7b1f571b5a893463d5cda505105c4e69537ee4588e07f31e46cb7b7f2f37"
         },
         {
           "token": "core/procedures/install-sap-assets.md",
           "kind": "file",
-          "sha256": "e88a351ad5684f56ab7dfd8dad43c0f43d138127d02d69f4e297814608114ec0"
+          "sha256": "621ee83595c16a3dd567e1fa3ab87c17dc4ac5fc96307e22404b5e65cfe5e793"
         }
       ]
     },
@@ -275,7 +275,7 @@
         {
           "token": "scripts/doctor.mjs",
           "kind": "file",
-          "sha256": "5a8812e19c57ca259095da4f121d4b47704c388e9f8765e93ac0fe67580c386b"
+          "sha256": "7c1ccacc9621dd41de30d82c4fd4d73ab38ba606cdc2a15d694eb50ea02685ac"
         }
       ]
     },
@@ -300,7 +300,7 @@
         {
           "token": "core/project-context.md",
           "kind": "file",
-          "sha256": "405c04d986fe8a72ca7a02bc298ed6e2592851fd08de1625c555f208755df741"
+          "sha256": "072a0e5f5b4035b7a4f5e177ce81351263bbf41fd17cb35eea685d8e0a48be91"
         }
       ]
     },
@@ -359,7 +359,7 @@
           "token": "core/procedures/",
           "kind": "tree",
           "files": 20,
-          "sha256": "dad9121fb5efc492469467babf0eb7f414cff0d9f2e6281be47958c2e856c75f"
+          "sha256": "30152818261638e7006e83453bd4a9529ca5011cd8768fe07cf0412e1b508a72"
         }
       ]
     },
@@ -374,7 +374,7 @@
           "token": "core/knowledge/abap/templates/alv-sample/",
           "kind": "tree",
           "files": 1,
-          "sha256": "2b9fcf0fe3c908b92905ebb68d94631fc986bda570aaf0ab0d5f3ce4293c423b"
+          "sha256": "1a0405c8a30026802679ecd3a58329626eb9ed36ed8e03f21792642d3a1a4202"
         }
       ]
     },
@@ -389,7 +389,7 @@
           "token": "core/knowledge/abap/templates/oop-sample/",
           "kind": "tree",
           "files": 20,
-          "sha256": "449c468bb33dba3af76b01ec5b96376393119c48d32f87ebd74d3d8723c3ca29"
+          "sha256": "74d04bc5698bd24e5f9bb8357d9a547adb3d67e585ea023309e1bbdd809c542e"
         }
       ]
     },
@@ -404,7 +404,7 @@
           "token": "core/knowledge/abap/templates/procedural-sample/",
           "kind": "tree",
           "files": 1,
-          "sha256": "73cb8e56b9759511672c68c6b332836c8170d645e726a715a0192ffe0fb84c7b"
+          "sha256": "33704d3d373628a340a0df198e7b3ca8caa7365ecc9ce516aa05eafbe62917f8"
         }
       ]
     },
@@ -422,7 +422,7 @@
           "token": "core/policies/data-protection/",
           "kind": "tree",
           "files": 13,
-          "sha256": "99c24bf222c270603e2bbd585a55dbc0ef700fc2c8c655b15f4c34e217333163"
+          "sha256": "7ca0d167da8ec7ad5ca03c5a2d9992ed87c56a5c15ac0e35d212a7d76736ccf7"
         }
       ]
     },
@@ -440,7 +440,7 @@
           "token": "core/policies/",
           "kind": "tree",
           "files": 18,
-          "sha256": "253596d31335be9f2b9f2352a980979ce46ce4bdbe800fe81736d42782b8ca3c"
+          "sha256": "8cd676f812234967fd3f180d09ecd6b48804d46924955d7d5378ddae58709ff5"
         }
       ]
     },
@@ -458,7 +458,7 @@
           "token": "core/procedures/",
           "kind": "tree",
           "files": 20,
-          "sha256": "dad9121fb5efc492469467babf0eb7f414cff0d9f2e6281be47958c2e856c75f"
+          "sha256": "30152818261638e7006e83453bd4a9529ca5011cd8768fe07cf0412e1b508a72"
         }
       ]
     },
@@ -476,7 +476,7 @@
           "token": "core/procedures/",
           "kind": "tree",
           "files": 20,
-          "sha256": "dad9121fb5efc492469467babf0eb7f414cff0d9f2e6281be47958c2e856c75f"
+          "sha256": "30152818261638e7006e83453bd4a9529ca5011cd8768fe07cf0412e1b508a72"
         }
       ]
     },
@@ -494,7 +494,7 @@
           "token": "core/procedures/",
           "kind": "tree",
           "files": 20,
-          "sha256": "dad9121fb5efc492469467babf0eb7f414cff0d9f2e6281be47958c2e856c75f"
+          "sha256": "30152818261638e7006e83453bd4a9529ca5011cd8768fe07cf0412e1b508a72"
         }
       ]
     },
@@ -511,12 +511,12 @@
         {
           "token": "core/knowledge/modules/common/active-modules.md",
           "kind": "file",
-          "sha256": "8d2abc86a5b395c0a7edf650207f98be973b31b5abae50dd5222b19c80407789"
+          "sha256": "98ce994316a2afc73eebd4584386c2a97e426b771781c31f2e3a03dc9287cfb9"
         },
         {
           "token": "core/project-context.md",
           "kind": "file",
-          "sha256": "405c04d986fe8a72ca7a02bc298ed6e2592851fd08de1625c555f208755df741"
+          "sha256": "072a0e5f5b4035b7a4f5e177ce81351263bbf41fd17cb35eea685d8e0a48be91"
         }
       ]
     },
@@ -555,7 +555,7 @@
           "token": "core/knowledge/abap/conventions/",
           "kind": "tree",
           "files": 18,
-          "sha256": "9d5c7d2105aa8ca7893aee4bff63150a396df0874d30ee98ce4cf1cd97231552"
+          "sha256": "c3d4e4408e6a40f01277608f948a55960cbe6cf50daf9f6ef4a8821d67e2f24f"
         }
       ]
     },
@@ -570,7 +570,7 @@
           "token": "server/sap-assets/",
           "kind": "tree",
           "files": 30,
-          "sha256": "4a7f03e437ebf3d530f04a43fab78a04c2fb9dea4f2a21e0c20109dcc536eb80"
+          "sha256": "e08090c2b25eeda6359727d3f0b664f554332dd306cba4ed1a482452296d7745"
         }
       ]
     },
@@ -585,7 +585,7 @@
           "token": "server/",
           "kind": "tree",
           "files": 46,
-          "sha256": "24669d68eeabe7729c9112e79223fbfce59b4a6b323bcc77252734661fb10025"
+          "sha256": "e19fe29186b2770dfbc667512bd718e1da85c05d7138710ebb457648aa9fa0b0"
         }
       ]
     },
@@ -615,7 +615,7 @@
           "token": "server/tool-catalog/",
           "kind": "tree",
           "files": 5,
-          "sha256": "5e4bd4b9d0bf19786693a6ff8dd8bd96810e5669b87615599cc92da232f59d8a"
+          "sha256": "5a0634bc26313da9613def299d83444d331402071dcce902cba29f83cb2cfd5e"
         }
       ]
     },
@@ -630,7 +630,7 @@
           "token": "core/policies/data-protection/",
           "kind": "tree",
           "files": 13,
-          "sha256": "99c24bf222c270603e2bbd585a55dbc0ef700fc2c8c655b15f4c34e217333163"
+          "sha256": "7ca0d167da8ec7ad5ca03c5a2d9992ed87c56a5c15ac0e35d212a7d76736ccf7"
         }
       ]
     },
@@ -660,7 +660,7 @@
           "token": "adapters/claude/hooks/",
           "kind": "tree",
           "files": 6,
-          "sha256": "584dcfa5728040bdba854d387bf5aae9caedadea8830fd6523be6ce36b2b72ff"
+          "sha256": "be55f45af0e399d63daef9bfa30e903bebc7710d157db62125ee9e2465633921"
         }
       ]
     },
@@ -675,7 +675,7 @@
           "token": "adapters/claude/hooks/",
           "kind": "tree",
           "files": 6,
-          "sha256": "584dcfa5728040bdba854d387bf5aae9caedadea8830fd6523be6ce36b2b72ff"
+          "sha256": "be55f45af0e399d63daef9bfa30e903bebc7710d157db62125ee9e2465633921"
         }
       ]
     },
@@ -693,7 +693,7 @@
           "token": "adapters/claude/hooks/",
           "kind": "tree",
           "files": 6,
-          "sha256": "584dcfa5728040bdba854d387bf5aae9caedadea8830fd6523be6ce36b2b72ff"
+          "sha256": "be55f45af0e399d63daef9bfa30e903bebc7710d157db62125ee9e2465633921"
         }
       ]
     },
@@ -711,7 +711,7 @@
           "token": "adapters/claude/hooks/",
           "kind": "tree",
           "files": 6,
-          "sha256": "584dcfa5728040bdba854d387bf5aae9caedadea8830fd6523be6ce36b2b72ff"
+          "sha256": "be55f45af0e399d63daef9bfa30e903bebc7710d157db62125ee9e2465633921"
         }
       ]
     },
@@ -739,7 +739,7 @@
           "token": "tools/spec/",
           "kind": "tree",
           "files": 5,
-          "sha256": "7f5878c0af5721ab1bf35d16efc987f1124eca17e3470ce451ff56afbdcefd73"
+          "sha256": "784ea20a7f555392de00baf42ada0c76271538e1133027920d492b2d0e2e36a4"
         }
       ]
     },
@@ -786,7 +786,7 @@
           "token": "tools/fetch/",
           "kind": "tree",
           "files": 2,
-          "sha256": "7dfd88ed0705d3079cb9e79623785736c31ecf54ad2f747db87a17053bbdd56d"
+          "sha256": "0e15128091b64230e402a304791d85a02d4ce0213209d0cdddcd01bf75615d05"
         }
       ]
     },
@@ -801,7 +801,7 @@
           "token": "tools/fetch/",
           "kind": "tree",
           "files": 2,
-          "sha256": "7dfd88ed0705d3079cb9e79623785736c31ecf54ad2f747db87a17053bbdd56d"
+          "sha256": "0e15128091b64230e402a304791d85a02d4ce0213209d0cdddcd01bf75615d05"
         }
       ]
     },
@@ -818,8 +818,8 @@
         {
           "token": "scripts/",
           "kind": "tree",
-          "files": 7,
-          "sha256": "336474606bb9c6f4b77692dbebefc6425500625100210b4aa3034c85850a62e2"
+          "files": 10,
+          "sha256": "13173138eaaadcdac96ff7b12c65aa5cd7eb8465952189dd9191bb466dcbdd5f"
         }
       ]
     },
@@ -845,7 +845,7 @@
           "token": "server/",
           "kind": "tree",
           "files": 46,
-          "sha256": "24669d68eeabe7729c9112e79223fbfce59b4a6b323bcc77252734661fb10025"
+          "sha256": "e19fe29186b2770dfbc667512bd718e1da85c05d7138710ebb457648aa9fa0b0"
         }
       ]
     },
@@ -860,7 +860,7 @@
           "token": "server/",
           "kind": "tree",
           "files": 46,
-          "sha256": "24669d68eeabe7729c9112e79223fbfce59b4a6b323bcc77252734661fb10025"
+          "sha256": "e19fe29186b2770dfbc667512bd718e1da85c05d7138710ebb457648aa9fa0b0"
         }
       ]
     },
@@ -889,7 +889,7 @@
         {
           "token": "server/UPDATE-RUNBOOK.md",
           "kind": "file",
-          "sha256": "63600ad64bec5f879627078a3169b9c25d4bcdcd4f74277fab61ec7e6e16d81d"
+          "sha256": "0230789ea416a7c588851bcba7b40c944018495aec9ec8ce34f65c6e10a89162"
         }
       ]
     },
@@ -906,7 +906,7 @@
         {
           "token": "server/UPDATE-RUNBOOK.md",
           "kind": "file",
-          "sha256": "63600ad64bec5f879627078a3169b9c25d4bcdcd4f74277fab61ec7e6e16d81d"
+          "sha256": "0230789ea416a7c588851bcba7b40c944018495aec9ec8ce34f65c6e10a89162"
         }
       ]
     },
@@ -924,7 +924,7 @@
           "token": "adapters/",
           "kind": "tree",
           "files": 18,
-          "sha256": "4dfa7eb799bb5645a747c18819e9165f0159536f536273f147490af5b4aa19ba"
+          "sha256": "74c3b427e6e46e10598d27fc51cf2d4acdb8e70a879eb786525cb31e47107ed7"
         }
       ]
     },
@@ -955,7 +955,7 @@
           "token": "server/sap-assets/",
           "kind": "tree",
           "files": 30,
-          "sha256": "4a7f03e437ebf3d530f04a43fab78a04c2fb9dea4f2a21e0c20109dcc536eb80"
+          "sha256": "e08090c2b25eeda6359727d3f0b664f554332dd306cba4ed1a482452296d7745"
         }
       ]
     },
@@ -974,7 +974,7 @@
         {
           "token": "core/project-context.md",
           "kind": "file",
-          "sha256": "405c04d986fe8a72ca7a02bc298ed6e2592851fd08de1625c555f208755df741"
+          "sha256": "072a0e5f5b4035b7a4f5e177ce81351263bbf41fd17cb35eea685d8e0a48be91"
         }
       ]
     },
@@ -1014,7 +1014,7 @@
         {
           "token": "LICENSE",
           "kind": "file",
-          "sha256": "867f7d16ac26e28938c47fec13bb8eeeee3271e3fa0304e269803c5595bc4134"
+          "sha256": "4d41fcd6ff85535dff7c8e68ef3cf18e1d673631fad0419cb23e0846898637c4"
         }
       ]
     },

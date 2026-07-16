@@ -11,15 +11,14 @@
 // exit 0 통과 / 1 계약 위반 / 3 private 유출(치명)
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { sha256, hashTarget } from './lib/target-hash.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --prov <dir>: provenance 디렉터리 override. 음성시험이 변조 스냅샷을 먹이면서
 // 목적지 자산은 실제 트리를 그대로 쓰기 위한 것. 기본은 interactive/provenance.
 const provIdx = process.argv.indexOf('--prov');
 const PROV = provIdx >= 0 ? path.resolve(process.argv[provIdx + 1]) : path.join(ROOT, 'provenance');
-const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 
 function load(name) {
   const f = path.join(PROV, name);
@@ -113,26 +112,7 @@ for (const r of rules) {
   }
 }
 
-// ── 5. 목적지 실재 + 내용 해시 ─────────────────────────────────────────────
-function hashTarget(token) {
-  const abs = path.join(ROOT, token);
-  if (!fs.existsSync(abs)) return null;
-  const st = fs.statSync(abs);
-  if (st.isFile()) return { kind: 'file', sha256: sha256(fs.readFileSync(abs)) };
-  const files = [];
-  (function walk(d) {
-    for (const ent of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
-      if (ent.name === 'node_modules' || ent.name === '.git') continue;
-      const full = path.join(d, ent.name);
-      if (ent.isDirectory()) walk(full);
-      else files.push(full);
-    }
-  })(abs);
-  files.sort();
-  const lines = files.map((f) => `${path.relative(abs, f).replaceAll('\\', '/')} ${sha256(fs.readFileSync(f))}\n`);
-  return { kind: 'tree', files: files.length, sha256: sha256(lines.join('')) };
-}
-
+// ── 5. 목적지 실재 + 내용 해시 (계약은 lib/target-hash.mjs 공유 — EOL 정규화) ──
 let checked = 0;
 let deferredSkipped = 0;
 for (const r of rules) {
@@ -145,7 +125,7 @@ for (const r of rules) {
       fail.push(`목적지 부재: ${r.pattern} → ${t.token}`);
       continue;
     }
-    const now = hashTarget(t.token);
+    const now = hashTarget(ROOT, t.token);
     if (!now) {
       fail.push(`목적지 소실: ${r.pattern} → ${t.token} (스냅샷 작성 시엔 존재)`);
       continue;
