@@ -1,9 +1,26 @@
 # HANDOFF — 프로젝트 전체 상태와 재개 지침
 
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
-> 작성 2026-07-10 · 최종 갱신 2026-07-15. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
+> 작성 2026-07-10 · 최종 갱신 2026-07-16. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
-> **현재 재개점 (2026-07-15)**: 트랙 A 재기준 v2 **사용자 택일 3건 확정(D-025)**.
+> **현재 재개점 (2026-07-16, D-027)**: 통합 보강의 실행순서 정본은
+> `docs/reference/designs/2026-07-16-integration-hardening-roadmap.md`다. D-025의
+> 실행 구조×SAP Policy 및 P4 소유권은 그대로 유지하지만, 아래 2026-07-15 재개점의
+> `candidate=6de63ba`와 “§11 덩어리 3부터 진행” 순서는 **역사 보존 상태이며 실행하지
+> 않는다**. 새 순서는 **S0 Track B 안전 봉인 → S1 clean final-harness v0.20.x candidate
+> 선정 → S2 Track A Policy/review/wrapper/bridge 구현 → S3 provenance·CI·vsp 검증 보강
+> → S4 독립 리뷰·disposable staging → S5 attended connected gate·파일럿 → S6 기능 확장**이다.
+> 당장 Claude가 수행할 범위는 설계서 §6의 **S0 한 단계만**이며 Direct/P0이다. SAP 연결,
+> `.harness/runs/**` 생성, 트랙 B 원본 `D:\claude for SAP\sc4sap-custom` 수정은 금지한다.
+> `scripts/run-track-a.ps1`와 승인된 new-style contract/manifest가 생기기 전까지 Engine은
+> 계속 fail-closed이고 raw `scripts/execute.py` 호출은 금지다. 상태 표기는 정확히
+> `attended-only`, `unattended=sealed`, `historical_rv4_classifier=open`,
+> `sap_mutation_boundary=unverified`(scope: reviewer + all attended children)를 유지한다.
+> **S1 착수 전 리마인더 (Fable 5 방향 검토, 2026-07-16)**: 새 v0.20.x candidate를 뽑을
+> 때 F1~F7/N1~N8 불변식(특히 **F1 = headless child의 MCP 차단**, DESIGN §3 백엔드 결정의
+> 근거)을 새 SHA에서 재측정해 S1 합격 기준 또는 lock v2 계약에 명시한다 —
+> `--strict-mcp-config` 형상이 v0.20에서 바뀌면 "Engine=vsp CLI만"의 근거가 흔들린다.
+> **이전 재개점 (2026-07-15, D-027로 실행순서 supersede — 역사 보존)**: 트랙 A 재기준 v2 **사용자 택일 3건 확정(D-025)**.
 > 실행 구조는 **Direct 기본 + Guided 명시 승격 + Engine attended 특수**, unattended는
 > sealed다. 단일 정본 설계서 = `docs/reference/designs/2026-07-15-track-a-rebase-v2.md`
 > (07-14 초안 대체); D-023 방향·D-024 정정 위에 D-025가 O1/O2/O3 trade-off를 봉인.
@@ -52,7 +69,7 @@
 > (AGENTS.md가 raw execute를 금지 — 알림 제거도 덩어리 5).
 > **권고**: 덩어리 3~5 완료 후 **새-컨텍스트 독립 리뷰 1회**(덩어리마다 말고 한 번에).
 > 근거 = 07-15 실증: 작성자 자체검증 18/18 뒤에도 독립 리뷰가 MAJOR 6건 검출.
-> **다음 액션**: §11 덩어리 3 → 4 → 5 → 독립 리뷰 → clean detached 6de63ba
+> **당시 다음 액션(D-027로 supersede — 실행 금지)**: §11 덩어리 3 → 4 → 5 → 독립 리뷰 → clean detached 6de63ba
 > test/staging install/복제본 migration → §12 G1~G14 + 파일럿 A/B + P4 T1~T5
 > (`READY_FOR_RELEASE`, 실제 release 없음) → 증거 exact SHA 바인딩 후 PROMOTE. 실제 전달
 > run만 사람 T6 release·T7 STMS import를 추가한다. 상세는 v2 설계서 + D-025 원문.

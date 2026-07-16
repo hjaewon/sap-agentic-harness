@@ -9,6 +9,14 @@
 > trade-off의 정본은 D-025다.
 > 07-14 v0.19.2 분석은 재실행하지 않았고, 허용된 `929685a..6de63ba` 커밋 델타만
 > 판독했다.
+>
+> **D-027 supersede (2026-07-16)**: 이 문서의 실행 구조 × SAP Policy·P4 소유권·안전
+> 상태 문자열은 그대로 유지된다. 다만 `candidate=6de63ba` 고정과 §10~§12의 6de63ba
+> staging→파일럿 실행 순서는 역사 근거로만 보존하며 **실행하지 않는다**. 현행 순서
+> 정본은 `docs/reference/designs/2026-07-16-integration-hardening-roadmap.md`다. 또한
+> 아래 `interactive/** 소스 diff 0` 불변식(:861·:992)의 baseline은 D-027 **S0**가
+> `interactive/` 절차를 의도적으로 수정한 이후로 재정의된다 — 로드맵 §10.4가 S0 이후
+> interactive byte를 새 staging baseline으로 삼는다.
 
 ---
 

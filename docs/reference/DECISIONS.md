@@ -552,3 +552,38 @@
   `docs/` 최상위는 PRD·ARCHITECTURE 2종만 남는다. CLAUDE.md 문서 계약 표의 경로 갱신.
   재기준 v2 §11의 `docs/DECISIONS.md` 행 경로 갱신(내용 계약은 무변경). 이 항목 이후
   모든 결정은 새 경로에 append한다.
+
+## D-027 · 2026-07-16 · 통합 보강 순서 재배치 — Track B 안전 봉인 → clean v0.20.x candidate → Track A Phase 5
+
+- **결정**: D-025의 실행 구조×SAP Policy, P4 소유권과 아래 안전 상태는 변경하지 않는다.
+  `attended-only`, `unattended=sealed`, `historical_rv4_classifier=open`,
+  `sap_mutation_boundary=unverified`(scope: reviewer + all attended children). 대신 기존
+  `candidate=6de63ba`와 “§11 덩어리 3→4→5부터 진행” 순서를 중단하고 다음 순서로
+  재배치한다. ① Track B의 create-program/create-object/release/reviewer 절차에 남은
+  auto/unattended 및 범용 기계경계 표현을 현재 Policy에 맞게 먼저 봉인한다. ② dirty
+  ownership 확인과 전체 release check를 통과한 clean final-harness v0.20.x exact SHA를
+  새 candidate로 선정한다. ③ 그 candidate 계약에 맞춰 lock v2, 리뷰 계약·검사기,
+  `scripts/run-track-a.ps1`, legacy deny와 단방향 `.sc4sap`→`.harness` bridge를 구현한다.
+  ④ sc4sap provenance·migration checker·CI assertion·vsp 테스트 이식성을 보강한다.
+  ⑤ 새-컨텍스트 독립 리뷰와 disposable staging을 통과한 뒤에만 attended connected
+  gate와 파일럿을 수행하고, 마지막에 기능·Domain Pack을 확장한다. 단계별 파일·명령·
+  합격·중단 조건의 정본은
+  `docs/reference/designs/2026-07-16-integration-hardening-roadmap.md`다.
+- **근거**: ① upstream v0.20 계열은 Direct zero-footprint와 전역 hook no-op 등 이
+  프로젝트가 별도로 보강하려던 표면을 이미 진전시켰으므로 v0.19.3에 새 코드를 쌓기 전
+  clean 후보 재선정이 필요하다. ② Track B의 과거 auto/unattended write·release 절차는
+  현재 P3/P4 사람 승인·DEV-only·소유권 계약과 충돌한다. ③ Track A와 Track B가 각각
+  `.harness`와 `.sc4sap` 상태·승인·리뷰 체계를 가지므로, 동기화 없이 기능부터 늘리면
+  동일 작업에 두 개의 완료 판정이 생긴다. ④ 현 migration coverage는 source commit을
+  고정하지 않고 private 경로를 순회하며, 일부 CI는 안전 계약을 출력만 하고 assert하지
+  않는다. 이 상태에서 connected pilot은 결함을 증폭한다.
+- **기각**: (a) 기존 6de63ba 덩어리 3부터 곧바로 계속 — 최신 상류 계약을 다시 덮어쓸
+  위험 때문에 기각. 6de63ba는 “당시 검토된 candidate, 미-staged·미-verified”라는 역사
+  사실만 보존한다. (b) 기능·팩부터 확장 — 완료 계약과 SAP 안전경계가 먼저다. (c)
+  `.sc4sap`↔`.harness` 양방향 동기화 — 충돌·재개 불일치 표면이 늘어나므로 기각하고
+  `.sc4sap` 기록을 입력 증거로 소비하는 단방향 bridge만 허용한다. (d) 두 트랙을 단순히
+  계속 분리 — 사용자에게 두 개의 승인·상태·완료 의미를 노출하므로 통합 목표에 맞지 않는다.
+- **영향**: HANDOFF의 2026-07-15 “다음 액션”은 역사 기록으로만 남고 실행 권위가 없다.
+  DESIGN v2.4는 기존 Phase 5·§16에 supersede 경고를 둔다. 당장 허용되는 첫 구현은
+  Direct/P0의 S0뿐이며 SAP 연결·쓰기·release/import와 `.harness/runs/**` 생성은 없다.
+  S0~S4의 오프라인 게이트가 모두 PASS하기 전 S5 connected 작업을 시작하지 않는다.

@@ -44,7 +44,10 @@ SAP ABAP 개발을 AI 하네스로 수행하는 **단일 레포 · 두 트랙**.
 ## 게이트 (구조 변경 시 항상 통과 상태 유지)
 
 ```bash
-node interactive/scripts/check-migration-coverage.mjs   # 미분류 0 (경고 exit 2는 비차단)
+# ⚠️ D-027: check-migration-coverage는 S3에서 private-safe 스냅샷 게이트로 교체하기
+#    전까지 실행 금지 — 외부 sc4sap-custom 전체를 재귀 순회하며 private 경로 이름을
+#    열거한다(R-004 정신 저촉). 정본 = 2026-07-16 로드맵 §9.2·§13.
+# node interactive/scripts/check-migration-coverage.mjs # (S3 교체 전 실행 금지)
 node interactive/scripts/check-links.mjs interactive     # 깨짐 0
 node interactive/server/verify-engine.mjs                # 번들 무결성 OK
 node interactive/scripts/smoke-mcp.mjs                   # tools 155 (무프로파일)
