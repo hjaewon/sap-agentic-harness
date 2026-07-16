@@ -587,3 +587,71 @@
   DESIGN v2.4는 기존 Phase 5·§16에 supersede 경고를 둔다. 당장 허용되는 첫 구현은
   Direct/P0의 S0뿐이며 SAP 연결·쓰기·release/import와 `.harness/runs/**` 생성은 없다.
   S0~S4의 오프라인 게이트가 모두 PASS하기 전 S5 connected 작업을 시작하지 않는다.
+
+## D-028 · 2026-07-16 · S1 — clean final-harness v0.20.x candidate 확정: `d4a0aeb` (6de63ba 폐기, verified는 v0.17.3 유지)
+
+- **결정**: 트랙 A의 새 candidate를 **`d4a0aeb0bdbcea008dbe2926006ee2e06eac2fc3`**
+  (final-harness, plugin v0.20.0, "fix: harden engine git and installer boundaries")로
+  확정한다. 상태는 **`selected`**이며 staged도 verified도 아니다.
+  `adapters/final-harness.lock.json`의 **verified는 v0.17.3(8f7f13b) 그대로 유지**한다 —
+  이 결정은 lock 파일을 바꾸지 않는다(lock v2는 S2-C 소관). 이전 candidate `6de63ba`는
+  D-027대로 "당시 검토된 candidate, 미-staged·미-verified" 역사 사실로만 남는다.
+  재기준 v2 §7.5가 명시를 요구한 "현재 dirty Git/install trust fixes 포함 여부"는
+  **포함**으로 확정한다.
+- **근거 (전부 실측)**:
+  ① **§7.3 선결 해소** — 상류 워킹트리의 미커밋 ~20파일을 사용자가 직접 커밋·푸시
+     (2026-07-16). 실측: HEAD=d4a0aeb, `git status --porcelain` 0줄,
+     `master...origin/master` 동기. D-024의 moving-target/dirty-pin 금지를 위반하지 않고
+     clean SHA를 고정할 수 있게 됐다.
+  ② **authoritative release check success=true** — `scripts/release_check.py`를
+     `--allow-missing-codex` 없이 기본 실행. 리포트: `authoritative:true`,
+     `codex_required:true`(실제 codex-cli **0.144.4** 탐지 → 플러그인 수명주기 E2E가
+     조용히 skip 불가), `python_versions:[3.9,3.12]`, `bridge_repeat:3`,
+     **`success:true`**, 9/9 run exit 0(`git-diff-check` 포함 = §7.4 7단계 동시 충족).
+     증거 sha256 = `85cda0a606d6ae7402acc3be8e7c29cd4cc3eb9c8d795548689dd95eb4efbfe8`.
+  ③ **clean detached 재현(§7.6)** — 별도 클론에서 `--detach d4a0aeb`(dirty 0)로 재실행 →
+     동일하게 `success:true`, 784 passed/3 skipped. **`secret.env` 부재 상태에서 통과** =
+     릴리스 게이트가 로컬 secret에 의존하지 않음이 실증됐다.
+  ④ **§7.5 구성 요건 기계 확인** — `git merge-base --is-ancestor`로 `5cd63ec`
+     (v0.20.0 Engine hook lifecycle)·`1209553`(bounded docs lifecycle) **둘 다 조상 YES**.
+  ⑤ **버전·changelog 정합(§7.4 3단계)** — plugin.json blob `e2bb26f2…` =
+     `"version":"0.20.0"`, CHANGELOG v0.20.0 항목 1~7이 이 트리를 서술(항목 7 =
+     d4a0aeb가 추가한 "Engine Git·설치 신뢰 경계 후속 봉합").
+  ⑥ **F1 실질 생존 확인** — DESIGN §3 백엔드 결정의 근거인 F1(headless child의 MCP
+     차단)이 candidate에서도 성립: Claude `--strict-mcp-config`(`execute.py:3008`·`:3566`),
+     Codex `mcp_servers.{key}.enabled=false`(`:3526`), 열거 실패 시 fail-closed
+     (`:760`·`:784`). v0.17.3 기준 좌표(2332-2333 등)는 무효이나 **실질은 유지** →
+     "Engine=vsp CLI만"의 근거가 흔들리지 않는다.
+- **정직 기록 (미검증·열린 항목 — 숨기지 않는다)**:
+  ① **RV4는 이 candidate에서도 열려 있다** — `authority-gate.py`(@d4a0aeb)에 **"vsp"
+     언급 0건**, `_deploy()`의 `deploy_actions`(`:371-376`)는 helm/vercel/netlify/
+     firebase/flyctl/wrangler/serverless/railway만 커버하고 vsp 부재. `:390`의
+     `head=="deploy" or action in deploy_actions.get(head,…)` 판정상 `vsp deploy`
+     (head=`vsp`)는 걸리지 않는다 → `deploy=false`여도 vsp deploy 미차단.
+     **v0.20 업그레이드는 RV4를 닫지 않는다.** 안전 문자열 4종(`attended-only`·
+     `unattended=sealed`·`historical_rv4_classifier=open`·`sap_mutation_boundary=unverified`,
+     scope: reviewer + all attended children)을 그대로 유지한다.
+  ② **symlink 탈출 차단은 이 머신에서 미검증** — 두 파이썬 모두 3건 skip, 전부
+     WinError 1314(심볼릭링크 권한 부족): `test_run_contract.py:223`·
+     `test_install_engine.py:454`·`:466`. 하필 installer/run_contract의 **symlink 탈출
+     거부** 테스트다(release_check는 환경 skip으로 판정해 success=true). S4 staging의
+     installer 경계 검사에서 재확인 대상.
+  ③ **Track B hook 보존·Direct zero router process는 계약 수준만 확인** — CHANGELOG
+     v0.20.0 항목 1·2가 선언하고 상류 자체 테스트가 커버하나, **우리 트랙 B 훅 3종에
+     대한 실증은 S4 disposable staging**이 소유한다. S1은 이를 판정하지 않았다.
+  ④ **F1~F7/N1~N8 전량 재측정은 아직** — F1만 실질 확인했다. lock `_comment`("엔진
+     갱신 시 F1~F7 재검증 후에만 lock을 올린다")대로 **lock 승격 전 전량 재측정 +
+     좌표 갱신**이 선결이다(S2-C lock v2 / S4).
+- **기각**: (a) **`1209553`으로 되감아 dirty 수정 제외** — 기각: d4a0aeb는 clean tip이고
+  강화 대상이 하필 **engine git + installer 경계**인데, 이는 S4 staging이 검사할 표면
+  그 자체다. 구 installer를 검증하는 것은 무의미하고 재작업을 부른다. (b) **`6de63ba`
+  유지** — D-027에서 이미 기각(최신 상류 계약 덮어쓰기 위험). (c) **`--allow-missing-codex`
+  로 통과** — 기각: 리포트가 `authoritative:false`가 되어 §7.7 중단 조건("비권위 또는
+  일부 lane SKIP")에 정면 저촉. (d) **candidate를 곧바로 staged/verified로 승격** —
+  기각: §7.6·§10.6대로 staged는 S4(독립 리뷰 + disposable staging) 통과 후, verified는
+  S5 파일럿·게이트 후 PROMOTE에서만.
+- **영향**: S2는 이 SHA 계약에 맞춰 lock v2·`scripts/run-track-a.ps1` wrapper·run-scoped
+  리뷰 계약·bridge를 구현한다. lock의 candidate/safety_state 필드 도입도 S2-C 소관이다.
+  주 머신에 새 Engine 설치는 **S4 전까지 금지**(로드맵 §5). SAP 연결은 S5 전까지 금지 —
+  이 결정 과정에서 **SAP 접속·write 0건**, 상류 레포 **수정 0건**(검사만; 리포트는
+  스크래치패드에 기록).

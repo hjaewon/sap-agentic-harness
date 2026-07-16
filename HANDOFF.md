@@ -16,8 +16,21 @@
 > reviewer + data-extraction P2)를 attended-only Policy에 정렬 — unattended 권장·release
 > 자동 실행·reviewer 기계격리 보편 주장 각 0건, 상태 모델 DRAFT/PROVISIONAL_WRITE/
 > COMPLETE/READY_FOR_RELEASE 반영, links·bundle 무변경, phases diff 0. Fable 5 방향 검토
-> 통과 후 착수. **다음 = S1**(clean v0.20.x candidate) — 단 S1은 상류 dirty 소유권 확인이
-> 선결(사용자 대기)이라 자동 진행하지 않고 사용자 승인 후 착수한다.
+> 통과 후 착수.
+> **S1 완료 (2026-07-16, D-028)**: 상류 dirty를 사용자가 커밋·푸시해 선결 해소 →
+> **CANDIDATE_SHA = `d4a0aeb0bdbcea008dbe2926006ee2e06eac2fc3`**(plugin v0.20.0)로 확정,
+> 상태 **`selected`**(staged/verified 아님). authoritative release check **success=true**
+> (codex 0.144.4 실탐지 · Py3.9+3.12 각 784 passed/3 skipped · bridge×3 · git-diff-check,
+> 9/9 exit 0, 증거 sha256 `85cda0a6…`) + **clean detached 클론 재현 통과**(`secret.env`
+> 부재에도 통과 = secret 비의존). `5cd63ec`(v0.20 hook lifecycle)·`1209553`(bounded docs)
+> 조상 YES. **F1 실질 생존 확인**(`--strict-mcp-config` `execute.py:3008`·`:3566`, codex
+> `enabled=false` `:3526`) → DESIGN §3 백엔드 근거 유지. **lock은 verified=v0.17.3
+> 그대로(미변경)**. ⚠️ **정직 기록**: RV4는 이 candidate에서도 **열림**(authority-gate.py에
+> vsp 언급 0건 — v0.20 업그레이드로 닫히지 않음) · symlink 탈출 차단 테스트 3건은 이
+> 머신 권한 부족으로 **미검증**(WinError 1314, S4 재확인) · 트랙 B 훅 보존·Direct
+> zero-footprint는 **계약 수준만**(실증은 S4) · F1~F7/N1~N8 **전량 재측정은 lock 승격 전
+> 선결**. **다음 = S2**(이 SHA 계약에 맞춘 lock v2 · `run-track-a.ps1` wrapper ·
+> run-scoped 리뷰 계약 · bridge) — Direct/P0, SAP 무접촉. 주 머신 Engine 설치는 S4 전까지 금지.
 > `scripts/run-track-a.ps1`와 승인된 new-style contract/manifest가 생기기 전까지 Engine은
 > 계속 fail-closed이고 raw `scripts/execute.py` 호출은 금지다. 상태 표기는 정확히
 > `attended-only`, `unattended=sealed`, `historical_rv4_classifier=open`,
