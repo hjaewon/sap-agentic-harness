@@ -105,3 +105,20 @@ This policy is one of four enforcement layers:
 4. **L4 (MCP server upstream)** — hardcoded blocklist in `mcp-abap-adt` (roadmap)
 
 Even with L3/L4 in place, agents MUST still follow L1 — it provides the user-facing refusal with category and alternatives, which the hook/server cannot produce cleanly.
+
+## Adapter Support for the Per-Request Gate (P2)
+
+"Policy permits an authorized extraction" is not the same as "this adapter
+mechanically brokers the per-request gate." Keep them distinct:
+
+- **Claude** — the `acknowledge_risk` gate is brokered by the L3 `PreToolUse` hook;
+  per-request approval (P2) is supported.
+- **Codex** — `GetTableContents` / `GetSqlQuery` are hard-disabled in the exposition;
+  row-data extraction is **unsupported**, not "approvable". Do not attempt to broker
+  approval where the tool is disabled.
+- **Antigravity** — the `excludeTools` path for these tools is **unverified** on the
+  current version; treat P2 as **unsupported** until measured.
+
+This does not relax the row-data blocklist above; it records where the per-request
+approval is mechanically available. The full adapter matrix is finalized in the
+2026-07-16 roadmap S5-B.

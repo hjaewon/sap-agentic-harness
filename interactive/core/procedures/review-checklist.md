@@ -15,7 +15,33 @@ You are the **reviewer**, running in a fresh context, separate from the worker t
 
 ## Reviewer Contract
 
-- **Read-only — mechanically enforced.** You judge; you never fix. The [sap-reviewer](../../agents/sap-reviewer.md) agent definition's `disallowedTools` blocks Write, Edit, Bash, NotebookEdit, and every SAP mutation tool (Create*/Update*/Delete*, ActivateObjects, PatchGuiStatus, ReleaseTransport, WriteTextElementsBulk, RunUnitTest, the Runtime profiling/execution tools, ReloadProfile) — the harness refuses the call, this is not a convention you have to remember. Fixes are applied by the worker after reading your result, then re-reviewed in another fresh context.
+- **Read-only by role.** You judge; you never fix. On the **Claude adapter** this is
+  mechanically enforced: the [sap-reviewer](../../agents/sap-reviewer.md) agent
+  definition's `disallowedTools` blocks Write, Edit, Bash, NotebookEdit, and every
+  SAP mutation tool (Create*/Update*/Delete*, ActivateObjects, PatchGuiStatus,
+  ReleaseTransport, WriteTextElementsBulk, RunUnitTest, the Runtime
+  profiling/execution tools, ReloadProfile). That is an **adapter-specific**
+  guarantee, not a universal one — the harness-neutral core does not by itself
+  mechanically block a reviewer on every host (see the adapter-defense note below),
+  so hold the read-only discipline regardless of host. Fixes are applied by the
+  worker after reading your result, then re-reviewed in another fresh context.
+- **Reviewer Policy profile: P0/P1 only.** You may read metadata / source / ATC /
+  health (P0 offline, P1 connected-read). You perform **no P2 row-data extraction,
+  no P3 write/execute, and no P4 transport operation — including transport reads**
+  (`ListTransports` / `GetTransport` / `ReleaseTransport` are all out of scope for
+  the reviewer). You never mutate the repo or SAP.
+- **Boundary state.** SAP-side reviewer isolation is not backed by a dedicated
+  machine boundary; the recorded state is `sap_mutation_boundary=unverified`
+  (D-025 O1). Your isolation rests on this contract plus fresh-context separation,
+  not on a proven SAP-write block.
+
+**Adapter-defense note (mechanical enforcement differs by host):**
+
+| Adapter | Reviewer read-only enforcement |
+|---|---|
+| Claude | Mechanical — `agents/sap-reviewer.md` `disallowedTools` blocks Write/Edit/Bash + all SAP mutation tools |
+| Codex | Role + adapter config (exposition / disabled tools); no core-level mutation block is asserted here |
+| Antigravity | Role + adapter config; `excludeTools` enforcement unverified on the current version |
 - **Input**: `.sc4sap/program/{PROG}/review-request.json` (see [schemas/review-request.schema.json](./schemas/review-request.schema.json)) — spec hash, target system (`sid`/`client`), transport, and the `objects[]` list with types. Also read `spec.md` and `interview.md` (for the paradigm and testing-scope decisions) from the same directory. If the request carries `environment_context`, apply the rules under "Environment context" below before counting findings.
 - **Output**: review-result JSON conforming to [schemas/review-result.schema.json](./schemas/review-result.schema.json), returned as your final response — you do not write `.sc4sap/program/{PROG}/review-result.json` yourself (see "Output — review-result.json" below; the worker validates and records it). Set `reviewed_spec_sha256` to the `spec_sha256` you received in the request (verify it against the actual `spec.md` first — on mismatch, FAIL immediately with a single MAJOR finding "spec changed after approval").
 - **Narrow context kit — do NOT bulk-load all conventions.** Each item below names the only convention file(s) to load while checking that item. Load them one item at a time; unload/ignore the rest. Preloading all 12 kits wastes context and dilutes judgment.

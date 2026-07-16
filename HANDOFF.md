@@ -12,6 +12,12 @@
 > → S4 독립 리뷰·disposable staging → S5 attended connected gate·파일럿 → S6 기능 확장**이다.
 > 당장 Claude가 수행할 범위는 설계서 §6의 **S0 한 단계만**이며 Direct/P0이다. SAP 연결,
 > `.harness/runs/**` 생성, 트랙 B 원본 `D:\claude for SAP\sc4sap-custom` 수정은 금지한다.
+> **S0 완료 (2026-07-16)**: 트랙 B mutation 절차(create-program·create-object·release·
+> reviewer + data-extraction P2)를 attended-only Policy에 정렬 — unattended 권장·release
+> 자동 실행·reviewer 기계격리 보편 주장 각 0건, 상태 모델 DRAFT/PROVISIONAL_WRITE/
+> COMPLETE/READY_FOR_RELEASE 반영, links·bundle 무변경, phases diff 0. Fable 5 방향 검토
+> 통과 후 착수. **다음 = S1**(clean v0.20.x candidate) — 단 S1은 상류 dirty 소유권 확인이
+> 선결(사용자 대기)이라 자동 진행하지 않고 사용자 승인 후 착수한다.
 > `scripts/run-track-a.ps1`와 승인된 new-style contract/manifest가 생기기 전까지 Engine은
 > 계속 fail-closed이고 raw `scripts/execute.py` 호출은 금지다. 상태 표기는 정확히
 > `attended-only`, `unattended=sealed`, `historical_rv4_classifier=open`,

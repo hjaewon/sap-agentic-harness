@@ -1,6 +1,6 @@
 ---
 name: create-object
-description: ABAP object creation procedure — confirm transport and package, then create, write the initial implementation, and activate
+description: ABAP object creation procedure — freeze package and transport intent, then create, write the initial implementation, and activate under attended P3 (MCP success = PROVISIONAL_WRITE, not completion)
 ---
 
 # create-object (wrapper)

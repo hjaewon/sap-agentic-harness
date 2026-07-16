@@ -33,6 +33,26 @@ Phase 0 (Version Preflight)
   → Phase 8 (Completion Report)
 ```
 
+## Track A Policy Alignment (attended-only)
+
+This procedure runs under the Track A execution Policy (see `AGENTS.md` and the
+2026-07-16 integration-hardening roadmap §6). Do not treat the pipeline as a
+self-completing unit — map its phases to that Policy:
+
+- **Direct scope (P0/P1) ends at the Spec Approval Gate.** Phase 0 → interview →
+  plan → spec → human approval produce a local **DRAFT**. No SAP write happens in
+  Direct.
+- **SAP write (Phase 4 onward) is P3 and attended.** Creating / updating /
+  activating objects requires a present human operator; it is never run
+  `unattended` (`unattended` is sealed — D-025 §7). Reaching a SAP-write or
+  completion request elevates the run to **Guided** — a present operator explicitly
+  proceeds; it does not auto-run on its own.
+- **`.sc4sap/**` files are working material, not completion proof.** A successful
+  MCP create / activation makes an object **PROVISIONAL_WRITE**, not done.
+- **COMPLETE requires both** an exact-subject fresh-context review **R-PASS** and a
+  vsp-backed **V-PASS** (source read-back · syntax · activate · unit · ATC). Absent
+  either, Phase 8 records **DRAFT** or **PROVISIONAL_WRITE** — never "완료 / done".
+
 ## Use When / Do Not Use When
 
 Use when:
@@ -332,12 +352,16 @@ User-facing message (verbatim template):
 Display this to the user:
 
 ```
-✅ Spec approved. Select execution mode:
+✅ Spec approved. Phase 4+ writes to SAP and is attended P3 — a human operator
+   stays present for the whole run. `unattended` execution is sealed (D-025 §7) and
+   is NOT offered here; these modes set only how often the run pauses for a prompt,
+   never whether a human is present.
 
-  [1] auto    — Phase 4–8 runs unattended (recommended for simple CRUD/Report)
-                 └ only pauses on error or a Phase 6 FAIL/BLOCKED verdict
+  [1] auto    — the present operator pre-authorizes the phase transitions; Phase
+                4–8 proceed without a per-phase prompt, still pausing on error or a
+                Phase 6 FAIL/BLOCKED verdict. The operator stays present throughout.
   [2] manual  — prompts "proceed to Phase N?" at every phase transition
-  [3] hybrid  — Phase 4 (implementation) runs auto; Phase 5–8 prompt per phase
+  [3] hybrid  — Phase 4 pre-authorized; Phase 5–8 prompt per phase
 
 Choice: 1 / 2 / 3  (default: 2)
 ```
@@ -438,8 +462,10 @@ Steps:
    - If the user approved a deviation from `spec.md` during this run, attach it under `environment_context.approved_deviations[]` with who/when/why it was approved, so the reviewer does not re-flag it as a violation.
    - `environment_context` is optional — omit it entirely when there is no outage or approved deviation to report.
 4. Run [review-checklist](./review-checklist.md) **in a fresh context** (new session/subagent per adapter guidance). The reviewer judges read-only; fixes are applied by the worker, then re-reviewed. Pass the reviewer the path to `review-request.json` and the [review-checklist](./review-checklist.md) itself.
-5. The reviewer has no write access (its `disallowedTools` blocks Write/Edit/Bash and every
-   SAP mutation call) — it returns its verdict as review-result JSON, conforming to
+5. The reviewer runs read-only — on the Claude adapter this is mechanical (its
+   `disallowedTools` blocks Write/Edit/Bash and every SAP mutation call); on other
+   adapters it is role + adapter config (see review-checklist.md's adapter-defense
+   note). It returns its verdict as review-result JSON, conforming to
    [schemas/review-result.schema.json](./schemas/review-result.schema.json), in its final
    response. **The worker** (back in this context) validates that JSON against the schema
    and, on success, writes it to `.sc4sap/program/{PROG}/review-result.json`. On
@@ -476,6 +502,25 @@ Adopt the [sap-writer](../personas/sap-writer.md) persona for this step.
 **Pre-condition (HARD GATE)**: ALL of the following must hold. If any is unmet, return to Phase 6 — do not write the report and do not tell the user the program is done:
 - `.sc4sap/program/{PROG}/review-result.json` exists with `verdict: "PASS"` and its `reviewed_spec_sha256` equals `approval.json.spec_sha256`.
 - `.sc4sap/program/{PROG}/verification.json` satisfies the gate matrix: `check_syntax = PASS AND activate = PASS AND unit_test ∈ {PASS, SKIPPED (with a reason recorded in evidence)} AND atc ∈ {PASS, SKIPPED (with a reason recorded in evidence)}`. Per [schemas/verification.schema.json](./schemas/verification.schema.json), `check_syntax`/`activate` cannot legally be `SKIPPED` — anything other than `PASS` on either fails this gate.
+
+**Completion state (report exactly one, per the Track A state model — see the
+"Track A Policy Alignment" section above):**
+
+- **DRAFT** — no SAP write happened (Direct ended at spec approval, or the run was
+  aborted before Phase 4). The report says a draft/spec exists — not that a program
+  was built.
+- **PROVISIONAL_WRITE** — objects were created/activated on DEV and the HARD GATE
+  above holds, but no vsp-backed **V-PASS** has been recorded yet. This is the
+  strongest state a Track B MCP-only session can reach. The report must NOT say
+  "완료 / done"; it states the objects are provisional pending vsp verification.
+- **COMPLETE** — the HARD GATE holds AND a vsp **V-PASS** (source read-back ·
+  syntax · activate · unit · ATC on the same objects) has been recorded. Only then
+  may the report state the program is complete. The exact-subject review `R-PASS`
+  (verdict `PASS` bound to `approval.json.spec_sha256`) plus the vsp `V-PASS` are
+  the two required stamps.
+
+An MCP success response, an ACTIVE flag, or a single `CheckSyntax` result alone
+never upgrades the state past PROVISIONAL_WRITE.
 
 Report inputs (from local state, no re-fetching):
 - Objects created + activation status

@@ -1,6 +1,6 @@
 ---
 name: create-object
-description: ABAP object creation procedure — confirm transport and package, then create, write the initial implementation, and activate
+description: ABAP object creation procedure — freeze package and transport intent, then create, write the initial implementation, and activate under attended P3 (MCP success = PROVISIONAL_WRITE, not completion)
 source:
   - sc4sap-custom/skills/create-object/SKILL.md
   - sc4sap-custom/skills/create-object/workflow-steps.md
@@ -9,11 +9,31 @@ source:
 
 # Create Object
 
-Guided ABAP object creation procedure for a single agent. Hybrid mode: confirm transport and package interactively, then auto-create, write initial code, and activate the object.
+ABAP object creation procedure for a single agent. Under the attended Track A
+Policy: freeze the target and transport intent interactively, then — with a present
+human operator (P3) — create, write initial code, and activate the object. Object
+creation is not auto-completed on a single confirmation; see "Track A Policy
+Alignment" below.
 
 ## Purpose
 
-Handle the full lifecycle of creating a new ABAP object: determine the right object type, confirm package and transport assignment, create the object via MCP, generate a well-structured initial implementation, and activate it — all in one workflow.
+Handle the full lifecycle of creating a new ABAP object: determine the right object type, confirm package and transport assignment, create the object via MCP, generate a well-structured initial implementation, and activate it. Direct produces a DRAFT; the SAP-write steps are attended P3 and their success is PROVISIONAL_WRITE (not completion).
+
+## Track A Policy Alignment (attended-only)
+
+This procedure is a Track A mutation path (see `AGENTS.md` and the 2026-07-16
+roadmap §6). Apply the Policy, not a one-shot auto-run:
+
+- **Freeze first (P0/P1).** Object type, name, DEV tier, package, object allowlist,
+  and transport intent are confirmed and frozen before any `Create*` call.
+- **Apply is P3 and attended.** `Create*` / `Update*` / `ActivateObjects` run only
+  with a present human operator. There is no unattended completion (`unattended` is
+  sealed — D-025 §7), and a single confirmation does not auto-complete the object.
+- **MCP success is PROVISIONAL_WRITE, not done.** An ACTIVE result from
+  `GetInactiveObjects` proves the object links — it is not a completion stamp.
+- **COMPLETE is reached by handoff to a Guided run** that records an exact-subject
+  review `R-PASS` and a vsp-backed `V-PASS` (source read-back · syntax · activate ·
+  unit · ATC). The Step 7 report labels the state accordingly.
 
 ## Use When
 
@@ -64,21 +84,25 @@ Handle the full lifecycle of creating a new ABAP object: determine the right obj
 
 If the user-provided name violates any rule, suggest a compliant alternative before proceeding.
 
-## Hybrid Mode
+## Attended Flow
 
-**Confirm** (interactive — human confirmation gate before any create):
+**Freeze** (interactive — human confirmation gate before any create; a present
+operator, DEV tier only):
 
 - Object name (enforce Z/Y prefix, max 30 chars, uppercase)
 - Package assignment (search with `GetPackage` if unsure)
-- Transport number (list open transports via `ListTransports`, or create new)
+- Transport intent (list open transports via `ListTransports`, or create new) —
+  freeze the request / intent before applying
 - Short description
 
-**Auto-execute** (after confirmation):
+**Apply** (attended P3 — only with the operator present; not an unattended
+auto-run):
 
-- Create object via appropriate MCP `Create*` tool
+- Create object via the appropriate MCP `Create*` tool
 - Generate initial implementation (skeleton with proper structure)
 - Activate the object
-- Verify activation via `GetInactiveObjects`
+- Verify activation via `GetInactiveObjects` — an ACTIVE result is
+  **PROVISIONAL_WRITE**, not completion (see "Track A Policy Alignment" above)
 
 ## Workflow Steps
 
@@ -188,7 +212,7 @@ Adopt the [sap-writer](../personas/sap-writer.md) persona for this step. Pure fo
 
 Render rules:
 
-- flow = "standard" AND activation_status = "ACTIVE": 5–7 line block — object name · type · package · transport · ACTIVE status + 1-line next-step hint (e.g., "Add methods with direct `UpdateClass` MCP calls" or "Release with the [release](release.md) procedure").
+- flow = "standard" AND activation_status = "ACTIVE": 5–7 line block — object name · type · package · transport · **state = PROVISIONAL_WRITE** (created + active on DEV; not yet COMPLETE) + 1-line next-step hint. Do NOT report the object as "완료 / done" from MCP success alone — COMPLETE requires a Guided run's exact-subject review `R-PASS` plus a vsp `V-PASS`. Next-step examples: "Add methods with direct `UpdateClass` MCP calls", "Hand off to a Guided run for R-PASS + vsp V-PASS to complete", or "Release with the [release](release.md) procedure".
 - flow = "standard" AND activation_status = "FAILED": error message + suggested fix + retry hint.
 - flow = "ecc-helper" AND activation_status = "ECC_DEFERRED": **use the MANDATORY format VERBATIM** (do NOT rephrase):
 
