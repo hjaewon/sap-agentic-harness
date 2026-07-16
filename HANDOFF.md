@@ -29,8 +29,28 @@
 > vsp 언급 0건 — v0.20 업그레이드로 닫히지 않음) · symlink 탈출 차단 테스트 3건은 이
 > 머신 권한 부족으로 **미검증**(WinError 1314, S4 재확인) · 트랙 B 훅 보존·Direct
 > zero-footprint는 **계약 수준만**(실증은 S4) · F1~F7/N1~N8 **전량 재측정은 lock 승격 전
-> 선결**. **다음 = S2**(이 SHA 계약에 맞춘 lock v2 · `run-track-a.ps1` wrapper ·
-> run-scoped 리뷰 계약 · bridge) — Direct/P0, SAP 무접촉. 주 머신 Engine 설치는 S4 전까지 금지.
+> 선결**.
+> **S2 완료 (2026-07-16, 커밋 1dc5e98·f1f3dfa·4d1bf50·+bridge)**: ⓐ **S2-A** — vsp Policy
+> 문서를 구 3모드에서 **role × P0~P4**로 재작성. **리뷰어 transport 조회 허용 오류 제거**
+> (AGENTS "including reads" 저촉), "무인 전환 가능" 삭제, RV4 역사/현재 분리, P2/P4
+> owner·승인 시점 exact화. VERIFY-PATTERNS에 role별 credential 분리(리뷰어 dot-source
+> 금지 = 유일한 기계 차단). ⓑ **S2-B** — 리뷰 계약을 **run 축 v2**로: `-RunId`,
+> `reviewed_source_sha256`(exact subject 핀, 소스 변경 시 stale), `boundary` 강제
+> (P0/P1·transport 0·`unverified` 부정직 표기 차단), **bookkeeping 제외를 좁힘**(구
+> `.harness/**` 통짜 제외를 두면 verdict 자신이 제외돼 등식형 검사가 공허해짐 —
+> 다른 run 침범도 걸림). 테스트 **23/23**. ⓒ **S2-C** — **lock v2**(verified v0.17.3
+> 보존 + candidate d4a0aeb `selected` + top-level safety_state + history에 6de63ba) +
+> **`scripts/run-track-a.ps1` 신설**(64 LEGACY_PHASE_DENY / 65 ENGINE_UNAVAILABLE /
+> 66 CONTRACT_MISSING / 67 LOCK_INVALID; **safety_state 변조도 67로 거부**) + 테스트
+> **16/16** + legacy 봉인(`legacy-phase-policy.json`·`LEGACY-CATALOG.md`). **실제 lock으로
+> 오늘 실행하면 65** — Engine은 의도적 fail-closed. ⓓ **S2-D** — 단방향 bridge
+> `promote-track-b-run.ps1`(.sc4sap read-only → `.harness/runs/<id>/` 동결) + 테스트
+> **17/17**(승격 후 `.sc4sap` **바이트 동일** 실측). **candidate는 여전히 `selected`**
+> (§8.4 — 코드가 생겼다고 staged 아님). ⚠️ **정직 기록**: raw execute 안내 제거는 **부분적** —
+> 출처 `.claude/hooks/session-start-context.py`가 **gitignore 대상**이라 이 머신 로컬만
+> 교정됐고 durable 제거의 소유자는 **S4**(installer 재설치) 또는 상류 기여다.
+> **다음 = S3**(provenance·CI·vsp 테스트 계약 보강) — Direct/P0, SAP 무접촉.
+> 주 머신 Engine 설치는 S4 전까지 금지.
 > `scripts/run-track-a.ps1`와 승인된 new-style contract/manifest가 생기기 전까지 Engine은
 > 계속 fail-closed이고 raw `scripts/execute.py` 호출은 금지다. 상태 표기는 정확히
 > `attended-only`, `unattended=sealed`, `historical_rv4_classifier=open`,
