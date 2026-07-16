@@ -190,6 +190,28 @@ CODE_FAIL**(폴백)이다.
 
 ## ④ 호출 규약
 
+### role별 credential 분리 (SAFETY-PROFILES §④의 운용판 — 2026-07-16, S2-A)
+
+**vsp는 role을 구분하지 않는다.** 셸에 자격증명이 있으면 누가 호출하든 SAP에 닿는다 —
+분리는 **셸(프로세스 환경) 단위로만** 성립한다.
+
+| role | dot-source | 규율 |
+|---|---|---|
+| **Reviewer** | **하지 않는다 (기본)** | 리뷰는 `git diff` + `src/` 정독으로 수행한다. 자격증명이 없으면 리뷰 세션의 SAP write는 §②·V1/V2대로 **ENV_FAIL로 기계 차단**된다 — 이것이 리뷰어 SAP-격리의 **유일한 기계적 수단**이다 |
+| Reviewer가 P1 라이브 재도출이 꼭 필요할 때 | **read 전용 프로파일을 리뷰어 셸에만** | 그 셸에서 `deploy`/`copy`/`source write`/`test`/`query`/`transport`(조회 포함)를 실행하지 않는다. **worker 셸과 같은 프로세스 환경을 공유하지 않는다** |
+| **Engine attended worker** | phase 계약이 요구할 때만, **엔진 기동 셸**에서 | 엔진은 기동 셸의 `os.environ`을 **phase 공통으로 승계**한다 — step별 분리가 엔진 밖에서 불가하므로 스코핑은 반드시 **기동 시점**에 한다. P0/P1 의도 run은 dot-source 없이 기동하고 레포 CWD에 `.env` 부재를 보장한다 |
+| **Human operator (P3)** | 해당 작업 셸에서만, **DEV tier 한정** | R-003. QA/PRD tier에 write 금지 |
+
+> **왜 셸 분리가 1차 방어인가**: 리뷰 스텝과 write 스텝이 같은 phase의 승계 env를
+> 공유하면 리뷰어도 `vsp deploy`를 성공시킬 수 있다(SAFETY-PROFILES §⑥-RV4 실측 —
+> E1/D3에서 동일 셸의 deploy가 `VERIFY_PASS`). 권한 설정 `deploy=false`로도 막히지
+> 않는다 — `authority-gate.py`가 vsp를 모르기 때문이고, 이는 candidate `d4a0aeb`에서도
+> 동일하다(D-028: gate에 "vsp" 언급 0건). 따라서 **자격증명을 주지 않는 것**이 유일한
+> 기계적 차단이며, 나머지는 관례·allowlist·에스코트다
+> (`sap_mutation_boundary=unverified`).
+
+### 공통 규약
+
 - **dot-source 선행 필수**: SAP 자격증명을 env var로 주입하려면 verify-sap.ps1
   호출 전에 `. scripts\vsp-env.ps1`(기본 프로파일 IDES-DEV) 또는
   `. scripts\vsp-env.ps1 -ProfileName <name>`을 먼저 실행한다. 이 스크립트는 시크릿을
