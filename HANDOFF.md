@@ -10,8 +10,10 @@
 > 않는다**. 새 순서는 **S0 Track B 안전 봉인 → S1 clean final-harness v0.20.x candidate
 > 선정 → S2 Track A Policy/review/wrapper/bridge 구현 → S3 provenance·CI·vsp 검증 보강
 > → S4 독립 리뷰·disposable staging → S5 attended connected gate·파일럿 → S6 기능 확장**이다.
-> 당장 Claude가 수행할 범위는 설계서 §6의 **S0 한 단계만**이며 Direct/P0이다. SAP 연결,
-> `.harness/runs/**` 생성, 트랙 B 원본 `D:\claude for SAP\sc4sap-custom` 수정은 금지한다.
+> **진척: S0·S1·S2 완료(2026-07-16, 커밋 4ad4a30~558dc27 — 전부 push됨). 다음 = S3.**
+> 상시 금지(모든 단계): SAP 연결·write(S5 전까지), 주 머신 Engine 설치(S4 전까지),
+> 트랙 B 원본 `D:\claude for SAP\sc4sap-custom` 수정, raw `python scripts/execute.py`,
+> `check-migration-coverage` 실행(S3 교체 전).
 > **S0 완료 (2026-07-16)**: 트랙 B mutation 절차(create-program·create-object·release·
 > reviewer + data-extraction P2)를 attended-only Policy에 정렬 — unattended 권장·release
 > 자동 실행·reviewer 기계격리 보편 주장 각 0건, 상태 모델 DRAFT/PROVISIONAL_WRITE/
@@ -30,7 +32,7 @@
 > 머신 권한 부족으로 **미검증**(WinError 1314, S4 재확인) · 트랙 B 훅 보존·Direct
 > zero-footprint는 **계약 수준만**(실증은 S4) · F1~F7/N1~N8 **전량 재측정은 lock 승격 전
 > 선결**.
-> **S2 완료 (2026-07-16, 커밋 1dc5e98·f1f3dfa·4d1bf50·+bridge)**: ⓐ **S2-A** — vsp Policy
+> **S2 완료 (2026-07-16, 커밋 1dc5e98·f1f3dfa·4d1bf50·558dc27)**: ⓐ **S2-A** — vsp Policy
 > 문서를 구 3모드에서 **role × P0~P4**로 재작성. **리뷰어 transport 조회 허용 오류 제거**
 > (AGENTS "including reads" 저촉), "무인 전환 가능" 삭제, RV4 역사/현재 분리, P2/P4
 > owner·승인 시점 exact화. VERIFY-PATTERNS에 role별 credential 분리(리뷰어 dot-source

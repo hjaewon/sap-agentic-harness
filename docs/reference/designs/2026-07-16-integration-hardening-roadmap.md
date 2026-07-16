@@ -783,22 +783,31 @@ sealed다.
 | S5 | G1~G14, pilots, T1~T5 | unattended, real release/import |
 | S6 | domain-specific tests | U-gate 없는 unattended |
 
-현재 유효한 로컬 명령:
+현재 유효한 로컬 명령 (S2 완료 시점 갱신, 2026-07-16):
 
 ~~~powershell
+# 오프라인 게이트
 node interactive/scripts/check-links.mjs interactive
 node interactive/server/verify-engine.mjs
 node interactive/scripts/smoke-mcp.mjs
 node interactive/scripts/smoke-mcp.mjs --exposition=readonly
-Set-Location engine
-npm test -- --runInBand
+Set-Location engine; npm test -- --runInBand
+
+# 트랙 A 테스트 (S2 산출 — 전부 SAP 무접촉)
+powershell -NoProfile -File scripts/test-check-review-verdict.ps1   # 23/23 run-scoped 리뷰 계약
+powershell -NoProfile -File scripts/test-run-track-a.ps1            # 16/16 wrapper 음성시험
+powershell -NoProfile -File scripts/test-promote-track-b-run.ps1    # 17/17 bridge
 ~~~
+
+> 테스트 하네스 함정(실측 2026-07-16): `powershell.exe -Command`는 자식 종료코드를
+> **0/1로 뭉갠다**. 64/65/66/67을 구분하는 스위트는 반드시 **`-File`**로 띄운다.
 
 현재 실행 금지:
 
 ~~~text
-node interactive/scripts/check-migration-coverage.mjs
-python scripts/execute.py <phase>
+node interactive/scripts/check-migration-coverage.mjs        (S3에서 private-safe 게이트로 교체 전)
+python scripts/execute.py <phase>                            (AGENTS.md 금지 — 진입은 run-track-a.ps1)
+scripts/run-track-a.ps1 ... 로 Engine 실제 기동               (candidate=selected — 오늘은 exit 65가 정상)
 vsp transport list/get without S5-A human-owned connected scope
 any GetTableContents/GetSqlQuery without per-call human approval
 any ReleaseTransport outside an actual delivery run
