@@ -1,24 +1,19 @@
-# Offline structure/integrity gates (backlog 5-13).
+# Offline structure/integrity/safety gates (S3 · D-027 로드맵 §9.7).
 #
-# Scope: repo-self-contained gates only. Two local-only gates are intentionally
-# EXCLUDED because they read state that does not exist on a runner:
-#   - check-migration-coverage.mjs -> scans the external frozen source repo
-#     sc4sap-custom (absolute local path SC4SAP_SRC); absent in CI -> crash.
-#   - doctor.mjs -> machine-local diagnostic (installed CLI versions, plugin
-#     install, hook wiring); meaningless on a runner.
-# Run both locally instead (CLAUDE.md gate list).
+# 원칙: 여기 있는 게이트는 **assert**한다. 상태를 출력만 하고 항상 exit 0인 게이트는
+# 안전 표면이 회귀해도 초록이라 없느니만 못하다(로드맵 §15).
 #
-# Track A's real verify (vsp against a live SAP system) also CANNOT run here -
-# the runner has no vsp binary, credentials, or network to the SAP box; those
-# stay local/escorted (HANDOFF 5-13).
+# S3에서 달라진 것:
+#   - check-migration-coverage(외부 sc4sap-custom 절대경로를 재귀 순회 → 러너에 없어 크래시,
+#     그래서 CI 제외였다)를 **폐기**하고 check-migration-snapshot으로 교체했다. 새 게이트는
+#     고정 스냅샷만 읽어 원본 없이 돌므로 **드디어 CI에서 실행된다**.
+#   - smoke-mcp가 관찰에서 assertion으로 바뀌었다.
+#   - 엔진 소스 테스트 599개와 provenance 검사를 편입했다.
 #
-# Two jobs, split by native runtime:
-#   node-gates (ubuntu) - check-links, verify-engine, smoke-mcp. Repo-self-
-#     contained (relative paths, vendored keyring incl. linux-x64-gnu prebuild).
-#   ps-gate (windows) - the review-verdict checker test drives the real checker
-#     the way the ENGINE does (Windows powershell.exe, backslash fixture paths);
-#     it is Windows-native by design, so it runs on windows-latest rather than
-#     being ported to Linux pwsh.
+# 여전히 CI에 없는 것 (러너에 존재하지 않는 상태를 읽음 — 로컬 전용):
+#   - doctor.mjs → 설치된 CLI 버전·플러그인 설치·훅 배선을 본다. 러너엔 무의미.
+#   - build-migration-snapshot / report-sc4sap-public-drift → 동결 원본이 필요하다.
+#   - Track A의 실제 verify(살아있는 SAP 대상 vsp) → 자격증명·네트워크 부재. 로컬/에스코트 전용.
 name: offline-gates
 
 on:
@@ -32,25 +27,93 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # check-engine-provenance가 `git log -1 -- engine/src …`로 번들 소스 최종 커밋을
+          # 찾는다. 얕은 클론(기본 depth 1)이면 이력이 없어 오판한다.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      - name: 이식 provenance (pinned snapshot · 원본 무접촉 · private 열거 0)
+        run: node interactive/scripts/check-migration-snapshot.mjs
+
+      - name: 이식 게이트 음성시험 (게이트가 실제로 거부하는지)
+        run: node interactive/scripts/test-check-migration-snapshot.mjs
+
       - name: check-links
         run: node interactive/scripts/check-links.mjs interactive
 
-      - name: verify-engine (bundle integrity)
+      - name: 번들 무결성 (VERSION ↔ integrity.json ↔ 바이트)
         run: node interactive/server/verify-engine.mjs
 
-      - name: smoke-mcp (tool surface)
+      - name: 엔진 provenance (소스 커밋 ↔ 번들)
+        run: node interactive/scripts/check-engine-provenance.mjs
+
+      - name: MCP 도구 표면 계약 (readonly mutation 0 · row-data · 어댑터 deny)
         run: node interactive/scripts/smoke-mcp.mjs
 
+      - name: 표면 게이트 음성시험
+        run: node interactive/scripts/test-smoke-mcp.mjs
+
+      - name: 플러그인 매니페스트 5종 ↔ 단일 정본
+        run: node interactive/scripts/gen-plugin-manifests.mjs --check
+
+      - name: git diff --check (공백/충돌 마커)
+        run: git diff --check HEAD
+
+  engine-tests:
+    # 엔진 소스 테스트 599개 (§9.3). 번들 바이트만 검사하면 소스 회귀를 못 본다.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: engine/package-lock.json
+
+      - name: install (engine)
+        working-directory: engine
+        # HUSKY=0: husky는 개발자 훅 설치용이라 러너에서 불필요.
+        # patch-package는 그대로 돌아야 한다 — 벤더링된 ADT 클라이언트 패치가 소스 계약의 일부다.
+        env:
+          HUSKY: '0'
+        run: npm ci
+
+      - name: unit/offline tests
+        working-directory: engine
+        # SAP 자격증명이 없으므로 integration 스위트는 스스로 skip한다
+        # (tests/test-config.yaml은 gitignore 대상 — 로컬에서도 부재 상태로 599 passed 실측).
+        run: npm test -- --runInBand
+
+      - name: 번들 재현 빌드 (같은 커밋 → 같은 바이트)
+        # devDeps(esbuild/tsc)가 깔린 이 잡에서만 가능하다.
+        run: node interactive/scripts/check-engine-provenance.mjs --rebuild
+
   ps-gate:
+    # Track A 검사기들은 ENGINE이 실제로 부르는 방식(Windows powershell.exe, 역슬래시 경로)
+    # 그대로 돌려야 의미가 있어 windows-latest다.
+    #
+    # ⚠️ 반드시 `-File`로 띄운다. `powershell -Command`는 자식 종료코드를 0/1로 뭉개는데
+    # (2026-07-16 실측 · 로드맵 §13), 이 스위트들은 64/65/66/67을 구분해야 한다.
+    # GitHub의 `shell: powershell`은 -Command라서 쓰지 않고 cmd에서 -File로 호출한다.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: review-verdict checker tests
-        shell: powershell
-        run: .\scripts\test-check-review-verdict.ps1
+      - name: review-verdict 검사기 테스트 (run-scoped 계약)
+        shell: cmd
+        run: powershell -NoProfile -File .\scripts\test-check-review-verdict.ps1
+
+      - name: run-track-a wrapper 음성시험 (legacy deny · fail-closed)
+        shell: cmd
+        run: powershell -NoProfile -File .\scripts\test-run-track-a.ps1
+
+      - name: Track B -> Guided bridge 테스트
+        shell: cmd
+        run: powershell -NoProfile -File .\scripts\test-promote-track-b-run.ps1
