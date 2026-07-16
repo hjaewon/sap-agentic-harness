@@ -47,13 +47,21 @@ SAP ABAP 개발을 AI 하네스로 수행하는 **단일 레포 · 두 트랙**.
 node interactive/scripts/check-migration-snapshot.mjs    # 이식 provenance (pin·원본 무접촉)
 node interactive/scripts/check-links.mjs interactive     # 깨짐 0
 node interactive/server/verify-engine.mjs                # 번들 무결성 OK
-node interactive/scripts/smoke-mcp.mjs                   # 도구 표면 불변식 assert
-node interactive/scripts/doctor.mjs                      # 3사 동기화 OK
+node interactive/scripts/check-engine-provenance.mjs     # 엔진 소스 커밋 ↔ 번들
+node interactive/scripts/smoke-mcp.mjs                   # 도구 표면 계약 assert
+node interactive/scripts/gen-plugin-manifests.mjs --check # 매니페스트 5종 ↔ 단일 정본
+node interactive/scripts/doctor.mjs                      # 3사 동기화 OK (로컬 전용)
 ```
 
+게이트 자체의 음성시험(게이트가 정말 거부하는지): `test-check-migration-snapshot.mjs`
+17/17 · `test-smoke-mcp.mjs` 16/16. 위 게이트는 doctor를 뺀 전부가 CI에서도 돈다.
+
 `check-migration-coverage`는 **S3에서 폐기**됐다(D-027 §9.2) — 외부 sc4sap-custom을
-재귀 순회하며 private 경로 이름을 열거해 R-004 정신에 저촉했다. 대체 =
-`check-migration-snapshot`(원본 무접촉, CI 포함).
+재귀 순회하며 private 경로 이름을 열거해 R-004 정신에 저촉했고, 러너엔 그 절대경로가
+없어 CI 실행 자체가 불가였다. 대체 = `check-migration-snapshot`(원본 무접촉, CI 포함).
+
+원본이 있는 머신에서만 (CI 아님): `build-migration-snapshot.mjs`(스냅샷 재생성) ·
+`report-sc4sap-public-drift.mjs`(상류 public 드리프트 리포트 — 자동 이식 0).
 
 git push는 사용자 판단 — 커밋까지만 하고 push는 요청 시에만.
 

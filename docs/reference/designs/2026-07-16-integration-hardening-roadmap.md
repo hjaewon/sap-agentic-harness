@@ -783,29 +783,48 @@ sealed다.
 | S5 | G1~G14, pilots, T1~T5 | unattended, real release/import |
 | S6 | domain-specific tests | U-gate 없는 unattended |
 
-현재 유효한 로컬 명령 (S2 완료 시점 갱신, 2026-07-16):
+현재 유효한 로컬 명령 (S3 완료 시점 갱신, 2026-07-16):
 
 ~~~powershell
-# 오프라인 게이트
+# 오프라인 게이트 — doctor를 뺀 전부가 CI에서도 돈다
+node interactive/scripts/check-migration-snapshot.mjs        # 이식 provenance (원본 무접촉)
 node interactive/scripts/check-links.mjs interactive
-node interactive/server/verify-engine.mjs
-node interactive/scripts/smoke-mcp.mjs
-node interactive/scripts/smoke-mcp.mjs --exposition=readonly
-Set-Location engine; npm test -- --runInBand
+node interactive/server/verify-engine.mjs                    # VERSION↔integrity↔바이트
+node interactive/scripts/check-engine-provenance.mjs         # 엔진 소스 커밋 ↔ 번들
+node interactive/scripts/smoke-mcp.mjs                       # 도구 표면 계약 assert
+node interactive/scripts/gen-plugin-manifests.mjs --check    # 매니페스트 5종 ↔ 단일 정본
+node interactive/scripts/doctor.mjs                          # 3사 동기화 (로컬 전용)
+Set-Location engine; npm test -- --runInBand                 # 599 passed / 5 skipped
+
+# 게이트의 음성시험 — 게이트가 '통과만 하는 장식'이 아님을 증명
+node interactive/scripts/test-check-migration-snapshot.mjs   # 17/17
+node interactive/scripts/test-smoke-mcp.mjs                  # 16/16
 
 # 트랙 A 테스트 (S2 산출 — 전부 SAP 무접촉)
 powershell -NoProfile -File scripts/test-check-review-verdict.ps1   # 23/23 run-scoped 리뷰 계약
 powershell -NoProfile -File scripts/test-run-track-a.ps1            # 16/16 wrapper 음성시험
 powershell -NoProfile -File scripts/test-promote-track-b-run.ps1    # 17/17 bridge
+
+# 동결 원본이 있는 머신에서만 (CI 아님 · allowlist pathspec만 → private/ 미질의)
+node interactive/scripts/build-migration-snapshot.mjs [--check]     # 스냅샷 재생성/재현성
+node interactive/scripts/report-sc4sap-public-drift.mjs             # 상류 드리프트 리포트
+node interactive/scripts/check-engine-provenance.mjs --rebuild      # 번들 재현 빌드(devDeps 필요)
 ~~~
 
 > 테스트 하네스 함정(실측 2026-07-16): `powershell.exe -Command`는 자식 종료코드를
 > **0/1로 뭉갠다**. 64/65/66/67을 구분하는 스위트는 반드시 **`-File`**로 띄운다.
+> GitHub Actions의 `shell: powershell`도 -Command라서 ps-gate는 cmd에서 -File로 부른다.
+
+> 의도된 변경을 반영하는 법(스냅샷은 손으로 고치지 않는다):
+> 도구 표면이 바뀌면 `smoke-mcp.mjs --update` · 이식 자산이 바뀌면
+> `build-migration-snapshot.mjs` · 매니페스트/자산 수가 바뀌면
+> `gen-plugin-manifests.mjs` · 엔진을 올리면 `verify-engine.mjs --refresh` +
+> VERSION의 source commit 갱신. 각각 사유를 커밋 메시지에 남긴다.
 
 현재 실행 금지:
 
 ~~~text
-node interactive/scripts/check-migration-coverage.mjs        (S3에서 private-safe 게이트로 교체 전)
+node interactive/scripts/check-migration-coverage.mjs        (S3에서 폐기 — 대체: check-migration-snapshot)
 python scripts/execute.py <phase>                            (AGENTS.md 금지 — 진입은 run-track-a.ps1)
 scripts/run-track-a.ps1 ... 로 Engine 실제 기동               (candidate=selected — 오늘은 exit 65가 정상)
 vsp transport list/get without S5-A human-owned connected scope

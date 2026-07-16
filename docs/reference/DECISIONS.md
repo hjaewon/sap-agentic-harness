@@ -655,3 +655,75 @@
   주 머신에 새 Engine 설치는 **S4 전까지 금지**(로드맵 §5). SAP 연결은 S5 전까지 금지 —
   이 결정 과정에서 **SAP 접속·write 0건**, 상류 레포 **수정 0건**(검사만; 리포트는
   스크래치패드에 기록).
+
+## D-029 — S3: 이식 provenance를 live walk에서 pinned snapshot으로, 게이트를 관찰에서 assertion으로 (2026-07-16)
+
+- **맥락**: D-027 로드맵 §9. S3는 기능 추가가 아니라 **부품 사이 계약**을 닫는 단계다.
+  실측한 결함 넷: ① `check-migration-coverage`가 동결 원본 전체를 파일시스템 재귀
+  순회하며 `private/` 엔트리 이름을 열거(R-004 정신 저촉) + 러너엔 절대경로가 없어 CI
+  실행 불가(이식 검증이 CI 사각지대) ② `integrity.json.sourceCommit`이 상류 fork 약식
+  SHA `1964959`를 **우리 엔진 소스 커밋인 양** 기록 + VERSION이 "working tree,
+  uncommitted"로 끝남(재현 불가 선언) ③ `smoke-mcp`가 도구 수를 출력만 하고 **언제나
+  exit 0** — 안전 표면이 회귀해도 CI는 초록 ④ plugin version이 매니페스트 5곳에 복제.
+
+- **결정**:
+  ① **이식 검증 = pinned snapshot**. 원본 커밋 `a95eb0f`(이식일 2026-07-10 시점 원본
+     HEAD, `git rev-list -1 --until=... HEAD`로 재현) + 명시 public root allowlist 36 +
+     tracked public 인벤토리 487 + 목적지 내용 해시를 `interactive/provenance/`에 고정.
+     게이트는 **원본에 접근하지 않는다** → CI에서 실행된다. 구 게이트의 실질(미분류 0·
+     죽은 규칙 0·목적지 실재)은 pinned inventory에 대해 오프라인 재현하고, **목적지
+     내용 해시 드리프트**를 새로 추가했다. 원본 접근은 생성기/드리프트 리포터 2종에만
+     격리하고 둘 다 allowlist pathspec만 써서 `private/`를 **질의조차 하지 않는다**.
+  ② **분류 정의의 정본은 코드**, 스냅샷은 그 기록. 게이트가 둘의 일치를 assert한다.
+     정본을 JSON에 두면 mutation 도구를 execution 목록에 숨겨 "readonly mutation 0"을
+     통과시킬 수 있다 — 분류 변경은 리뷰에 보이는 코드 변경을 거치게 한다.
+  ③ **게이트마다 음성시험을 동반**한다(17/17 · 16/16). 통과만 하는 게이트는 없느니만
+     못하다(로드맵 §15).
+  ④ **핀은 재검증한 뒤에만 올린다**(compatibility). 설치 버전을 확인한 것만으로 핀을
+     따라 올리면 근거 없이 동작을 주장하게 된다. 잰 것과 재지 않은 것을 함께 적는다.
+
+- **기각**: (a) **구 게이트 유지 + private 예외 처리** — 기각: 순회 자체가 private 이름을
+  열거하므로 사후 필터는 무의미하고, CI 사각지대도 남는다. (b) **원본 현재 HEAD를 핀으로**
+  — 기각: 이식은 2026-07-10에 했고 원본 public 영역은 그 뒤 45건 변경됐다. 현재 HEAD를
+  핀하면 이식하지 않은 지점에서 이식했다고 주장하게 된다. (c) **드리프트 45건을 S3에서
+  판정** — 기각: S3 범위는 기계를 만드는 것이다. 판정 없이 전부 `pending`으로 두는 쪽이
+  정직하다(`pending` = 아직 안 봤다, ≠ 이식 불필요). (d) **자산 수를 순진하게 계수** —
+  기각: 실측 결과 순진한 계수가 **틀렸다**(industry/country의 README.md, modules/common은
+  팩이 아님). 구 설명의 "14+BC · 14 industries · 16 countries"가 오히려 정확했고 실제
+  오류는 "11 procedures" 하나(절차 16 중 11만 스킬 노출)였다. → 기계로 세되 **무엇을
+  세는지는 사람이 정한다**. (e) **deferred 목적지도 해시** — 기각: 게이트가 건너뛰는
+  해시라 churn만 낳고, 하필 `scripts/`(게이트 도구 자신의 디렉터리)를 가리켜 스크립트
+  한 줄 고칠 때마다 동결 원본 있는 머신에서만 재생성 가능해진다(자기참조).
+
+- **실측 정직 기록**:
+  ① **번들은 재현된다** — `0b304de7`에서 재빌드 시 sha256 `53ac1ac5…`·8275580 bytes로
+     배포본과 바이트 동일, tracked `dist/` 변경 0. §9.3의 "재현 불가 시 build env를 별도
+     lock에 기록"은 **불발동**.
+  ② **readonly는 실행 무풍지대가 아니다** — `RuntimeRunClassWithProfiling`(ABAP 실행)과
+     `RuntimeCreateProfilerTraceParameters`가 readonly exposition에 노출된다. 리뷰어는
+     P0/P1만 해야 하는데(AGENTS) exposition이 그것을 강제하지 않으며 차단은 에이전트/
+     어댑터 층에만 있다. `sap_mutation_boundary=unverified`와 정합. 게이트는 이 2종을
+     등재 고정해 **새 실행 도구의 유입만** 잡는다(현 상태를 고친 것이 아니다).
+  ③ **row-data는 default·readonly 양쪽 모두 노출** → P2는 exposition으로 막히지 않는다.
+     기계 차단면은 어댑터 deny(Codex `disabled_tools` / AG `excludeTools` / Claude
+     allow-list 제외)뿐이고 그 위에 호출별 사람 승인이 있다.
+  ④ **파일 수 508/494/487은 서로 다른 계약**(walk+untracked / 원본 변동 후 walk / pin의
+     tracked public). 487만 재현 가능하다.
+  ⑤ **EOL이 게이트를 깨뜨릴 뻔했다** — 이 레포엔 `.gitattributes`가 없고
+     `core.autocrlf=true`라 Windows는 CRLF·Linux(CI)는 LF로 체크아웃된다. 원시 바이트를
+     해시하면 같은 내용이 러너에서 다른 해시가 된다(실측 `8d2abc86…` vs `98ce9943…`).
+     → 해시 계약을 `lib/target-hash.mjs` 한 곳에 두고 **바이트 수준** CRLF→LF 정규화
+     (`toString('utf8')` 왕복은 잘못된 UTF-8을 U+FFFD로 바꿔 해시가 거짓말을 한다).
+  ⑥ **vsp**: HEAD `0b03ef2`·binary sha256·크기 전부 lock과 일치. `go test ./...`는 4개
+     패키지 FAIL이나 전부 캐시/레코딩/jseval 영역이라 lock의 command_contract 밖이다
+     (로드맵 §3.5가 예고한 3원인과 정확히 일치). 계약의 오프라인 명령 2종은 lock
+     binary로 **직접 실측**해 PASS(lint→Warning/exit 0 · parse→exit 0 · execute→gated).
+     나머지는 SAP 접속 필요라 S5 전까지 미판정. 분리 기록은 `vsp.lock.json.test_status`.
+  ⑦ **RV4는 여전히 열림**, `unattended=sealed` 유지. 안전 문자열 4종 무변경.
+
+- **영향**: CI가 3게이트 → 3잡(node-gates 9단계 · engine-tests 599 · ps-gate 3스위트)로.
+  `check-migration-coverage` 폐기. 엔진 provenance/매니페스트/표면 스냅샷은 이제 **의도된
+  변경일 때만** 각자의 `--update`/`--refresh`/재생성으로 갱신하며 사유를 커밋에 남긴다.
+  **vsp-custom 수리 착수는 사용자 결정 사항**이라 S3에서 하지 않았다(§9.6 — /tmp→t.TempDir·
+  recording ID·CGO0 SQLite·Windows lane). 이 단계에서 SAP 접속·write **0건**, 동결 원본
+  **수정 0건**(읽기만), private 경로 열거 **0건**.

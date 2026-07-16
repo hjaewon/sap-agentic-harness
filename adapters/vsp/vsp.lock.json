@@ -77,5 +77,90 @@
   "not_used": [
     "MCP server mode (vsp = CLI 전용, DESIGN.md §3)",
     "--offline MCP flag"
-  ]
+  ],
+  "test_status": {
+    "_": "go test ./... 분리 기록 (S3 · D-027 로드맵 §9.6). vsp 전체 test가 green이 아니어도 현 lock binary는 쓸 수 있다. 다만 실패를 숨기지 않고 계약 관련/무관으로 나눠 적는다.",
+    "measured": "2026-07-16 · CGO_ENABLED=0 · windows/amd64 · go1.26.4 · HEAD 0b03ef2(=verified_commit) · 작업트리 clean",
+    "scope_note": "vsp-custom을 읽기만 했다. 소스 수정 0 — 수리는 별도 repo 작업이며 사용자 결정 사항이다(§9.6).",
+    "lock_command_contract": {
+      "verdict": "PASS",
+      "_": "계약에 등재된 명령 중 오프라인 2종은 이 lock binary로 직접 실측했고, 나머지는 SAP 접속이 필요해 S5 이전에는 판정하지 않는다.",
+      "measured_offline": [
+        "vsp lint --file <abap> → Warning 1건 보고 후 exit 0 (계약: Error만 비-0 exit) ✅",
+        "vsp parse --file <abap> → exit 0 ✅",
+        "vsp execute --help → \"Requires write permissions\" (계약: gated write, 기본 차단) ✅"
+      ],
+      "not_measured_needs_sap": [
+        "system info",
+        "atc",
+        "test",
+        "health",
+        "deploy",
+        "copy",
+        "install abapgit",
+        "execute 실행"
+      ],
+      "supporting_packages_green": [
+        "pkg/abaplint (lint 구현)",
+        "internal/mcp",
+        "pkg/config",
+        "pkg/dsl",
+        "pkg/graph",
+        "pkg/ctxcomp",
+        "embedded/*",
+        "pkg/scripting",
+        "pkg/ts2abap",
+        "pkg/wasmcomp",
+        "pkg/llvm2abap",
+        "internal/lsp"
+      ]
+    },
+    "unrelated_known_failures": {
+      "verdict": "FAIL (계약 밖)",
+      "_": "4개 패키지가 실패하지만 전부 캐시/레코딩/jseval 영역이라 lock의 command_contract가 다루는 명령과 무관하다. 로드맵 §3.5가 예고한 3원인과 정확히 일치한다.",
+      "items": [
+        {
+          "package": "cmd/vsp",
+          "tests": [
+            "TestAuditCache_PutGetRoundtrip",
+            "TestAuditCache_Persistence",
+            "TestAuditCache_TTLExpiry",
+            "TestAuditCache_FilesystemIsolation",
+            "TestQueryCodeRefsCached_EquivalenceAndMemoization",
+            "TestQueryCodeRefsCached_EmptyResultCached"
+          ],
+          "cause": "CGO0에서 go-sqlite3 부재 — audit 캐시. 계약 명령(lint/parse/deploy/atc/test)과 무관",
+          "roadmap_fix": "CGO0에서 명시 skip 또는 pure-Go backend 채택"
+        },
+        {
+          "package": "pkg/cache",
+          "tests": [
+            "Example_withSQLite"
+          ],
+          "cause": "동상 — CGO0 × go-sqlite3",
+          "roadmap_fix": "동상"
+        },
+        {
+          "package": "pkg/adt",
+          "tests": [
+            "TestListRecordings",
+            "TestListRecordingsWithFilter",
+            "TestRecordingFilterMinSteps",
+            "TestRebuildIndex"
+          ],
+          "cause": "레코딩 ID를 timestamp 단독으로 만들어 빠른 생성 시 중복 — 세션 레코딩/리플레이 기능이며 계약 명령과 무관. ⚠️ 다만 패키지 자체는 ADT 구현체라 FAIL 표시가 계약 실패로 오독되기 쉽다",
+          "roadmap_fix": "timestamp 단독이 아닌 충돌 불가 식별자로 교체"
+        },
+        {
+          "package": "pkg/jseval",
+          "tests": [
+            "TestOracleComparison"
+          ],
+          "cause": "Windows에서 하드코딩된 /tmp 경로 사용",
+          "roadmap_fix": "t.TempDir()로 교체"
+        }
+      ]
+    },
+    "pending_user_decision": "vsp-custom 별도 repo 수리 착수(§9.6: /tmp→t.TempDir · recording ID · CGO0 SQLite 처리 · CGO0 Windows production lane · 필요 시 CGO1 cache lane)는 사용자 결정 사항이라 S3에서 착수하지 않았다."
+  }
 }
