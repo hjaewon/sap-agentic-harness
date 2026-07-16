@@ -16,7 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { sha256, hashTarget } from './lib/target-hash.mjs';
+import { sha256, hashTarget, hashContent } from './lib/target-hash.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROV = path.join(ROOT, 'provenance');
@@ -157,7 +157,13 @@ const mapped = rules.map((r) => {
   const deferred = /deferred/i.test(r.note);
   const tokens = [...r.note.matchAll(/`([^`]+)`/g)].map((m) => m[1]).filter((t) => !t.includes('*'));
   rec.deferred = deferred;
+  // deferred 규칙은 목적지를 **해시하지 않는다**. 게이트가 어차피 건너뛰는데 해시만
+  // 기록하면 두 가지가 깨진다: ① `scripts/sap-profile-cli.mjs → scripts/`(deferred)이
+  // 하필 게이트 도구 자신이 사는 디렉터리라, 스크립트를 한 줄 고칠 때마다 스냅샷이
+  // churn하고 그 재생성은 동결 원본이 있는 머신에서만 가능해진다(자기참조).
+  // ② 아직 이식하지 않은 자산에 내용 핀을 박는 것은 의미가 없다.
   rec.targets = tokens.map((t) => {
+    if (deferred) return { token: t, deferred: true };
     const h = hashTarget(ROOT, t);
     return h ? { token: t, ...h } : { token: t, missing: true };
   });
@@ -212,11 +218,13 @@ const outFiles = [
 ];
 
 if (CHECK_ONLY) {
+  // 내용 비교(EOL 정규화). 원시 바이트로 비교하면 autocrlf가 CRLF로 체크아웃한
+  // 클린 클론에서 거짓 '불일치'가 난다 — 재현성 검사가 EOL 관습을 검사하면 안 된다.
   let drift = 0;
   for (const [f, content] of outFiles) {
-    const cur = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : null;
-    if (cur !== content) {
-      console.log(`❌ 재생성 불일치: ${path.relative(ROOT, f)}`);
+    const cur = fs.existsSync(f) ? fs.readFileSync(f) : null;
+    if (cur === null || hashContent(cur) !== hashContent(Buffer.from(content, 'utf8'))) {
+      console.log(`❌ 재생성 불일치: ${path.relative(ROOT, f)}${cur === null ? ' (파일 없음)' : ''}`);
       drift++;
     } else console.log(`✅ 재현: ${path.relative(ROOT, f)}`);
   }

@@ -755,7 +755,7 @@
       "targets": [
         {
           "token": "tools/extract/",
-          "missing": true
+          "deferred": true
         }
       ]
     },
@@ -771,7 +771,7 @@
       "targets": [
         {
           "token": "tools/extract/",
-          "missing": true
+          "deferred": true
         }
       ]
     },
@@ -817,9 +817,7 @@
       "targets": [
         {
           "token": "scripts/",
-          "kind": "tree",
-          "files": 10,
-          "sha256": "13173138eaaadcdac96ff7b12c65aa5cd7eb8465952189dd9191bb466dcbdd5f"
+          "deferred": true
         }
       ]
     },
