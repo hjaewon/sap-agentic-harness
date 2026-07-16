@@ -9,6 +9,15 @@
   },
   "_how_to_record": "node interactive/scripts/report-sc4sap-public-drift.mjs 로 목록을 뽑고, 판단한 경로만 dispositions에 <원본경로>: { disposition, note, decided } 로 추가한다. 이식을 실제로 했다면 MIGRATION-MANIFEST 갱신 + build-migration-snapshot.mjs 재생성으로 pin을 옮기는 것이 정본 절차다.",
   "pinned_commit": "a95eb0fe962adfb12fae6840213d85391b7703a8",
-  "_status_2026_07_16": "S3 시점 실측: pin 이후 public 변경 45건 전부 pending. S3 범위는 드리프트 '기계'를 만드는 것이지 45건을 판정하는 것이 아니므로 의도적으로 비워 둔다. 판정은 별도 작업.",
-  "dispositions": {}
+  "dispositions": {},
+  "_measurement": {
+    "_": "드리프트 수는 **비교 대상 상류 HEAD의 함수**다. HEAD 없이 수만 적으면 재현 불가능하고, 실제로 이 세션 중에도 상류가 두 번 움직여 45→55로 바뀌었다(2026-07-16 S4 독립 리뷰 지적 M2).",
+    "measured_at": "2026-07-16",
+    "pinned_commit": "a95eb0fe962adfb12fae6840213d85391b7703a8",
+    "measured_against_upstream_head": "9781ff3ee34504ae5d32147656d81c06fdc22674",
+    "public_changes": 55,
+    "pending_copy_or_transform": 41,
+    "note": "S3 착수 시점(상류 HEAD 2a0ee531…)에는 45건이었다. 상류가 2026-07-16에 커밋을 더 쌓아 55가 됐다 — 핀 게이트는 영향받지 않는다(핀은 a95eb0f 고정). 재현: node interactive/scripts/report-sc4sap-public-drift.mjs",
+    "scope": "S3 범위는 드리프트 기계를 만드는 것이지 55건을 판정하는 것이 아니다. 판정은 별도 작업이며 기록 없는 항목은 전부 pending으로 보고된다."
+  }
 }

@@ -35,6 +35,15 @@ export function hashContent(buf) {
   return sha256(out.subarray(0, n));
 }
 
+// tree hash에서 제외하는 디렉터리 — **자산이 아닌 것**만.
+// `.sc4sap`이 여기 있는 이유 (2026-07-16 S4 staging 실측): 전역 활성 sc4sap 플러그인이
+// 레포 안에서 기동하며 `.sc4sap/state/last-tool-error.json` 같은 런타임 상태를 남긴다.
+// 이것들은 git 미추적이라 **개발 머신에만 있고 클린 클론·CI에는 없다**. 해시에 섞으면
+// 스냅샷이 "이 머신에서만 통과하는" 기록이 된다 — 실제로 clean clone에서 adapters/가
+// 18 vs 16 파일로 갈려 게이트가 깨졌다. MIGRATION-MANIFEST도 `.sc4sap/**`를
+// "MCP 런타임 상태 … 자산 아님"으로 이미 분류하고 있다.
+const NOT_ASSET_DIRS = new Set(['node_modules', '.git', '.sc4sap']);
+
 // 목적지 토큰(파일 또는 디렉터리) → { kind, sha256, files? }
 // 디렉터리는 정렬된 '<relpath> <contenthash>\n' 라인들의 해시(tree hash).
 export function hashTarget(root, token) {
@@ -45,7 +54,7 @@ export function hashTarget(root, token) {
   const files = [];
   (function walk(d) {
     for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
-      if (ent.name === 'node_modules' || ent.name === '.git') continue;
+      if (NOT_ASSET_DIRS.has(ent.name)) continue;
       const full = path.join(d, ent.name);
       if (ent.isDirectory()) walk(full);
       else files.push(full);

@@ -1024,7 +1024,8 @@ docs/superpowers/specs/…lite-design.md  ← 설계 스냅샷 (정본은 intera
    갱신은 UPDATE-RUNBOOK 절차로만, 갱신 시 capability diff + gen-permissions 재생성 필수.
 4. 실데이터 조회 2종(GetTableContents/GetSqlQuery)은 어떤 하네스에서도 자동 승인 금지.
 5. 매니페스트·게이트 우선: 구조 변경 시 `node interactive/scripts/check-links.mjs interactive`와
-   `node interactive/scripts/check-migration-coverage.mjs`가 항상 통과 상태여야 한다.
+   `node interactive/scripts/check-migration-snapshot.mjs`가 항상 통과 상태여야 한다
+   (구 `check-migration-coverage`는 S3에서 폐기 — D-029).
 6. superpowers 플러그인은 사용자가 의도적으로 비활성화함 — 재활성화 제안 불필요.
 7. **굵직한 결정(대안을 기각한 선택)은 `docs/reference/DECISIONS.md`에 append** — 수정·삭제 금지,
    정정도 새 항목으로. 이 문서(HANDOFF)를 재작성할 때 결정의 '왜'가 소실되지 않게 하는 장치다.
@@ -1033,10 +1034,14 @@ docs/superpowers/specs/…lite-design.md  ← 설계 스냅샷 (정본은 intera
 
 ```bash
 cd "D:/claude for SAP/sap-agentic-harness"
-node interactive/scripts/check-migration-coverage.mjs   # 미분류 0 이어야 함
+# 오프라인 게이트 (S3 기준 — doctor를 뺀 전부가 CI에서도 돈다)
+node interactive/scripts/check-migration-snapshot.mjs    # 이식 provenance (원본 무접촉)
 node interactive/scripts/check-links.mjs interactive     # 깨짐 0 이어야 함
 node interactive/server/verify-engine.mjs                # 번들 무결성 OK
-node interactive/scripts/smoke-mcp.mjs                   # tools 155 (무프로파일)
+node interactive/scripts/check-engine-provenance.mjs     # 엔진 소스 커밋 ↔ 번들
+node interactive/scripts/smoke-mcp.mjs                   # 도구 표면 계약 assert
+node interactive/scripts/gen-plugin-manifests.mjs --check # 매니페스트 5종 ↔ 단일 정본
+node interactive/scripts/doctor.mjs                      # 3사 동기화 (로컬 전용)
 node interactive/adapters/codex/toggle-plugin.mjs status # Codex 활성 상태
 codex plugin list | grep sap-agentic                     # Codex 설치 상태
 agy plugin list                                          # AG 임포트 상태

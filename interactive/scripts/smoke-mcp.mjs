@@ -57,7 +57,11 @@ const classify = (n) => {
   if (EXECUTION.includes(n)) return 'execution';
   if (SERVER_CONTROL.includes(n)) return 'server-control';
   if (ROW_DATA.includes(n)) return 'row-data';
-  if (MUTATION_RE.test(n) && !/^Runtime/.test(n)) return 'mutation';
+  // `Runtime` 접두어를 벗겨서도 판정한다. MUTATION_RE가 ^앵커라 `Runtime*`는 구조적으로
+  // 매칭되지 않는데, 그러면 가상의 `RuntimeDeleteFoo`가 조용히 read로 분류된다.
+  // (구 `!/^Runtime/` 가드는 애초에 걸릴 수 없는 것을 막던 사역이었다 — S4 리뷰 N2.)
+  // 실제 Runtime 읽기 도구는 벗겨도 List/Get/Analyze로 시작해 매칭되지 않는다.
+  if (MUTATION_RE.test(n) || MUTATION_RE.test(n.replace(/^Runtime/, ''))) return 'mutation';
   return 'read';
 };
 

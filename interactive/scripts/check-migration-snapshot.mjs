@@ -145,7 +145,13 @@ console.log(`pin           : ${src.source?.pinned_commit?.slice(0, 12)}… (${sr
 console.log(`public roots  : ${(src.public_root_allowlist ?? []).length} (private 열거 0건)`);
 console.log(`inventory     : ${entries.length} files, hash 재계산 ${recomputed === src.inventory?.hash ? 'OK' : 'FAIL'}`);
 console.log(`rules         : ${rules.length} (미분류 ${unmatched.length} · expect_zero ${rules.filter((r) => r.expect_zero).length})`);
-console.log(`목적지        : 해시 검사 ${checked}건 (deferred 스킵 ${deferredSkipped}건)`);
+// deferredSkipped는 **목적지 토큰** 수다. deferred 규칙 수와 다를 수 있다
+// (예: `scripts/sap-option-tui.mjs`는 목적지 토큰이 0개라 규칙은 deferred지만 스킵 카운트에 안 잡힌다).
+// 둘을 함께 찍어 '3 vs 4'가 불일치로 오독되지 않게 한다.
+const deferredRules = rules.filter((r) => r.deferred).length;
+console.log(
+  `목적지        : 해시 검사 ${checked}건 (deferred 목적지 ${deferredSkipped}개 스킵 · deferred 규칙 ${deferredRules}개)`
+);
 for (const n of note) console.log(`  ℹ ${n}`);
 
 // 같은 목적지 토큰을 가리키는 규칙이 여럿이면(예: server/) 동일 메시지가 중복된다 — 접는다.

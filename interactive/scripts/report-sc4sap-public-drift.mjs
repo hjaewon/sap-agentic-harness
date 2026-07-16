@@ -91,7 +91,11 @@ for (const line of raw.split('\n').filter(Boolean)) {
 }
 
 // private 유출 방어 — allowlist pathspec이면 구조적으로 불가하나, 그래도 assert한다.
-const leaked = changes.filter((c) => PRIVATE_ROOTS.some((r) => c.path.startsWith(r)));
+// rename의 **원본 경로(from)까지** 본다: `-M`이 붙어 있어 R 상태가 나올 수 있고, 그때
+// 도착지만 검사하면 원본 경로가 검사를 통과해 버린다(심층방어 — 현재 rename 0건).
+const leaked = changes.filter((c) =>
+  PRIVATE_ROOTS.some((r) => c.path.startsWith(r) || (c.from && c.from.startsWith(r)))
+);
 if (leaked.length) {
   console.error(`❌ 치명: private 경로가 diff에 등장 (${leaked.length}건) — 중단`);
   process.exit(3);
@@ -131,7 +135,8 @@ if (AS_JSON) {
 
 console.log(`pin      : ${PIN.slice(0, 12)}… (${src.source.pinned_commit_date})`);
 console.log(`public HEAD: ${head.slice(0, 12)}…`);
-console.log(`public 변경: ${changes.length}건 (allowlist ${ROOTS.length}개 root · private 질의 0)\n`);
+console.log(`public 변경: ${changes.length}건 (allowlist ${ROOTS.length}개 root · private 질의 0)`);
+console.log(`※ 이 수는 위 public HEAD 기준이다 — 상류가 움직이면 바뀐다. 기록할 땐 HEAD를 함께 적을 것.\n`);
 
 const byDisp = {};
 for (const c of changes) (byDisp[c.disposition] ??= []).push(c);

@@ -111,5 +111,6 @@ interactive/scripts/               게이트 스크립트 (check-links·check-mi
 
 ## 검증 게이트 (구조 변경 시 항상 통과 유지)
 
-구조 변경 시 게이트 5종(coverage·links·verify-engine·smoke-mcp·doctor)을 통과 상태로
-유지한다 — 명령 목록 정본은 HANDOFF §9 (CLAUDE.md 게이트 절과 동일, 여기 중복 게재 안 함).
+구조 변경 시 게이트(migration-snapshot·links·verify-engine·engine-provenance·smoke-mcp·
+plugin-manifests·doctor)를 통과 상태로 유지한다 — 명령 목록 정본은 **CLAUDE.md 게이트 절**
+(여기 중복 게재 안 함). `coverage`는 S3에서 폐기됐다(D-029 — `check-migration-snapshot`으로 대체).

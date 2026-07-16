@@ -50,8 +50,8 @@
         {
           "token": "adapters/claude/",
           "kind": "tree",
-          "files": 13,
-          "sha256": "3daa17e8cfcfe98bd3029233bdae3b7b2f19e94bf84b1a1f09dcb27929ddb0b6"
+          "files": 11,
+          "sha256": "80a85ba4aa60ae81a29576b409f4955560b0526a843bdde2442862afdb9f0875"
         }
       ]
     },
@@ -921,8 +921,8 @@
         {
           "token": "adapters/",
           "kind": "tree",
-          "files": 18,
-          "sha256": "80ffdbaf9cb69bef0190722cd9d224de1538337cca066c13c990c43282ae63e4"
+          "files": 16,
+          "sha256": "57a2a1fa3baf8666ac75138c401ff9ffcdb85a02b5f2ee2af80903dcb5050b77"
         }
       ]
     },
