@@ -455,10 +455,13 @@ packs/modules/fi/
 
 ### Phase 3: Gated Deploy
 - spec 승인 게이트 + package allowlist + transport 정책 (SAFETY-PROFILES.md)
+- **새-컨텍스트 리뷰 게이트** — write 직전 별도 리뷰 스텝(엔진 무수정, 캡슐 해시
+  바인딩·캡슐본 배포). 스펙 정본 = `docs/reference/designs/2026-07-17-phase3-review-gate.md`
 - deploy → activate → **drift check(§6)** → ATC → unit test verify 체인 구축
 - 환경 실패 분류 규약 적용 (§9)
 - **완료 기준**: 객체 1건이 전체 체인을 통과해 SAP에 존재하고, drift check가 SE80 수동
-  변경을 실제로 검출함을 1회 실증
+  변경을 실제로 검출함을 1회 실증 + **리뷰 게이트가 기계 검증을 통과한 실제 결함을
+  차단한 실증 1회** (리뷰 게이트 스펙 위임 6)
 
 ### Phase 4: Domain Packs
 - FI/CO부터 이중 구조(§12)로 시작, sc4sap 지식 선별 이식

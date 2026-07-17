@@ -74,8 +74,21 @@
 > + 사용자 확정) · write 직전 배치 + PASS 해시 바인딩 · 리뷰어 = 설정값(기본
 > opus급, Codex 환경은 설정 교체) · 기술 7건 위임 확정. 미결 = 엄격도(질문 ②)
 > · BLOCKED 사람 개입(질문 ③) → 커버리지 승인 → 스펙 초안 → Codex 교차 리뷰 →
-> 승인·기록. **재개 정본 = `docs/reference/handoffs/phase3-review-gate-design.md`**
-> (스펙 기록 시 삭제).
+> 승인·기록. ~~재개 정본 = `docs/reference/handoffs/phase3-review-gate-design.md`~~
+> **→ ✅ ③ 완료 (2026-07-17, 스펙 승인·기록)**: 미결 2건 사용자 확정 — 엄격도
+> 표준안(MAJOR 이상 1 = FAIL · MINOR만 = PASS+기록 · 수정 revision 3회 =
+> BLOCKED) / BLOCKED = 런 종료+보고서(산출물 보존, 능동 알림·대기질의 기각).
+> Codex 교차 리뷰 B15(codex exec, 판정 "수정 필요" MAJOR 11·MINOR 4) 반영 v2 —
+> **수용 15건**(수정 루프 = 엔진 표준 스텝 재시도로 실현(도달 불가 모순 해소) ·
+> 리뷰 캡슐 도입(캡슐 해시 바인딩+캡슐본 배포 = TOCTOU 제거) · write 프로파일
+> 분리(워커 read-only tier) · 래퍼 결정적 판정(verdict 불신) · INTERNAL_ERROR
+> catch-all·기동 총량 5 hard budget · AC 13종), **비수용 2건 사유 기록**(서버측
+> CAS·비용 회계 — 과잉). **스펙 정본 =
+> `docs/reference/designs/2026-07-17-phase3-review-gate.md`**, 핸드오프 파일
+> 삭제, DESIGN §13 Phase 3 완료 기준에 실증 1회 편입. 다음 = harness-docs
+> Mode B 흡수 → harness-plan(Phase 3 계획) — 둘 다 제안만, 사용자 승인 후 착수.
+> 부수: 백로그 5-12 신설(claude-final v0.20 개편 대응 대기 — lock 절연 유지,
+> 완료 전 플러그인 업데이트 금지).
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성
@@ -500,6 +513,10 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   편입(방식은 그때 설계 — 엔진 verifier 프롬프트 강화 vs 별도 리뷰 스텝 vs 사람 셰퍼딩
   유지 중 택1). **그 전까지 무인 write는 켜지 않는다** — 나머지 선결 2건(0b 마커 실측,
   §14-2 drift 실측)과 함께 Phase 3의 3대 선결.
+  → ✅ **설계 확정 (2026-07-17)**: 별도 리뷰 스텝 채택(엔진 무수정), 스펙 정본 =
+  `docs/reference/designs/2026-07-17-phase3-review-gate.md` (harness-design 인터뷰
+  + Codex B15 교차 리뷰 반영 v2, 사용자 승인). **편입 구현은 harness-plan 계획 후**
+  — 구현 완료 전까지 무인 write 금지는 그대로 유효.
 - 엔진 유지 판단 자체의 반증 조건 5종(마커 분류 실패·CDS/RAP lint 차단력 0·drift 불성립·
   BLOCKED 과반 지속·수요 부재)은 로드맵 Phase 완료 기준과 일대일 — 별도 결정 불요,
   로드맵 완주가 곧 판정 (검토 전문은 세션 기록).
