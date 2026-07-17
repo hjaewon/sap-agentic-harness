@@ -1,0 +1,9 @@
+{
+  "policy_version": "1.0",
+  "schema_version": "trackB-review-result-v1",
+  "reviewer": { "command": ["node", "tests/mocks/reviewer-pass.mjs"],
+                "model": "opus", "timeout_ms": 600000 },
+  "limits": { "revision_limit": 3, "infra_retry_limit": 2 },
+  "env_allowlist": ["PATH", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE",
+                    "APPDATA", "LOCALAPPDATA", "PROGRAMFILES", "COMSPEC"]
+}
