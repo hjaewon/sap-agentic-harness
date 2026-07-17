@@ -89,6 +89,22 @@
 > Mode B 흡수 → harness-plan(Phase 3 계획) — 둘 다 제안만, 사용자 승인 후 착수.
 > 부수: 백로그 5-12 신설(claude-final v0.20 개편 대응 대기 — lock 절연 유지,
 > 완료 전 플러그인 업데이트 금지).
+> **→ Phase 3-review-gate 런 (2026-07-17, attended bridge — 워커=메인 세션
+> 위임: 스텝 0~4 sonnet·스텝 5 상속)**: **스텝 0~4 완주**(각 1회 시도·verify
+> 실패 0·엔진 커밋) — `scripts/review-gate/` 게이트 도구 일식 구현 완료(캡슐·
+> 판정·상태·게이트 조립 mock E2E·배포 래퍼, node:test **42/42**). 부수 발견:
+> tdd-guard가 `<dir>/tests/` 관례 미인식 → 스텝별 1줄 shim 우회(근본 수리는
+> 후속 후보). **스텝 5 스파이크 = blocked (정직 반증)**: Part A 실 리뷰어
+> 헤드리스 왕복 **성공**(claude -p·opus·strict-mcp-config·disallowedTools,
+> PASS 파이프라인 exit 0 — command는 config.json 정본화, 2.1.212 실측) /
+> Part B **vsp CLI deploy 경로가 SAP_TIER·SAP_READ_ONLY를 미소비 실측**
+> (lock v2.38.1-91 소스 판독 + 더미 호스트 오프라인 프로브, **SAP write 0**) —
+> 스펙 §5-4 "read-only 프로파일 = 기계 강제" 전제 반증. transport 동반 write는
+> transportable-edit 게이트가 클라이언트측 거부 실증, **$TMP 로컬 write는 게이트
+> 범위 밖**. 보완 3안(① vsp CLI에 SAP_READ_ONLY 배선+lock 재검증 ② 무인 워커
+> env에 SAP 자격증명 미공급 구조 ③ 서버측 권한 분리) **사용자 결정 대기** —
+> 결정·재실증 전까지 무인 write 금지(5-11) 유효. 상세:
+> `phases/3-review-gate/`(run-summary·spike-evidence·step5-output).
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성
