@@ -504,6 +504,22 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   BLOCKED 과반 지속·수요 부재)은 로드맵 Phase 완료 기준과 일대일 — 별도 결정 불요,
   로드맵 완주가 곧 판정 (검토 전문은 세션 기록).
 
+### 5-12. claude-final v0.20 개편 대응 — 대기 (트리거: 상류 공사 완료 시) [2026-07-17 등재]
+
+- **상황**: final-harness(claude-final)가 v0.20 "하나의 루프, 세 강도" 개편 진행 중
+  (`D:\AI PROJECT\claude-final\docs\reference\design-v0.20-one-loop-three-strengths.md`).
+  이 프로젝트는 lock(v0.17.3, D-018)으로 절연 — 공사와 무관하게 현행 작업 계속.
+  **공사 완료 전 final-harness `/plugin update` 금지**(반제품 스킬 유입 방지).
+- **완료 시 작업 (세션 1회, 반나절 추정)**: ① 플러그인 업데이트 ② §15-F F1~F7
+  재검증 + `adapters/final-harness.lock.json` 갱신 — v0.20 엔진 변경은 R-01~R-04
+  최소 수리뿐("Engine 대개편 금지"가 설계안 스코프 가드에 명시)이라 F 표면 접촉
+  적을 전망 ③ **R-01 보증 등급 재표기(enforced→advisory)와 DESIGN.md §5 "엔진
+  불변식" 목록 대조** — 강등 항목 있으면 §5 문구 동반 정정(이 프로젝트 3층 방어의
+  "엔진 tier 게이트"는 vsp 쪽이라 무관) ④ DESIGN.md §11 스킬 매핑(harness-direct
+  신설·harness-loop Guided 강화 반영) + AGENTS.md·`.harness/PROTOCOL.md` 레인 문구
+  소폭. 강화된 Guided(계약+evidence) 채택 여부는 그때 선택 — 현행 루프는 무수정
+  동작.
+
 ### 5-6. 다국어 README — ✅ 결정 완료 (2026-07-11): 재작성 안 함
 
 - 개인 도구라 다국어 README 소비자 없음 + 코어(영어)·운영 문서(한국어) 역할 분담으로
