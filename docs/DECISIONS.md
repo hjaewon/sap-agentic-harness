@@ -255,3 +255,26 @@
 - **영향**: 3종은 수행 레벨만 담고 메타는 포인터로 위임 (각 300줄 이하, 최상위
   docs 합산 48KB 이하 유지 — 신설 후 합산 약 34KB). D-012의 "DECISIONS.md
   1종" 조항은 메타 레벨에 한해 유지.
+
+## D-021 · 2026-07-17 · Phase 3 리뷰 게이트 = 별도 리뷰 스텝 (엔진 무수정) — 캡슐 해시 바인딩 + fail-closed (5-11 설계 종결)
+- **결정**: 무인 SAP write 직전마다 새-컨텍스트 read-only AI 리뷰어 게이트를 별도
+  리뷰 스텝(verify=래퍼 exit code)으로 편입. 판정 = MAJOR 이상 1개 FAIL · MINOR만
+  PASS+기록 · 수정 revision 3회 BLOCKED(런 종료+보고서, 산출물 보존). PASS는 리뷰
+  캡슐(소스+manifest+스펙+기계검증 결과+정책·모델·스키마 버전+대상 시스템) 해시에
+  바인딩하고 배포는 캡슐본에서(TOCTOU 제거). 수정 루프는 엔진 표준 스텝 재시도로
+  실현(리뷰 스텝 재시도 예산 ≥ 5). 워커 스텝 vsp 프로파일 = read-only tier, write
+  프로파일은 배포 래퍼 경로만. 스펙 정본 =
+  `docs/reference/designs/2026-07-17-phase3-review-gate.md` (Codex B15 반영 v2).
+- **근거**: 기계 검증(문법·ATC·활성화) 전부 통과한 시맨틱 결함은 리뷰만
+  차단(INNER vs LEFT JOIN — HANDOFF §4.1 실증). 무인 체인의 완료 판정이 기계
+  verify뿐이라는 5-11 공백 해소. Fable+Codex 독립 수렴 + 사용자 확정(엄격도·
+  BLOCKED) + Codex 교차 리뷰 B15(MAJOR 11·MINOR 4) 반영.
+- **대안 기각**: ① 엔진 포크 수정(내장 _run_review 게이트화) — D-018 lock 위반·
+  상태머신 재설계 부담 ② 사람 셰퍼딩 유지 — 무인 가치 반감 ③ MINOR도 FAIL —
+  BLOCKED 빈발로 무인 가치 반감 ④ 재시도 5회 — 3회 초과 반복 실패는 구조 문제
+  ⑤ 능동 알림·대기-질의 — 장치 과잉·엔진 수정 필요 ⑥ vsp 서버측 조건부
+  write(CAS) — 현 위협 모델 대비 과잉(스펙 Deferred).
+- **영향**: DESIGN §13 Phase 3 완료 기준에 "리뷰 게이트가 실제 결함을 차단한
+  실증 1회" 추가(반영 완료). 구현은 harness-plan 계획 후 — 구현·실증 전까지
+  무인 write 금지(5-11)는 그대로 유효. OS 수준 위조 방지는 스코프 밖(절차+감사
+  등급) — 다중 사용자·QA 이상 tier 확장 시 재론.
