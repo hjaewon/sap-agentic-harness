@@ -1,5 +1,10 @@
 # verify-sap.ps1 - verify wrapper for live-SAP targets (Phase 0a skeleton).
 #
+# Self-provisions SAP credentials: it dot-sources scripts/vsp-env.ps1 into its
+# OWN process (read-only by default; -Write for deploy chains). The caller's
+# shell needs NO pre-dot-source and stays free of SAP_* - credentials are scoped
+# to this process only. See adapters/vsp/VERIFY-PATTERNS.md sec 4.
+#
 # Marker contract (DESIGN.md section 9 - failure classification):
 #   CODE_FAIL - code defect; eligible as a rule-promotion candidate
 #   ENV_FAIL  - connectivity/auth/system failure; never promote to rules
@@ -18,7 +23,12 @@
 # PowerShell 5.1 compatible. ASCII only.
 
 param(
-    [Parameter(ValueFromRemainingArguments = $true)]
+    # -ProfileName / -Write are named-only (VspArgs claims Position 0), so the
+    # vsp args after `--` are never siphoned into ProfileName. Keeps the existing
+    # `... -- <vsp args>` convention intact.
+    [string]$ProfileName = "IDES-DEV",
+    [switch]$Write,
+    [Parameter(Position = 0, ValueFromRemainingArguments = $true)]
     [string[]]$VspArgs
 )
 
@@ -32,6 +42,22 @@ if (-not (Test-Path -LiteralPath $VSP)) {
 
 if (-not $VspArgs -or $VspArgs.Count -eq 0) {
     Write-Output "CODE_FAIL: no vsp arguments"
+    exit 1
+}
+
+# Self-provision SAP credentials into THIS process (no pre-dot-source needed).
+# Default = read-only (SAP_READ_ONLY=true); -Write opts into the dev-tier write
+# path for verify chains that deploy (VERIFY-PATTERNS.md sec 3 / sec 4). Because
+# this runs as its own process, credentials never leak back to the parent shell.
+$vspEnvScript = Join-Path $PSScriptRoot 'vsp-env.ps1'
+try {
+    if ($Write) {
+        . $vspEnvScript -ProfileName $ProfileName -Write > $null
+    } else {
+        . $vspEnvScript -ProfileName $ProfileName > $null
+    }
+} catch {
+    Write-Output "ENV_FAIL: SAP credential provisioning failed (profile '$ProfileName' via vsp-env.ps1)"
     exit 1
 }
 

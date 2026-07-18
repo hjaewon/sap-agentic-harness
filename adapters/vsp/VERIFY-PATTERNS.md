@@ -190,10 +190,35 @@ CODE_FAIL**(폴백)이다.
 
 ## ④ 호출 규약
 
-- **dot-source 선행 필수**: SAP 자격증명을 env var로 주입하려면 verify-sap.ps1
-  호출 전에 `. scripts\vsp-env.ps1`(기본 프로파일 IDES-DEV) 또는
-  `. scripts\vsp-env.ps1 -ProfileName <name>`을 먼저 실행한다. 이 스크립트는 시크릿을
+- **자격증명 자체 조달(사전 dot-source 폐지)**: `verify-sap.ps1`은 자기 프로세스
+  안에서 `scripts/vsp-env.ps1`을 dot-source해 SAP_*를 스스로 조달한다 — 호출 셸에
+  미리 `. vsp-env.ps1`을 실행할 필요가 없고, 해서도 안 된다(아래 엔진 기동 셸 관례).
+  기본은 **read-only**(`SAP_READ_ONLY=true` 주입)이므로 read성 verify(lint connected·
+  atc·test·source read)는 그대로 동작한다. 프로파일 지정은 `-ProfileName <name>`
+  passthrough. 자식 프로세스로 실행되므로(`powershell -File …`) 자격증명은 그
+  프로세스에만 스코프되고 부모 셸에는 SAP_*가 남지 않는다. 스크립트 자신은 시크릿을
   출력/기록하지 않고 프로세스 환경에만 주입한다.
+- **write성 verify 체인은 `-Write` opt-in 필수**: 사다리 3층 `vsp deploy`처럼 write성
+  명령을 verify로 쓰는 경로는 `verify-sap.ps1 -Write -- deploy <file> $TMP` 형태로
+  호출한다. `-Write`는 vsp-env.ps1의 read-only를 해제하고 `SAP_TIER`(dev)를 전파해
+  게이트를 통과시킨다. `-Write` 없이 write 명령을 넣으면 게이트가 `SAP_READ_ONLY`로
+  거부(네트워크 이전)하고, 그 거부는 현행 분류상 CODE_FAIL로 뭉뚱그려지므로 write
+  체인에는 반드시 `-Write`를 명시할 것. (아래 §②-3의 Phase 1.5 deploy 실측은 이 게이트
+  신설 이전 캡처라 `-Write` 없이 CODE_FAIL을 얻은 기록 — 현행에서는 `-Write` 필수.)
+- **엔진 기동 셸 관례(무인 워커 자격증명 미공급의 성립 조건)**: 무인 엔진
+  (`python scripts/execute.py`)을 켜는 셸에는 SAP_*가 없어야 한다 — 사전 dot-source
+  금지. execute.py는 워커/advisory/verify 서브프로세스에 부모 env를 **전량 상속**
+  (`{**os.environ}`)시키므로, 기동 셸에 SAP_*가 없어야만 워커 스텝 env에 자격증명이
+  실리지 않는다. verify 스텝은 위 자체 조달로 자기 프로세스 안에서만 자격증명을 얻고,
+  그 밖의 워커 명령은 SAP에 접속할 수단이 없다.
+- **배포 스텝 래퍼 관례**: write 자격증명은 배포 스텝 명령 래퍼에서만
+  `. scripts\vsp-env.ps1 -Write`(또는 `verify-sap.ps1 -Write`)로 로딩한다 — 그 프로세스
+  트리에만 스코프되고 기동 셸·다른 워커 스텝에는 전파되지 않는다.
+- **vsp 게이트 의미론(v2.38.1-94, `adapters/vsp/vsp.lock.json` write_profile_gate 참조)**:
+  `SAP_READ_ONLY` truthy → 모든 write성 서브커맨드를 네트워크 이전 클라이언트측 거부
+  (마커 `blocked: SAP_READ_ONLY=true …`). `SAP_TIER`가 비어있지 않고 `dev`(대소문자
+  무관)가 아니면 동일 거부(마커 `blocked: SAP_TIER=<tier> …`). 둘 다 미설정 = 무제약.
+  read성 명령과 `vsp test`는 두 env에 무영향.
 - **`-File`에 대시 인자 전달 불가(실측 함정)**: `vsp lint --file ...`처럼 vsp 인자에
   `--file` 등 대시로 시작하는 플래그가 있으면 `powershell -File scripts\verify-sap.ps1 --
   <args>` 형태는 PowerShell 5.1의 `-File` 바인딩 오류로 실패한다. 이 경우
