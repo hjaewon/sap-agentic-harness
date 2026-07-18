@@ -200,6 +200,24 @@
 > 4.14.0 머지 잔여 드리프트 1파일(` M docs/skill-model-architecture.md`) —
 > 이 세션 귀책 아님(read-only 사용), R-004상 손대지 않고 기록만. 사용자
 > 판단으로 정리 권장. **다음 착수 = ③ 5-13 층2·3**.
+> **▶ 다음 착수 확정 (차기 세션, 2026-07-18 순서)**: **① 5-13 층2 —
+> interactive/core 지식 이식**. 내용(§5-13 층2 원문): conventions 확장
+> 3종(field-typing·function-module-rule·clean-code) + 신규 2건
+> (abapgit-roundtrip-rule·source-repair-protocol) + DD03L 실측 정본·DEC
+> 오버플로·null 정규화 등 8건. 원천 = JNC 교훈 팩 층2 절 + 동결 sc4sap-custom
+> `common/*.md`(읽기만 — R-004). **선결 판정 필수**: 원본 common/*.md가
+> 07-17 JNC측에서 갱신돼 동결 표기와 실물이 드리프트 — 이식 전
+> `interactive/MIGRATION-MANIFEST.md` 대조로 정본(팩 vs 원본 신판)을 정하고,
+> 분류 변경은 매니페스트 수정으로만. 지식 파일 증감 시 CLAUDE.md 헤드라인
+> 수치(지식 175·절차 16)·매니페스트 갱신 동반, 게이트 5종 유지(엔진 재번들
+> 불요 — 지식은 번들 밖). 완료 후 **② 5-13 층3**(트랙 A 방법론 시드 —
+> domain/abap/RULES.seed.md·VERIFY-PATTERNS·계획 관례. `.harness/RULES.md`
+> 직접 대량 추가 금지(메모리 루프 규약), 시드/문서 경유. 층3-1·층3-5는 리뷰
+> 게이트 스펙 §6 보강 재료 — D-021 정합). 부수 대기: 동결 sc4sap-custom
+> 드리프트 1파일(` M docs/skill-model-architecture.md`, 07-17 머지 잔여)
+> 정리는 사용자 판단 — 세션은 손대지 말 것. 전 기간 유효: 무인 SAP write
+> 금지(5-11) · final-harness 플러그인 업데이트 금지(5-12) · tdd-guard 로컬
+> 수리는 이 머신 한정(git 무추적 — 엔진 템플릿 업스트림 반영 후속 후보).
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성
