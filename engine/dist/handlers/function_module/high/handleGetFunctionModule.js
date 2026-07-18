@@ -13,7 +13,7 @@ const utils_1 = require("../../../lib/utils");
 exports.TOOL_DEFINITION = {
     name: 'GetFunctionModule',
     available_in: ['onprem', 'cloud', 'legacy'],
-    description: 'Retrieve ABAP function module definition. Supports reading active or inactive version.',
+    description: "Retrieve ABAP function module definition. Supports reading active or inactive version. CAUTION: the default version='active' returns the pre-edit source when an unactivated edit exists — writing on top of it silently destroys the previous edit and no gate catches it. When re-editing, read version='inactive' first (or check GetInactiveObjects), and re-read after every write. A returned 'active' source is NOT proof the FM was ever successfully activated (never-activated FMs also return it).",
     inputSchema: {
         type: 'object',
         properties: {
@@ -31,10 +31,31 @@ exports.TOOL_DEFINITION = {
                 description: 'Version to read: "active" (default) for deployed version, "inactive" for modified but not activated version.',
                 default: 'active',
             },
+            check_inactive: {
+                type: 'boolean',
+                description: "When reading the active version, also read the inactive version (one extra ADT call) and, if an unactivated version exists and its source differs, attach a 'warning' to the response. Default true. The extra read never fails or slows the main read. Set false to skip it.",
+                default: true,
+            },
         },
         required: ['function_module_name', 'function_group_name'],
     },
 };
+const INACTIVE_DIVERGENCE_WARNING = "An inactive (unactivated) version of this function module exists and differs from the active source returned here — re-read with version='inactive' before editing, or the pending edit will be silently overwritten.";
+function extractFunctionModuleSource(readResult) {
+    const data = readResult?.readResult?.data;
+    if (data == null) {
+        return undefined;
+    }
+    if (typeof data === 'string') {
+        return data;
+    }
+    try {
+        return JSON.stringify(data);
+    }
+    catch {
+        return String(data);
+    }
+}
 /**
  * Main handler for GetFunctionModule MCP tool
  *
@@ -43,7 +64,7 @@ exports.TOOL_DEFINITION = {
 async function handleGetFunctionModule(context, args) {
     const { connection, logger } = context;
     try {
-        const { function_module_name, function_group_name, version = 'active', } = args;
+        const { function_module_name, function_group_name, version = 'active', check_inactive = true, } = args;
         // Validation
         if (!function_module_name || !function_group_name) {
             return (0, utils_1.return_error)(new Error('function_module_name and function_group_name are required'));
@@ -60,17 +81,23 @@ async function handleGetFunctionModule(context, args) {
                 throw new Error(`FunctionModule ${functionModuleName} not found`);
             }
             // Extract data from read result
-            let functionModuleData;
-            if (typeof readResult.readResult.data === 'string') {
-                functionModuleData = readResult.readResult.data;
-            }
-            else {
+            const functionModuleData = extractFunctionModuleSource(readResult) ??
+                String(readResult.readResult.data);
+            // When reading the active version, probe the inactive version and warn if
+            // an unactivated edit exists and differs — so a re-editing caller does not
+            // silently overwrite it (backlog 5-13 Wave 3, item 2). The probe never
+            // fails or slows the main read.
+            let warning;
+            if (version === 'active' && check_inactive !== false) {
                 try {
-                    functionModuleData = JSON.stringify(readResult.readResult.data);
+                    const inactiveResult = await functionModuleObject.read({ functionModuleName, functionGroupName }, 'inactive');
+                    const inactiveData = extractFunctionModuleSource(inactiveResult);
+                    if (inactiveData != null && inactiveData !== functionModuleData) {
+                        warning = INACTIVE_DIVERGENCE_WARNING;
+                    }
                 }
-                catch {
-                    // Fallback for circular references (e.g. raw Axios response objects)
-                    functionModuleData = String(readResult.readResult.data);
+                catch (inactiveError) {
+                    logger?.debug?.(`[GetFunctionModule] Inactive-version check skipped for ${functionModuleName}: ${inactiveError?.message || inactiveError}`);
                 }
             }
             logger?.info(`✅ GetFunctionModule completed successfully: ${functionModuleName}`);
@@ -83,6 +110,7 @@ async function handleGetFunctionModule(context, args) {
                     function_module_data: functionModuleData,
                     status: readResult.readResult.status,
                     status_text: readResult.readResult.statusText,
+                    warning,
                 }, null, 2),
             });
         }

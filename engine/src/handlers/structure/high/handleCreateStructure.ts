@@ -10,6 +10,7 @@
 import { resolveLogonLanguage } from '../../../lib/adtLogonLanguage';
 import { createAdtClient } from '../../../lib/clients';
 import type { HandlerContext } from '../../../lib/handlers/interfaces';
+import { generateStructureDdl } from '../../../lib/structureDdl';
 import {
   type AxiosResponse,
   ErrorCode,
@@ -24,7 +25,7 @@ export const TOOL_DEFINITION = {
   name: 'CreateStructure',
   available_in: ['onprem', 'cloud'] as const,
   description:
-    'Create a new ABAP structure in SAP system with fields and type references. Includes create, activate, and verify steps.',
+    'Create a new ABAP structure in SAP system with fields and type references. Includes create, activate, and verify steps. The fields/includes input is generated into DDIC "define structure" DDL and applied under lock; creation fails explicitly (before any object is created) when a field spec is incomplete — e.g. a built-in type missing its length, or a field with neither data_element nor data_type.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -91,6 +92,16 @@ export const TOOL_DEFINITION = {
               type: 'string',
               description: 'Field description',
             },
+            currency_reference: {
+              type: 'string',
+              description:
+                'For CURR fields: name of the CUKY field in THIS structure that carries the currency key. Emits @Semantics.amount.currencyCode (optional).',
+            },
+            unit_reference: {
+              type: 'string',
+              description:
+                'For QUAN fields: name of the UNIT field in THIS structure that carries the unit of measure. Emits @Semantics.quantity.unitOfMeasure (optional).',
+            },
           },
           required: ['name'],
         },
@@ -133,6 +144,8 @@ interface StructureField {
   structure_ref?: string;
   table_ref?: string;
   description?: string;
+  currency_reference?: string;
+  unit_reference?: string;
 }
 
 interface StructureInclude {
@@ -191,6 +204,30 @@ export async function handleCreateStructure(
 
     const structureName = createStructureArgs.structure_name.toUpperCase();
 
+    // Generate the DDIC DDL from the field/include spec BEFORE any object is
+    // created — an incomplete spec (unresolved type, length-bearing type with
+    // no length, or a field with neither data_element nor data_type) fails here
+    // with nothing created, so there is no half-built shell to clean up
+    // (backlog 5-13 layer 1 Wave 2, item 3). item 11-①: the generated header
+    // always carries @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE.
+    let ddlCode: string;
+    try {
+      ddlCode = generateStructureDdl({
+        structureName,
+        description: createStructureArgs.description,
+        fields: createStructureArgs.fields,
+        includes: createStructureArgs.includes,
+      });
+    } catch (genError: any) {
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Cannot generate structure DDL: ${genError instanceof Error ? genError.message : String(genError)}`,
+      );
+    }
+    const componentCount =
+      createStructureArgs.fields.length +
+      (createStructureArgs.includes?.length ?? 0);
+
     logger?.info(`Starting structure creation: ${structureName}`);
 
     try {
@@ -231,7 +268,8 @@ export async function handleCreateStructure(
       // backlog 11-⑫). Falls back to EN when systeminformation is unavailable.
       const masterLanguage = await resolveLogonLanguage(connection, logger);
 
-      // Create
+      // Create the empty shell first; the generated field DDL is then applied
+      // to it under lock (the create endpoint only produces a shell).
       await client.getStructure().create({
         structureName,
         description: createStructureArgs.description || structureName,
@@ -241,13 +279,72 @@ export async function handleCreateStructure(
         masterLanguage,
       });
 
-      // Note: the ADT structure-create endpoint above produces an empty
-      // structure shell; field/include DDL generation is not yet implemented
-      // (tracked as HANDOFF §6 backlog 11-⑤/11-⑧). A lock/unlock pair used to
-      // sit here around that never-implemented DDL update, so it bracketed no
-      // request at all — removed as dead code (HANDOFF §6 backlog 11-⑨).
+      // Validate the generated DDL (check-with-source, AdtStructure.check
+      // 4.13.11) before writing it — surfaces a real DDL error up front rather
+      // than as an opaque write failure.
+      logger?.info(
+        `[CreateStructure] Checking generated DDL before update: ${structureName}`,
+      );
+      try {
+        await safeCheckOperation(
+          () =>
+            client.getStructure().check({ structureName, ddlCode }, 'inactive'),
+          structureName,
+          {
+            debug: (message: string) =>
+              logger?.debug(`[CreateStructure] ${message}`),
+          },
+        );
+      } catch (checkError: any) {
+        if (!(checkError as any).isAlreadyChecked) {
+          const rawCheckMessage =
+            checkError instanceof Error
+              ? checkError.message
+              : String(checkError);
+          if (/failed:\s*$/.test(rawCheckMessage)) {
+            throw new Error(
+              `Structure check failed with status 'notProcessed' and no message text from the server — the structure was created but fields were not applied. Retry once; if it persists, apply the change via the abapGit ZIP+Pull path.`,
+            );
+          }
+          throw new Error(`Generated DDL check failed: ${rawCheckMessage}`);
+        }
+      }
 
-      // Check inactive version
+      // Apply the generated DDL under lock. Keep the ENQUEUE lock alive across
+      // the write: lock() returns with the connection reset to stateless, and
+      // on backends that recycle the HTTP connection (e.g. IDES) a stateless
+      // PUT tears down the stateful ADT session, so the lock evaporates and the
+      // write fails with HTTP 423 "invalid lock handle". Same fix class as
+      // UpdateStructure 4.13.5. (The 4.13.9 dead lock/unlock pair — which
+      // bracketed no request — is superseded: it now brackets this real write.)
+      const lockHandle = await client.getStructure().lock({ structureName });
+      connection.setSessionType('stateful');
+      try {
+        await client.getStructure().update(
+          {
+            structureName,
+            ddlCode,
+            transportRequest: createStructureArgs.transport_request,
+          },
+          { lockHandle },
+        );
+        logger?.info(
+          `[CreateStructure] Applied ${componentCount} field(s)/include(s) to ${structureName}`,
+        );
+      } finally {
+        try {
+          await client.getStructure().unlock({ structureName }, lockHandle);
+          logger?.info(
+            `[CreateStructure] Structure unlocked: ${structureName}`,
+          );
+        } catch (unlockError: any) {
+          logger?.warn(
+            `Failed to unlock structure ${structureName}: ${unlockError?.message || unlockError}`,
+          );
+        }
+      }
+
+      // Check inactive version (after unlock) — informational.
       logger?.info(
         `[CreateStructure] Checking inactive version: ${structureName}`,
       );
@@ -299,7 +396,8 @@ export async function handleCreateStructure(
           package_name: createStructureArgs.package_name,
           transport_request: createStructureArgs.transport_request || 'local',
           activated: shouldActivate,
-          message: `Structure ${structureName} created successfully${shouldActivate ? ' and activated' : ''}`,
+          fields_applied: componentCount,
+          message: `Structure ${structureName} created with ${componentCount} field(s)/include(s) applied${shouldActivate ? ' and activated' : ''}`,
         }),
       } as AxiosResponse);
     } catch (error: any) {

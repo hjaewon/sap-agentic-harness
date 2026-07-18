@@ -1,4 +1,4 @@
-# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.12
+# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.13
 
 Paste this whole file into the Claude Code (or hand it to the maintainer) on the
 machine that holds the fork/upstream source. It is **self-contained**: for each
@@ -43,6 +43,8 @@ exact diffs from these commits if a hand-application drifts:
 | 4.13.10 | `8711b67b` | Logon-language resolution (§5) + already-exists machine id (§6) |
 | 4.13.11 | `5373268e` | Structure check-with-source (§7) + low/CDS classic unit test (§8) |
 | 4.13.12 | `(pending)` | Table check-with-source + handler blocks bad DDL (§10) + create-payload logon-language remainder × 8 (§11) |
+| 4.13.13 | `(pending)` | Real-data gate honesty: self-closing NULL cell drop/shift + row-count meta + sporadic-400 retry (§12) |
+| 4.13.14 | `(pending)` | DDIC write real-generation: CreateStructure fields→DDL (§13) + FM read inactive-edit-loss warning + description honesty (§14) |
 
 > Note: commit `acad614d` is the authoritative 4.13.8 boundary (the CHANGELOG's
 > `## [4.13.8]` header was added retroactively — content is identical).
@@ -815,6 +817,226 @@ DOMA/DTEL) were already live-proven in §5.
 
 ---
 
+## §12 — Real-data gate honesty: self-closing NULL cell drop/shift, row-count meta, sporadic-400 retry
+
+**The two real-data gate tools (`GetSqlQuery`, `GetTableContents`) share one XML
+parser; three defects, one Wave.** 4.13.13. Server-only (no client-package patch).
+
+### Symptom
+
+A `GetSqlQuery` / `GetTableContents` result silently mis-attributes NULL-cell
+values. Live on an on-premise S/4HANA system, a read-only self-join of `T000`
+that makes exactly one middle row's column non-NULL and the rest NULL:
+
+```
+SELECT a~mandt, b~mtext AS bmtext, a~mtext
+FROM t000 AS a LEFT OUTER JOIN t000 AS b
+  ON b~mandt = a~mandt AND a~mandt = '200'
+ORDER BY a~mandt
+```
+
+returned `BMTEXT = "Ready-to-activate client"` on the **`MANDT=000`** row (which
+must be NULL) and `NULL` on the `MANDT=200` row that actually owns that value —
+confirmed by the unaffected `MTEXT` column of the same row. The single non-NULL
+value had shifted up over the two leading NULLs. The response also carried only
+`total_rows`, with no honest count of the rows actually returned.
+
+### Root cause
+
+Three independent defects in
+`dist/handlers/system/readonly/handleGetSqlQuery.js` (`parseSqlQueryXml`, reused
+by `dist/handlers/table/readonly/handleGetTableContents.js`):
+
+1. **Self-closing cell drop + shift.** The per-column cell regex
+   `/<dataPreview:data[^>]*>(.*?)<\/dataPreview:data>/g` requires a closing tag.
+   SAP emits a nil / NULL cell as self-closing `<dataPreview:data/>`, which the
+   pattern skips; it then spans forward to the *next* cell's `</dataPreview:data>`,
+   swallowing that value into one match. The column array comes up short and every
+   following row in that column shifts up. Both real-data gate tools call the same
+   function, so both are affected.
+2. **Self-contradicting meta.** The response carried only `total_rows`
+   (server-reported), never the count of rows actually parsed, so a truncated or
+   mis-parsed result looked complete.
+3. **Sporadic HTTP 400 on complex queries.** The handler issued the Data Preview
+   POST once and threw immediately; multi-way joins / long IN lists and concurrent
+   calls draw a transient 400 that succeeds on an immediate re-run.
+
+### Fix — server only
+
+`engine/src/handlers/system/readonly/handleGetSqlQuery.ts`:
+
+1. The cell regex becomes an alternation that matches the self-closing form first
+   and captures the paired form's body, walked with `matchAll` so cell position is
+   preserved:
+   `/<dataPreview:data(?:\s[^>]*?)?\/>|<dataPreview:data(?:\s[^>]*?)?>([\s\S]*?)<\/dataPreview:data>/g`.
+   A self-closing or empty cell → `null`; any other body (including a blank `" "`
+   CHAR value) is kept verbatim, so a nil NULL is distinguished from an empty
+   string. When columns still come out unequal (a genuinely ragged response the
+   parser cannot align) the per-column shape is surfaced as a new `ragged_columns`
+   field and logged, instead of silently shifting rows.
+2. The response adds `returned_row_count` (rows actually parsed), `server_total_rows`
+   (server total when the XML provides it) and `truncated` (`returned >= row_number`
+   or `server_total > returned`). `GetTableContents` inherits all of this through
+   the shared parser.
+3. The handler wraps the Data Preview call in a retry-once helper: a first-attempt
+   HTTP 400 (`isHttp400` — matches `err.response?.status === 400`) is retried
+   exactly once; any other error, or a second 400, propagates unchanged. The tool
+   description documents the 400 constraint and the alias-shortening / BETWEEN
+   work-arounds.
+
+### Regression test
+
+`engine/src/__tests__/handleGetSqlQuery.test.ts` — offline XML fixtures pin: the
+self-closing shift (a NULL keeps its row; the value stays on its own row),
+nil-vs-blank-CHAR distinction, the all-NULL column, the ragged-column warning
+(present when genuinely unaligned, absent when self-closing cells realign), the
+three meta fields across three truncation cases, and the 400 retry
+(retry-then-succeed / give-up-after-one-retry / no-retry-on-500) driving the real
+handler over a fake connection. It also drives the real `handleGetTableContents`
+to prove the shared parser fix flows through. Reverse-verified: reverting only the
+cell regex fails exactly the four alignment cases while the meta / retry cases stay
+green.
+
+### Live verification
+
+Same read-only `T000` self-join, same on-premise system. On 4.13.12 the value
+shifted onto the `MANDT=000` row and no row-count meta was present; on 4.13.13
+`BMTEXT` is `NULL` for 000/100/400/500 and `"Ready-to-activate client"` on the
+`MANDT=200` row (matching its `MTEXT`), with `returned_row_count=5`,
+`server_total_rows=5`, `truncated=false`. Read-only throughout; no write issued.
+
+---
+
+## §13 — CreateStructure generates real fields (false success removed)
+
+**`CreateStructure` discarded its required `fields` input and created an empty
+shell, then reported success.** 4.13.14. Server-only (no client-package patch).
+Backlog 5-13 layer 1 Wave 2, items 3 + 11-①.
+
+### Symptom
+
+`CreateStructure` takes `fields` as a required parameter, but the handler passed
+`create({ ddlCode: '' })` — an empty structure shell — and dropped the fields
+entirely (the handler even carried a comment: "field/include DDL generation is
+not yet implemented"). It then returned `{ success: true, activated: true }`.
+Live on IDES (S/4HANA, logon CS) on 4.13.13: creating `ZSAH_S_5713R` with fields
+`ID CHAR(10)` + `AMOUNT DEC(15,2)` reported success, but a read-back showed only
+a placeholder `component_to_be_changed : abap.string(0)` — **neither field was
+present**. A false success: the tool said the structure was built when it was an
+empty shell.
+
+### Root cause
+
+The ADT structure-create endpoint only produces a shell; the field DDL must be
+applied by a subsequent source write, which was never implemented. The `fields`
+input was validated for presence and then thrown away.
+
+### Fix — server only
+
+A new pure builder `engine/src/lib/structureDdl.ts` (`generateStructureDdl`)
+turns the field/include spec into DDIC `define structure` DDL. The header always
+emits `@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE` (item 11-①; a DDIC
+structure is rejected without it — the same annotation §7's check-with-source
+surfaces as the real error when missing). Built-in types resolve to
+`abap.<type>` with length/decimals where the kind requires them; a `data_element`
+resolves to the element name; `CURR`/`QUAN` optionally emit
+`@Semantics.amount.currencyCode` / `@Semantics.quantity.unitOfMeasure`. The
+builder throws on an **incomplete spec** — a length-bearing built-in with no
+length, an unsupported/unresolved `data_type`, a field with neither
+`data_element` nor a built-in `data_type`, an include carrying a suffix, or no
+fields/includes at all.
+
+`engine/src/handlers/structure/high/handleCreateStructure.ts` now generates the
+DDL **before any object is created** (an incomplete spec fails here with nothing
+on the wire — no half-built shell to clean up), then applies it: create the
+shell → check-with-source on the generated DDL (§7's `AdtStructure.check`
+ddlCode-forward) → lock → `update({ ddlCode }, { lockHandle })` → unlock → check
+inactive → activate. The write is pinned stateful right after the lock (§1 class:
+IDES recycles the connection, so a stateless PUT would evaporate the lock) —
+this supersedes the 4.13.9 "dead lock/unlock pair" removal (§4): the lock now
+brackets a real write. The 4.13.12 logon-language stamping on the shell create is
+preserved. Two additive `fields[]` params (`currency_reference`,
+`unit_reference`) and a `fields_applied` count in the response are new; no tool
+added/removed.
+
+### Regression tests
+
+`engine/src/__tests__/structureDdl.test.ts` (15 cases) pins the field/include
+rendering, the always-present enhancement.category, and every incomplete-spec
+throw. `engine/src/__tests__/handleCreateStructure.test.ts` drives the real
+handler over a fake connection and pins: the generated DDL (with the field lines
+and enhancement.category) is transmitted as the check-with-source base64 body;
+the lock brackets exactly one source PUT (lock < PUT < unlock); an incomplete
+spec fails with **zero** requests on the wire. Reverse-verified: removing the
+enhancement.category push, the incomplete-spec throw, or the ddlCode passed to
+the check each fails the matching cases. (The obsolete `createStructureNoDeadLock`
+test — which asserted the lock/unlock pair was absent — is superseded, since the
+lock now legitimately brackets the field write.)
+
+### Live verification
+
+IDES $TMP, red→green. 4.13.13 created `ZSAH_S_5713R` reporting success but read
+back as the empty `component_to_be_changed` placeholder. 4.13.14 created
+`ZSAH_S_5713G` with `ID CHAR(10)` + `AMOUNT DEC(15,2)` + `CREATED_ON DATS` and
+read back with all three fields present and `@AbapCatalog.enhancement.category`
+in the header. Both objects deleted and read-back-confirmed gone (404); no orphan
+lock.
+
+---
+
+## §14 — Function-module read honesty: inactive-edit-loss warning + descriptions
+
+**Reading `version='active'` returns the pre-edit source when an unactivated edit
+exists, silently masking a pending edit; and several FM/activation descriptions
+lacked load-bearing cautions.** 4.13.14. Server-only. Backlog 5-13 layer 1 Wave 3,
+items 2 / 4 / 5 / 6.
+
+### Symptom (item 2)
+
+`GetFunctionModule` / `ReadFunctionModule` default to `version='active'`. When an
+unactivated inactive version exists, the active read returns the *old* source; a
+caller that re-edits on top of it silently destroys the pending edit, and no gate
+catches it.
+
+### Fix — server only
+
+Both handlers gain a `check_inactive` parameter: when reading active, they also
+read the inactive version and, if it exists and its source **differs**, attach a
+`warning` to the response. The extra read is wrapped so it never fails or slows
+the main read (a missing inactive version is swallowed). `GetFunctionModule`
+defaults it **on** (interactive single reads); `ReadFunctionModule` defaults it
+**off** (opt-in — it is the bulk-read surface and the per-FM extra call would be
+costly). Description cautions added (items 4/5/6, description-only): the FM read
+descriptions state that a returned 'active' source is **not** proof of successful
+activation (item 6); `ActivateObjects` documents the FUGR recipe — activate the
+function group + its TOP include (FUGR/I) + every FM (FUGR/FF) + the SAPL<group>
+main program in ONE run, never include the system include L<group>UXX, never mix
+unrelated objects (item 4); `UpdateFunctionModule` states the write persists as
+the inactive version even when the post-write check fails and that check errors
+can originate from pre-existing defects in sibling FMs of the same group (item 5).
+
+### Regression tests
+
+`engine/src/__tests__/handleGetFunctionModule.test.ts` (6) and
+`handleReadFunctionModule.test.ts` (4) drive the real handlers over a fake
+connection serving active vs inactive source by `?version=`: differs → warning;
+identical → none; Get default reads inactive, Read default does not; a failing
+inactive read never breaks the main read; the activation-evidence caution is
+pinned in the description. `handleActivateObjects.test.ts` (3) and
+`handleUpdateFunctionModule.test.ts` (2) pin the FUGR-recipe and sibling-persist
+description text. Reverse-verified: suppressing the warning assignment fails the
+Get "differs → warning" case.
+
+### Live verification
+
+item 2's live repro requires provisioning a function group + FM and staging a
+divergent inactive version (an FM edited but not activated) — heavier than a
+$TMP structure and disproportionate to the deterministic jest + reverse-verify
+coverage above, so it was judged on the jest evidence (per the Wave's explicit
+allowance). items 4/5/6 are description-only.
+
+---
+
 ## Known-remaining defects (still present upstream)
 
 Confirmed against the reference `HANDOFF.md` §6 backlog. These are **not** fixed
@@ -874,6 +1096,22 @@ was only reasoned (not live-staged) it is flagged **code-review-verified only**.
    session. Pre-existing ADT behavior, harmless in normal use; not a defect in the
    fix.
 
+9. **`DeleteStructure` reports success from the deletion-result parse, not a
+   read-back (backlog 5-13 layer 1 Wave 3, item 11-② — investigated, deliberately
+   not repaired).** The concern was whether the unlocked deletion-framework POST
+   can return a no-op 2xx (object survives) that the 4.13.9 `assertDeletionSucceeded`
+   parse (`del:isDeleted`) reports as success. Live on IDES: deleting an unlocked
+   `$TMP` structure via `assertDeletionSucceeded` reported success **and** a
+   read-back confirmed 404 (genuinely gone) — the no-op pathology did **not**
+   reproduce, and `assertDeletionSucceeded` already throws on `isDeleted != "true"`
+   (the locked/refused case, §3). Reproducing a genuine no-op (2xx claiming
+   deletion while the object survives) needs an unusual server state; per the
+   Wave's "no over-repair unless the pathology is demonstrated" instruction, the
+   handler was left unchanged. Hardening candidate: sc4sap-custom v4.14.0 promotes
+   `DeleteStructure` to an explicit lock → `DELETE(lockHandle)` → read-back-404
+   flow (verifying by absence, not by a non-error) — adopt it if a no-op case is
+   ever observed.
+
 ---
 
 ## Applying and verifying
@@ -904,7 +1142,7 @@ compiled `dist/`).
 ```bash
 cd engine
 npm ci            # re-applies patch-package via the prepare hook
-npm test          # jest unit suites — reference passes 572/0 at 4.13.10, 580/0 at 4.13.11, 599/0 at 4.13.12
+npm test          # jest unit suites — reference passes 572/0 at 4.13.10, 580/0 at 4.13.11, 599/0 at 4.13.12, 611/5skip at 4.13.13, 643/5skip at 4.13.14
 ```
 
 Focused run of just the fix suites:
@@ -914,10 +1152,11 @@ npx jest updateClassStatefulSession updateInterfaceStatefulSession \
   updateProgramStatefulSession updateHandlersStatefulSessionFamily \
   createHandlersStatefulSessionFamily vendoredClientLockChainStatefulSession \
   updateFunctionGroupContentTypeNegotiation deletionResultHonesty \
-  createProgramTypeGuard createStructureNoDeadLock \
+  createProgramTypeGuard structureDdl handleCreateStructure \
   createLogonLanguageConsistency createViewErrorBody \
   isAlreadyExistsErrorMachineId updateStructureCheckSource \
   updateTableCheckSource createLogonLanguageFamily \
+  handleGetFunctionModule handleReadFunctionModule \
   unitTestClassicLowCds getSqlQueryGate readonlyGuard
 ```
 
