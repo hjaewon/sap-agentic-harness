@@ -5,42 +5,46 @@
 
 ## Task
 
-**백로그 5-13 층1 (2026-07-18, HANDOFF 다음 착수 ②)** — JNC 교훈 팩
-(`D:\Claude for SAP\JNC-Dashboard\docs\reference\sap-adt-lessons-pack.md`,
-라이브 S/4 2021 관통 확정본)을 `engine/`(4.13.12)과 **대조 감사 + 선별 이식**.
-참조 구현 = sc4sap-custom 엔진 v4.14.0(동결 — 읽기만, R-004) ·
-vsp-custom 0cb26cb+731b871(층1 기반영).
+**백로그 5-13 층2 (2026-07-18, HANDOFF 다음 착수 ①)** — JNC 교훈 팩 층2
+(8항목)를 `interactive/core` 지식으로 이식. 대상 = conventions 확장 3종
+(field-typing-rule·function-module-rule·clean-code) + 신규 2건
+(abapgit-roundtrip-rule·source-repair-protocol). 원천 = 팩
+(`D:\Claude for SAP\JNC-Dashboard\docs\reference\sap-adt-lessons-pack.md`
+층2 절) + 동결 sc4sap-custom `common/*.md` 신판(07-17 커밋 f7257c0+ffb422b,
+읽기만 — R-004). **선결 판정 필수**: 정본(팩 vs 원본 신판)을
+MIGRATION-MANIFEST 대조로 확정 후 이식.
 
 ## Success criteria (기계 검증 가능)
 
-- [x] **대조 감사표**: 팩 전 항목에 대해 겹침(기반영)/신규(미반영)/N-A 판정 +
-      engine 좌표(파일:라인) + sc4sap v4.14.0 참조 위치. 겹침 추정 3건
-      (lock-window=4.13.3~7 · 삭제 2xx 정직화=4.13.9 · check-with-source=
-      4.13.11) 검증 포함.
-- [x] **신규 판정분 선별 이식** — SQL self-closing NULL 셀 드롭·시프트
-      (GetSqlQuery/GetTableContents, 실데이터 게이트 도구) **최우선**.
-      수리별 jest 회귀 테스트 신설 + **역-검증**(수리 원복 시 신설 테스트
-      FAIL) 실증. jest 전량 통과(기준선 599/0 유지·확장).
-- [x] **라이브 red→green** — 가능 항목은 IDES 실측(구 번들 red → 신 번들
-      green), 불가 항목은 사유 명시 + 대체 정본 증거(jest·참조 구현 대조).
-      실데이터 조회는 무해 시스템 테이블(T000 등) 검증 목적 최소한.
-- [x] **UPDATE-RUNBOOK 재번들** — verify-engine OK, capability 155 유지.
-- [x] **문서 계약** — engine/CHANGELOG.md + UPSTREAM-FIX-HANDOFF §해당 절
-      갱신(수리 시 동반 — 백로그 5-13 명시 요구).
-- [x] **게이트 5종 green + 새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0)** +
-      HANDOFF·STATE 기록 + 커밋.
+- [x] **선결 판정 기록**: 대상 5파일 각각 정본 판정(팩 vs 신판) + 근거,
+      팩 층2 8항목 → 이식 파일:위치 커버리지 표(누락 0 또는 누락 사유 명시).
+      감사 정본 = `docs/reference/audits/2026-07-18-5-13-layer2-audit.md`.
+- [x] **이식 완료**: conventions 3종이 신판 델타를 반영하고 신규 2건이
+      `interactive/core/knowledge/abap/conventions/`에 실재. 하네스 중립
+      적응(sc4sap 고유 참조 제거)은 L1 기존 적응 관례와 일관.
+- [x] **분류·수치 정합**: 신규 2건이 MIGRATION-MANIFEST 분류에 포섭(분류
+      변경 필요 시 매니페스트 수정으로만) + CLAUDE.md 헤드라인 수치(지식
+      175) 실측 재계수 갱신 + conventions 참조 INDEX/앵커 갱신.
+- [x] **게이트 5종 green** (coverage·links·verify-engine·smoke 155·doctor)
+      — 엔진 재번들 불요(지식은 번들 밖), 번들 무변경.
+- [x] **새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0)** — 리뷰어가 원천
+      (팩+신판) 대 이식본을 직접 대조.
+- [x] **HANDOFF·STATE 기록 + 커밋**.
 
 ## Verification method
 
-1. jest·게이트 5종 exit code 실측 + 역-검증 로그.
-2. 라이브 red→green 증거(구 vs 신 번들 실행 결과) 또는 불가 사유+대체 증거.
-3. 감사표의 겹침 판정을 리뷰어가 engine 좌표로 재확인.
-4. 독립 리뷰어(새 컨텍스트, read-only)가 diff를 이 GOAL 기준으로 항목별 판정.
+1. 게이트 5종 exit code 실측.
+2. 리뷰어(새 컨텍스트, read-only)가 팩 8항목 커버리지를 이식본 좌표로 재확인
+   + 신판 델타 누락·왜곡 여부 diff 대조 + 수치(지식 파일 수) 재계수.
+3. 동결 레포 무수정 확인(`git -C sc4sap-custom status` 드리프트 불변 —
+   기존 1파일 ` M docs/skill-model-architecture.md` 외 변화 0).
 
 ## 제약 (전 기간 유효)
 
-- 동결 레포 sc4sap-custom **읽기만**(R-004, private/는 읽기도 금지)
+- 동결 레포 sc4sap-custom **읽기만**(R-004, private/는 읽기도 금지) —
+  기존 드리프트 1파일(docs/skill-model-architecture.md)은 손대지 않고 보고만
 - 무인 SAP write 금지(5-11) · final-harness 플러그인 업데이트 금지(5-12)
 - QA/PRD write 금지(R-003) · vsp MCP 서버 모드 금지(R-002) · 자격증명 기록
-  금지(R-005) · $TMP 산출물 정리 + read-back 확인(R-006)
-- 엔진 수리는 레포 내 `engine/`에서 (D-017) · 재번들은 UPDATE-RUNBOOK 절차로만
+  금지(R-005)
+- `.harness/RULES.md` 직접 대량 추가 금지(층3에서도 시드/문서 경유)
+- 분류 변경은 MIGRATION-MANIFEST 수정으로만

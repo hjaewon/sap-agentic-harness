@@ -1,7 +1,7 @@
 # HANDOFF — 프로젝트 전체 상태와 재개 지침
 
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
-> 작성 2026-07-10 · 최종 갱신 2026-07-17. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
+> 작성 2026-07-10 · 최종 갱신 2026-07-18. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
 > **트랙 A Phase 2 완료 (2026-07-12)** — 답사→계획 변경 기록(§13 완료 기준 충족) +
 > 무인 완주(2 steps, verify 실패 0, 리뷰 위반 0) + connected 채점 **5 PASS/0 FAIL**.
@@ -218,6 +218,27 @@
 > 정리는 사용자 판단 — 세션은 손대지 말 것. 전 기간 유효: 무인 SAP write
 > 금지(5-11) · final-harness 플러그인 업데이트 금지(5-12) · tdd-guard 로컬
 > 수리는 이 머신 한정(git 무추적 — 엔진 템플릿 업스트림 반영 후속 후보).
+> **→ ✅ ① 5-13 층2 완료 (2026-07-18, 오케스트레이션 세션 — 감사 opus·이식
+> sonnet·리뷰 opus 전량 위임)**: **선결 판정** = 정본은 원본 신판(동결
+> sc4sap-custom HEAD `common/*.md` — 07-17 f7257c0+ffb422b가 JNC 팩 층2를
+> 이미 rule layer로 접어 넣어 팩을 상회, 8항목 커버리지 누락 0, L1 이식
+> 관례 실측 = 본문 verbatim+재배치 링크만 재경로). **이식** = conventions
+> 수정 3종(clean-code null-vs-zero · field-typing DD03L step0+필드명≠의미
+> 안티패턴 · function-module RFC 타입 제약/좁은 DEC 오버플로/FUGR 단일
+> 컴파일+UXX 제외) + 신규 2건(abapgit-roundtrip-rule·source-repair-protocol)
+> — 전부 원본 verbatim(신규·추가 링크가 conventions 내부 형제라 재경로 0),
+> 팩 부록 조건부는 abapGit·SUSH 2건만 caveat 내장(빈셀=층1 N-A ·
+> acknowledge_risk·금액확장 제외). **배선 4** = sap-executor(표+2행)·
+> sap-debugger(+1줄)·create-program(FUGR 활성화 레시피)·review-checklist
+> (+2항 — sc4sap 원본 3항째 활성화-증거는 층1 #6 기반영 + 이식된
+> source-repair-protocol 내장으로 의도 제외, 리뷰어 타당 판정). 수치 =
+> CLAUDE.md 지식 175→**177**(실측)·매니페스트 규약 18→**20종**(catch-all
+> `common/**` 기포섭 — 분류 규칙 불변). 게이트 5종 green(smoke 155·links
+> 599/0·doctor 5 OK, 엔진·번들 무변경 = 재번들 불요). **새-컨텍스트 독립
+> 리뷰 PASS(BLOCKER/MAJOR 0, INFO 3)** — verbatim byte 대조·8항목 좌표
+> 재확증·배선 f7257c0 대조·동결 레포 무손상(기존 드리프트 1파일 불변) 전부
+> 실측. 감사 정본 = `docs/reference/audits/2026-07-18-5-13-layer2-audit.md`.
+> **다음 착수 = ② 5-13 층3(트랙 A 방법론 시드)**.
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성
@@ -679,11 +700,13 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   #9 후보). 정본 = `docs/reference/audits/2026-07-18-5-13-layer1-audit.md`,
   UPSTREAM-FIX-HANDOFF §12~§14. 새-컨텍스트 리뷰 PASS. 상세는 헤더
   2026-07-18 블록.
-- **층 2 → interactive/core 지식 이식**: conventions 확장(field-typing·
-  function-module-rule·clean-code) + 신규 2건(abapgit-roundtrip-rule·
-  source-repair-protocol) + DD03L 실측 정본·DEC 오버플로·null 정규화 등 8건.
-  주의: 원본 sc4sap-custom `common/*.md`가 07-17 JNC측에서 갱신됨(동결 표기와
-  실물 드리프트 — MIGRATION-MANIFEST 대조 필요).
+- ~~**층 2 → interactive/core 지식 이식**~~ → ✅ **완료 (2026-07-18)**:
+  선결 판정 = 정본은 원본 신판(동결 HEAD `common/*.md` — f7257c0+ffb422b가
+  팩 층2를 기접힘, 8항목 누락 0). conventions 수정 3 + 신규 2 verbatim
+  이식 + 배선 4(페르소나 2·절차 2) + 규약 20종·지식 177. 게이트 5종
+  green, 새-컨텍스트 리뷰 PASS(BLOCKER/MAJOR 0). 정본 =
+  `docs/reference/audits/2026-07-18-5-13-layer2-audit.md`. 상세는 헤더
+  2026-07-18 블록.
 - **층 3 → 트랙 A 방법론 시드**: domain/abap/RULES.seed.md·VERIFY-PATTERNS·
   계획 관례(산출물 유형별 게이트 매핑 · 결함 목록=표본 · 세로 관통 · liveness
   실측 · 오라클 의심). `.harness/RULES.md` 직접 대량 추가는 금지(메모리 루프

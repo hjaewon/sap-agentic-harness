@@ -244,12 +244,31 @@
   MAJOR 0). 감사 정본 = docs/reference/audits/2026-07-18-5-13-layer1-audit.md.
   후속 권고: 동결 sc4sap-custom 전일 드리프트 1파일 정리(사용자 판단)
 
+- 2026-07-18 | **5-13 층2 완료** (오케스트레이션 세션 — 감사·이식·리뷰 전량
+  위임: 감사 opus·이식 sonnet·리뷰 opus) — **선결 판정**: 정본 = 원본 신판
+  (동결 sc4sap HEAD common/*.md — 07-17 f7257c0+ffb422b가 팩 층2를 이미
+  접어 넣어 팩을 상회, 8항목 커버리지 누락 0, L1 관례 실측 = 본문 verbatim
+  +재배치 링크만 재경로). **이식** = conventions 수정 3(clean-code
+  null-vs-zero·field-typing DD03L step0+필드명≠의미·function-module RFC
+  타입/DEC 오버플로/FUGR 단일 컴파일+UXX) + 신규 2(abapgit-roundtrip-rule·
+  source-repair-protocol) 전부 verbatim(신규 링크가 conventions 내부
+  형제라 재경로 0) + **배선 4**(sap-executor 표+2행·sap-debugger +1줄·
+  create-program FUGR 레시피·review-checklist +2항 — 3항째 활성화-증거는
+  층1 #6 기반영+source-repair-protocol 내장으로 의도 제외, 리뷰어 타당
+  판정) + 매니페스트 규약 18→20종(catch-all 기포섭)·CLAUDE.md 지식
+  175→177(실측). 게이트 5종 green(smoke 155·links 599/0·doctor 5 OK,
+  엔진 무변경). **새-컨텍스트 리뷰 PASS(BLOCKER/MAJOR 0·INFO 3)** —
+  verbatim byte 대조·8항목 좌표 재확증·배선 f7257c0 대조·동결 레포
+  무손상 실측. 감사 정본 =
+  docs/reference/audits/2026-07-18-5-13-layer2-audit.md. 부수: 첫 리뷰어
+  기동이 오작동 빈 응답(도구 0회) → 새 컨텍스트 재기동으로 정상 수행
+
 ## Next
 
-- 사용자 확정 순서(HANDOFF 헤더): **③ 5-13 층2**(interactive/core 지식 이식 —
-  conventions 확장+신규 2건, 원본 sc4sap-custom common/*.md 드리프트
-  MIGRATION-MANIFEST 대조 필요) → **5-13 층3**(트랙 A 방법론 시드 — RULES
-  직접 대량 추가 금지, 시드/문서 경유). 전 기간: 무인 SAP write 금지(5-11) ·
+- 사용자 확정 순서(HANDOFF 헤더): **5-13 층3**(트랙 A 방법론 시드 —
+  domain/abap/RULES.seed.md·VERIFY-PATTERNS·계획 관례. `.harness/RULES.md`
+  직접 대량 추가 금지, 시드/문서 경유. 층3-1·층3-5는 리뷰 게이트 스펙 §6
+  보강 재료 — D-021 정합). 전 기간: 무인 SAP write 금지(5-11) ·
   final-harness 플러그인 업데이트 금지(5-12)
 
 ## Attempts & dead ends
