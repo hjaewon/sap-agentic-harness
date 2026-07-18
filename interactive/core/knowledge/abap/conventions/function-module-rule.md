@@ -59,7 +59,7 @@ ENDFUNCTION.
 1. **`FUNCTION {name}` line must be followed immediately by `IMPORTING` / `EXPORTING` / `CHANGING` / `TABLES` / `EXCEPTIONS` clauses** — or by a `.` only when the FM truly takes no parameters (rare — only dispatcher / trigger FMs).
 2. **Never emit this placeholder line**: `" You can use the template 'functionModuleParameter' to add here the signature!` → it means signature is empty.
 3. **Never declare "shadow locals"** like `lv_iv_lifnr TYPE lifnr` inside the body to stand in for a missing IMPORTING parameter. Either declare the parameter for real, or omit the check.
-4. **TABLES vs TYPES table**: the old `TABLES` clause uses `STRUCTURE` (line type), not `TYPE`. Modern style prefers `IMPORTING it_xxx TYPE STANDARD TABLE OF structure` when the BAPI pattern allows, but traditional RFC BAPIs typically use `TABLES ... STRUCTURE`.
+4. **TABLES vs TYPES table**: the old `TABLES` clause uses `STRUCTURE` (line type), not `TYPE`. Modern style prefers `IMPORTING it_xxx TYPE STANDARD TABLE OF structure` when the BAPI pattern allows, but traditional RFC BAPIs typically use `TABLES ... STRUCTURE`. RFC `TABLES` parameters cannot carry null — an uncomputed value arrives as `0.00`, never as "absent". Normalize absence to null on the caller side; see [`clean-code.md`](clean-code.md) § Reconciliation Logic — Null vs Zero.
 5. **Return pattern**: prefer `EXPORTING ev_return TYPE bapiret2` or `TABLES et_return STRUCTURE bapiret2` (for multi-row) over ABAP `EXCEPTIONS` for BAPI-style RFCs — matches SAP standard convention.
 6. **Pass-by-value** is the default for RFC-enabled FMs (`VALUE(param)`). Non-RFC FMs may use reference pass (`REFERENCE(param)` or bare name).
 
@@ -113,3 +113,21 @@ When sc4sap creates an RFC-facing FM (PLM / WMS / external I/F), the completion 
 > ⚠ Processing Type `Remote-Enabled Module` must be set manually in SE37 Properties for: `<FM_LIST>`. MCP ADT REST does not expose this flag.
 
 Do not attempt to set the flag via source code, metadata PUT, or CREATE-time attributes — all three paths are non-functional.
+
+## RFC Interface Type Constraints
+
+RFC-enabled FM parameters reject generic types — `TYPE P DECIMALS 2` (and any other non-concrete type) is rejected; every RFC parameter needs a concrete DDIC type (a data element, or a DDIC structure / table type). `ABAP_BOOL` is a **domain**, not a data element — never place it in a data-element slot; use `ABAP_BOOLEAN` (the data element built on that domain). See [`abap-release-reference.md`](abap-release-reference.md) for the `ABAP_BOOL` → `ABAP_BOOLEAN` release note.
+
+## Narrow DEC Fields — BCD Overflow Kills the Whole Call
+
+Never assign percentage / ratio arithmetic into a narrow DEC field (e.g., `DEC(5,2)`). The moment real data pushes the ratio past ±999.99, `COMPUTE_BCD_OVERFLOW` aborts the **entire FM call** at runtime — not just the offending statement. No static gate catches this: syntax check, code review, and activation all pass, because the defect fires only on values, never on the source. Worse, when the FM is called over RFC the runtime error can return to the caller without leaving an ST22 dump on the server — there is nothing to find after the fact.
+
+Rule: ratio / percentage math belongs to the caller (e.g., Java `BigDecimal`), not to a narrow ABAP DEC/CURR result field. If an RFC call fails with no explanation, capture the exception verbatim with an independent standalone probe — a minimal separate caller that does nothing but invoke the FM and surface the exception, not the full application — so the raw runtime text is preserved.
+
+## Function Group Is One Compile and Activation Unit
+
+The whole function group compiles together — group syntax must be **0 errors / 0 warnings** before activation, and a defect in a **sibling FM** blocks activation of *your* FM too (you cannot activate one FM of a defective group in isolation).
+
+- **Diagnosis leverage**: run the server-side check per FM — `CheckSyntax` with `object_type='function_module'` plus the shared `function_group_name` returns that module's errors with `line:column` (read-only). Because the group compiles as one unit, sibling defects surface in these checks too. Do NOT try to shortcut via `object_type='program'` on the `SAPL<fugr>` main program — that path checks only the main program body and misses errors inside the FM includes.
+- **False-failure trap**: FM write tools postcheck the whole group, so a pre-existing sibling defect can make your own write look *failed* while the write itself persisted. Re-read the FM to verify before re-writing — see [`source-repair-protocol.md`](source-repair-protocol.md).
+- **Never put the system UXX include (`L<fugr>UXX`) in an activation list.** It is a generated container editor-locked by `SAP*`. When building an `ActivateObjects` list by mechanically enumerating group members (includes list, object structure), filter `L<fugr>UXX` out — on the legacy `/sap/bc/adt/activation` endpoint one UXX entry kills the ENTIRE run with 403 `ExceptionResourceNoAccess` ("Changes to L...UXX are forbidden by SAP*"; live-verified on S/4 2021, 2026-07-17). The proven FUGR family is exactly: `SAPL<fugr>` main program + `L<fugr>TOP` + every FM + the FUGR itself — UXX is not part of it. (Behavior of the `/sap/bc/adt/activation/runs` mass endpoint with a UXX entry is unmeasured — exclude it there too.)

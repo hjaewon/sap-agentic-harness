@@ -45,7 +45,7 @@
 | `common/team-consultation-protocol.md` | obsolete | 팀 프로토콜 — 폐기 |
 | `common/context-loading-protocol.md` | obsolete | Tier 로딩 — 어댑터 로딩 계약으로 대체 |
 | `common/multi-profile-artifact-resolution.md` | obsolete | Claude 전용 경로 해석 — 폐기 |
-| `common/**` | copy | `core/knowledge/abap/conventions/` (규약 18종) |
+| `common/**` | copy | `core/knowledge/abap/conventions/` (규약 20종) |
 | `abap/**` | copy | `server/sap-assets/` (설치 manifest는 L2 신규 작성) |
 | `engine/**` | copy | `server/` (번들·VERSION·integrity) |
 | `runtime-deps/**` | copy | `server/runtime-deps/` (keyring — NODE_PATH 배선) |

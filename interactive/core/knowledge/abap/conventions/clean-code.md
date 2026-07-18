@@ -26,6 +26,7 @@ This file lists the Clean ABAP rules that apply regardless of paradigm. Follow e
 - **Use typed constants, not magic numbers**. See [`constant-rule.md`](constant-rule.md).
 - **Avoid `TYPE STANDARD TABLE WITH EMPTY KEY`** unless you really mean it; prefer `HASHED` / `SORTED` when lookup patterns allow.
 - **Never reuse a variable** for a different semantic meaning across a routine.
+- **Ratio / percentage arithmetic assigned into a narrow DEC/CURR field is a runtime-only defect class** (`COMPUTE_BCD_OVERFLOW` fires only on values, never at syntax check) — see [`function-module-rule.md`](function-module-rule.md) § Narrow DEC Fields — BCD Overflow.
 
 ## Control Flow
 
@@ -85,6 +86,10 @@ This file lists the Clean ABAP rules that apply regardless of paradigm. Follow e
 - Paradigm-specific details:
   - OOP: class-based exceptions, `RAISE EXCEPTION NEW`, `CX_STATIC_CHECK` vs `CX_NO_CHECK` vs `CX_DYNAMIC_CHECK` — see [`clean-code-oop.md`](clean-code-oop.md) § Error Handling.
   - Procedural: `sy-subrc` check after each statement, `EXCEPTIONS` clause on `CALL FUNCTION`, `MESSAGE ... RAISING` for FM errors — see [`clean-code-procedural.md`](clean-code-procedural.md) § Error Handling.
+
+## Reconciliation Logic — Null vs Zero
+
+Never read an absent value as `0` in verification / reconciliation logic — a failed or empty lookup then masquerades as "difference = 0, match ✓" (two empty totals compare `0 = 0` and the check passes on nothing). If the underlying rows are empty, do not emit totals at all — block the zero assertion rather than let it read as a match. RFC `TABLES` parameters cannot carry null (an uncomputed value arrives as `0.00` — see [`function-module-rule.md`](function-module-rule.md)), so design a caller-side normalization hook that maps "no rows / not computed" to null before any comparison.
 
 ## Open SQL
 

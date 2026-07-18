@@ -165,6 +165,8 @@ Core (clean-code.md, both paradigms):
 - [ ] Prefer explicit typed internal tables over inline `INTO TABLE @DATA(...)` for SELECTs feeding further logic
 - [ ] Inline declarations / modern syntax used where `ABAP_RELEASE` permits — never newer than the configured release
 - [ ] No commented-out code, no debug statements (`BREAK-POINT`, `MESSAGE 'TEST'`)
+- [ ] No ratio/percentage arithmetic assigned into narrow DEC/CURR fields (`COMPUTE_BCD_OVERFLOW` is runtime-only — static gates cannot catch it)
+- [ ] Reconciliation/verification outputs do not treat absent values as 0 (empty lookup must not assert "difference = 0")
 
 Paradigm = OOP (clean-code-oop.md):
 - [ ] **Main program structure matches [zrsc4sap_oop_ex.prog.abap](../knowledge/abap/templates/oop-sample/zrsc4sap_oop_ex.prog.abap)** — REPORT statement, INCLUDE order, event block layout, two-class bootstrap (`go_data = NEW lcl_data( )` / `go_alv = NEW lcl_alv( go_data )`). Any structural deviation must be justified in `spec.md`; otherwise MAJOR finding.
