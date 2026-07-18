@@ -1,20 +1,20 @@
 {
   "_comment": "D-018 버전 lock — vsp 갱신 시 이 lock의 명령 계약을 재검증한 뒤에만 갱신한다. 업스트림 동기 절차: 반기 fetch → 분기 검토 → 리베이스 판단 (docs/DECISIONS.md D-018)",
-  "locked_at": "2026-07-12",
+  "locked_at": "2026-07-18",
   "repo": {
     "local_path": "D:\\Claude for SAP\\vsp-custom",
     "origin": "https://github.com/hjaewon/vsp-custom.git",
     "upstream": "https://github.com/oisee/vibing-steampunk.git"
   },
-  "verified_commit": "0b03ef2914636f9bafc4d1e53c78a3499d80eb6f",
+  "verified_commit": "5a8bedb866c60f54ef76a752e86b167dbabb6e0a",
   "binary": {
     "path": "D:\\Claude for SAP\\vsp-custom\\build\\vsp.exe",
-    "sha256": "028858220AF1F2C2C5645E6B631BC75AD3D5691B756823C5C082E19F95703CB7",
-    "size_bytes": 18112000,
-    "build_command": "CGO_ENABLED=0 go build -ldflags \"-s -w -X main.Version=v2.38.1-91-g0b03ef2 -X main.Commit=0b03ef2 -X main.BuildDate=2026-07-12T03:11:15Z\" -o build/vsp.exe ./cmd/vsp",
-    "built_at": "2026-07-12T03:11:15Z"
+    "sha256": "0B9B3A33D098A249C70CF4014C7EED9B23B2234994F9A802D78E673487515E74",
+    "size_bytes": 18138112,
+    "build_command": "CGO_ENABLED=0 go build -ldflags \"-s -w -X main.Version=v2.38.1-94-g5a8bedb -X main.Commit=5a8bedb -X main.BuildDate=2026-07-18T02:53:23Z\" -o build/vsp.exe ./cmd/vsp",
+    "built_at": "2026-07-18T02:53:23Z"
   },
-  "version_output": "vsp version v2.38.1-91-g0b03ef2 (commit: 0b03ef2, built: 2026-07-12T03:11:15Z)",
+  "version_output": "vsp version v2.38.1-94-g5a8bedb (commit: 5a8bedb, built: 2026-07-18T02:53:23Z)",
   "command_contract": [
     {
       "command": "vsp lint --file <f> | --stdin",
@@ -67,6 +67,33 @@
       "mode": "gated write (위험, 기본 차단)"
     }
   ],
+  "write_profile_gate": {
+    "_comment": "vsp-custom 5a8bedb 신설 — write 가능 CLI 서브커맨드(deploy·copy·execute·install zadt-vsp/abapgit·source write/edit·recover-failed-create)를 네트워크 호출 전에 클라이언트측 게이트로 차단. getClient→getWriteClient(=enforceWriteProfile+getClient) 경유. 읽기 명령은 getClient 직접 사용이라 무영향.",
+    "env_vars": {
+      "SAP_READ_ONLY": "viper truthy 규칙(true/1/TRUE 등)이면 모든 write 차단. 미설정·false·0 = 무제약.",
+      "SAP_TIER": "'dev'(대소문자 무관)만 write 허용. 그 외 비어있지 않은 tier(qa/prd/…)는 차단. 미설정 = tier 제약 없음."
+    },
+    "verified": {
+      "offline_unit_tests": "cmd/vsp/write_profile_test.go — enforceWriteProfile 12케이스 + getWriteClient/read-path 4케이스 전부 PASS (2026-07-18 go test 실행).",
+      "passthrough_live": "SAP_READ_ONLY/SAP_TIER 미설정 상태에서 deploy·copy가 정상 진행 = 게이트 통과 분기 라이브 확인 (2026-07-18).",
+      "block_live": "RESOLVED (2026-07-18, 스파이크 Part B 재실증 — phases/3-review-gate/spike-evidence.json): SAP_READ_ONLY=true 및 SAP_TIER=QA 단독 각각 deploy가 dial 이전 클라이언트측 거부(created=no·dialed=no, 사전/사후 source read 404), 같은 env로 system info exit 0(read 분리 입증). AC-10 충족."
+    }
+  },
+  "reverification": {
+    "date": "2026-07-18",
+    "previous_verified_commit": "0b03ef2914636f9bafc4d1e53c78a3499d80eb6f",
+    "system": "IDES-DEV S4H/100",
+    "binary_identity": "sha256·size·--version 모두 실측 일치 확인.",
+    "command_contract_result": "10종 전부 재검증 통과 — 회귀·계약 위반 없음 (lint/parse offline, system info/atc/test/health read-only online, deploy/copy write는 $TMP 무해 대상 후 삭제·read-back 정리, install abapgit·execute는 --help+코드 근거로 계약 형태만 확인·라이브 미실행).",
+    "jnc_delta": [
+      { "commit": "0cb26cb", "item": "활성화 거짓성공 정직화 4곳(CreateTable·CreateFromFile·UpdateFromFile·EditSource)", "method": "코드 diff + deploy 라이브 happy-path(CreateFromFile activation.Success=true) — red 케이스(persisted-inactive)는 재현 과도로 코드 근거 판정" },
+      { "commit": "0cb26cb", "item": "data preview TotalRows/Truncated/xsi:nil/HTTP400 1회 재시도", "method": "MCP 핸들러 전용(CLI query는 flag 미노출) — 유닛테스트 PASS(TestMarkTruncation·TestParseTableContentsEmptyCellAlignment·TestGetTableContentsRetriesOn400) + 커밋 731b871 라이브 T000 클레임" },
+      { "commit": "0cb26cb", "item": "FUGR SyntaxCheck content-optional(그룹 전체 read-only 진단)", "method": "MCP 전용 — TestSyntaxCheckWithoutContentOmitsArtifacts PASS + 731b871 라이브 확인" },
+      { "commit": "0cb26cb/731b871", "item": "ActivateGroup 신설(SAPL+includes+FM+group 1회 활성화)", "method": "CLI 명령 없음(MCP 전용, R-002로 서버모드 미기동) — TestActivateMultipleBuildsMultiRefBody·TestGroupActivationRefs PASS + 731b871 S/4HANA 2021 라이브 E2E" },
+      { "commit": "731b871", "item": "ActivateGroup에서 시스템 UXX include(L<group>UXX) 제외", "method": "TestGroupActivationRefs가 LZFGUXX 제외·main-first 단언 PASS + 731b871 라이브 E2E" }
+    ],
+    "note": "ActivateGroup·데이터프리뷰·FUGR SyntaxCheck는 internal/mcp 핸들러 전용이라 vsp CLI 명령이 없다. R-002(vsp MCP 서버 모드 금지)로 라이브 CLI 실증이 불가능해 코드·유닛테스트·커밋 라이브 클레임으로 판정했다. CLI-도달 가능한 활성화 거짓성공(deploy/source edit 경로)은 라이브 happy-path로 보강."
+  },
   "not_used": [
     "MCP server mode (vsp = CLI 전용, DESIGN.md §3)",
     "--offline MCP flag"
