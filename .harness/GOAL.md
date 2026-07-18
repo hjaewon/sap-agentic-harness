@@ -5,44 +5,42 @@
 
 ## Task
 
-**§5-4 보완 세션 (2026-07-18, HANDOFF "▶ 다음 착수 확정" ①)** — 스파이크 Part B
-반증("vsp CLI가 read-only 설정을 안 읽는다") 보완 = ①vsp CLI 배선 + ②무인 워커
-자격증명 미공급 병행 + 리뷰 게이트 MINOR 5건 + Part B 재실증(AC-10) → step 5 해소.
+**백로그 5-13 층1 (2026-07-18, HANDOFF 다음 착수 ②)** — JNC 교훈 팩
+(`D:\Claude for SAP\JNC-Dashboard\docs\reference\sap-adt-lessons-pack.md`,
+라이브 S/4 2021 관통 확정본)을 `engine/`(4.13.12)과 **대조 감사 + 선별 이식**.
+참조 구현 = sc4sap-custom 엔진 v4.14.0(동결 — 읽기만, R-004) ·
+vsp-custom 0cb26cb+731b871(층1 기반영).
 
 ## Success criteria (기계 검증 가능)
 
-- [x] **vsp-custom 수리** (기준 HEAD 731b871, 그 레포에서만 — D-018 편입 금지):
-      CLI write 경로(deploy/copy/execute/install)가 SAP_READ_ONLY=true 및 비-dev
-      SAP_TIER를 **네트워크 이전 클라이언트측 거부**. `go test ./...` green +
-      오프라인 더미 호스트 프로브로 거부 마커 실측(스파이크와 동일 방법,
-      SAP write 0). read 경로 무영향. build/vsp.exe 재빌드.
-- [x] **lock 재검증(D-018)**: 명령 계약 10종 + JNC 델타(ActivateGroup·활성화
-      거짓성공 4곳·TotalRows/Truncated·FUGR 그룹 진단·UXX 제외) 재검증 후
-      `adapters/vsp/vsp.lock.json` 갱신(새 커밋 sha·바이너리 sha256·버전 출력).
-      write 검증은 DEV $TMP만(R-003), 반영 확인은 source read(R-006).
-- [x] **리뷰 게이트 MINOR 5건**: ①infra_retry_limit 소비(or 주석 명시)
-      ②prompt_version 해시 편입 ③PASS 레코드 프롬프트 버전·토큰 ④캡슐 파일명
-      vsp deploy 호환(파일명→객체 식별 실측 후 수리) ⑤리뷰어 spawn cwd 분리.
-      `node --test 'scripts/review-gate/tests/*.test.mjs'` 전체 green.
-- [x] **② 자격증명 미공급 구조**: 무인 워커 스텝 env에 SAP 자격증명 미공급 +
-      write 프로파일은 배포 래퍼 경로에만 — 구조 배선·문서화.
-- [x] **Part B 재실증(AC-10)**: 새 바이너리로 spike-evidence.json part_b.ok=true,
-      `node scripts/review-gate/tests/spike.mjs --check …` exit 0,
-      phases/3-review-gate step 5 completed(정식 절차로 해소).
-- [x] **정합·기록**: 스펙 §5-4 문구 정합, HANDOFF 갱신, 게이트 5종 green,
-      새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0).
+- [x] **대조 감사표**: 팩 전 항목에 대해 겹침(기반영)/신규(미반영)/N-A 판정 +
+      engine 좌표(파일:라인) + sc4sap v4.14.0 참조 위치. 겹침 추정 3건
+      (lock-window=4.13.3~7 · 삭제 2xx 정직화=4.13.9 · check-with-source=
+      4.13.11) 검증 포함.
+- [x] **신규 판정분 선별 이식** — SQL self-closing NULL 셀 드롭·시프트
+      (GetSqlQuery/GetTableContents, 실데이터 게이트 도구) **최우선**.
+      수리별 jest 회귀 테스트 신설 + **역-검증**(수리 원복 시 신설 테스트
+      FAIL) 실증. jest 전량 통과(기준선 599/0 유지·확장).
+- [x] **라이브 red→green** — 가능 항목은 IDES 실측(구 번들 red → 신 번들
+      green), 불가 항목은 사유 명시 + 대체 정본 증거(jest·참조 구현 대조).
+      실데이터 조회는 무해 시스템 테이블(T000 등) 검증 목적 최소한.
+- [x] **UPDATE-RUNBOOK 재번들** — verify-engine OK, capability 155 유지.
+- [x] **문서 계약** — engine/CHANGELOG.md + UPSTREAM-FIX-HANDOFF §해당 절
+      갱신(수리 시 동반 — 백로그 5-13 명시 요구).
+- [x] **게이트 5종 green + 새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0)** +
+      HANDOFF·STATE 기록 + 커밋.
 
 ## Verification method
 
-1. go test·node --test·spike.mjs·게이트 5종 exit code 실측.
-2. 오프라인 프로브: SAP_READ_ONLY=true → 네트워크 이전 거부 마커 / env 부재 →
-   기존 동작(dial 도달) 대조 — write 실수행 0.
-3. lock 재검증 기록(명령별 실측 결과)과 vsp.lock.json 갱신 내용 대조.
-4. 독립 리뷰어(새 컨텍스트, read-only)가 두 레포 diff를 이 GOAL 기준으로
-   항목별 판정.
+1. jest·게이트 5종 exit code 실측 + 역-검증 로그.
+2. 라이브 red→green 증거(구 vs 신 번들 실행 결과) 또는 불가 사유+대체 증거.
+3. 감사표의 겹침 판정을 리뷰어가 engine 좌표로 재확인.
+4. 독립 리뷰어(새 컨텍스트, read-only)가 diff를 이 GOAL 기준으로 항목별 판정.
 
 ## 제약 (전 기간 유효)
 
+- 동결 레포 sc4sap-custom **읽기만**(R-004, private/는 읽기도 금지)
 - 무인 SAP write 금지(5-11) · final-harness 플러그인 업데이트 금지(5-12)
-- Go 수리는 `D:\Claude for SAP\vsp-custom`에서만 · 자격증명 기록 금지(R-005)
-- QA/PRD write 금지(R-003) · vsp MCP 서버 모드 금지(R-002)
+- QA/PRD write 금지(R-003) · vsp MCP 서버 모드 금지(R-002) · 자격증명 기록
+  금지(R-005) · $TMP 산출물 정리 + read-back 확인(R-006)
+- 엔진 수리는 레포 내 `engine/`에서 (D-017) · 재번들은 UPDATE-RUNBOOK 절차로만

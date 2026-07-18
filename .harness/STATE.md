@@ -233,10 +233,23 @@
   (tests/ 인식+레포 밖 제외 — 훅 ask의 bypass 관통 승인 폭주 해소, 무추적
   이 머신 한정). 무인 write 금지(5-11) 계속 유효(개방은 Phase 3 완주 후)
 
+- 2026-07-18 | **5-13 층1 완료** (같은 오케스트레이션 세션, 감사·수리·리뷰
+  전량 위임) — 대조 감사 12항목(신규 6·부분 2·설명 1·겹침 3, 사전 추정 정정
+  2) → 엔진 **4.13.13**(SQL self-closing NULL 셀 위치보존+메타 3필드+400
+  재시도 — T000 라이브 red→green, GetTableContents 공유 파서 동반 치유) +
+  **4.13.14**(CreateStructure fields→DDL 실생성·거짓 성공 제거 — $TMP 라이브
+  red→green + FM check_inactive 경고 + 설명 3건). 11-② 병리 미재현 기각,
+  lock-window는 engine stateful-핀 유지 결정. jest 599→643/5(역-검증 전
+  항목), 재번들 155 유지·번들 byte 동일, 새-컨텍스트 리뷰 PASS(BLOCKER/
+  MAJOR 0). 감사 정본 = docs/reference/audits/2026-07-18-5-13-layer1-audit.md.
+  후속 권고: 동결 sc4sap-custom 전일 드리프트 1파일 정리(사용자 판단)
+
 ## Next
 
-- 사용자 확정 순서(HANDOFF 헤더): **② 5-13 층1**(engine/ 대조 감사 — SQL
-  NULL-셀 최우선) → **③ 5-13 층2·3**. 전 기간: 무인 SAP write 금지(5-11) ·
+- 사용자 확정 순서(HANDOFF 헤더): **③ 5-13 층2**(interactive/core 지식 이식 —
+  conventions 확장+신규 2건, 원본 sc4sap-custom common/*.md 드리프트
+  MIGRATION-MANIFEST 대조 필요) → **5-13 층3**(트랙 A 방법론 시드 — RULES
+  직접 대량 추가 금지, 시드/문서 경유). 전 기간: 무인 SAP write 금지(5-11) ·
   final-harness 플러그인 업데이트 금지(5-12)
 
 ## Attempts & dead ends

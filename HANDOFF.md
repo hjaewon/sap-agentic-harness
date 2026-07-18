@@ -172,6 +172,34 @@
 > (5-11)는 계속 유효** — 이번 보완은 §5-4 기계 강제층 성립까지이고, 개방은
 > Phase 3 완주(AC-8 리뷰 게이트 실차단 실증 포함) 후 재론. **다음 착수 =
 > ② 5-13 층1 → ③ 5-13 층2·3** (변동 없음).
+> **→ ✅ ② 5-13 층1 완료 (2026-07-18, 같은 오케스트레이션 세션 — 감사·수리
+> 전량 opus 위임)**: **대조 감사**(코드 실증) — 층1 12항목 판정: 신규 6·부분
+> 2·설명 1·겹침 3, **사전 추정 정정 2건**(예외 type ⑫=4.13.0 기반영 겹침 ·
+> FUGR ④=능력○ 설명만 격차). 감사·이식 정본 =
+> `docs/reference/audits/2026-07-18-5-13-layer1-audit.md`(좌표 부록 포함).
+> **이식 = 엔진 4.13.13 + 4.13.14**: ⑴ 4.13.13(Wave 1, 실데이터 게이트
+> 정직화) — SQL self-closing NULL 셀 위치보존 파서(행 시프트 해소, T000
+> self-join 라이브 red→green — 타 행 값이 엉뚱한 MANDT에 붙던 결함 실측·해소,
+> GetTableContents는 공유 파서로 동반 치유)·ragged_columns 경고·메타 3필드
+> (returned_row_count/truncated/server_total_rows)·400 1회 재시도. ⑵ 4.13.14
+> (Wave 2·3) — CreateStructure **거짓 성공 제거**(fields→DDL 실생성
+> `structureDdl.ts` 이식, 불완전 스펙 무-와이어 사전 실패·부분 생성 금지,
+> $TMP 라이브 red(빈 셸)→green(필드 실재), enhancement.category 상시 방출) +
+> FM check_inactive 경고(Get 기본 on·Read opt-in) + 설명 3건(FUGR 레시피·
+> 형제 precheck persist·active≠활성). 11-②(삭제 재조회 404)는 라이브에서
+> no-op 2xx **미재현** → 과잉 수리 기각, Known-remaining #9 후보로만.
+> lock-window 드리프트(sc4sap check-before-lock vs engine stateful-핀)는
+> **engine 방식 유지 결정**(왕복 이점+라이브 검증, 재론=동일 실패 재발).
+> jest **599→643**/5 skip(+45·전제역전 1건 폐기, 수리별 역-검증 전 항목),
+> 재번들 verify-engine OK@4.13.14(46ca76e5eb64…)·번들 byte 동일·**155 유지**,
+> $TMP 전량 삭제·read-back 404·고아 잠금 0. CHANGELOG 4.13.13·4.13.14 +
+> UPSTREAM-FIX-HANDOFF §12·§13·§14·Known-remaining #9. **새-컨텍스트 독립
+> 리뷰 PASS(BLOCKER/MAJOR 0)** — 겹침 판정 2건 실코드 재확증(stateful 핀
+> 27파일·utils.ts 본문 우선), MINOR 1(감사표 좌표 — 부록 보강 완료)·INFO 2.
+> **후속 권고(INFO-1)**: 동결 레포 sc4sap-custom 워킹트리에 전일(07-17)
+> 4.14.0 머지 잔여 드리프트 1파일(` M docs/skill-model-architecture.md`) —
+> 이 세션 귀책 아님(read-only 사용), R-004상 손대지 않고 기록만. 사용자
+> 판단으로 정리 권장. **다음 착수 = ③ 5-13 층2·3**.
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성
@@ -625,14 +653,14 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
 - **원천**: JNC 대시보드가 라이브 S/4 2021 관통(FM 22·구조체 31)으로 확정한 교훈
   일반화본(R-001~R-013 계열). sc4sap-custom(엔진 v4.14.0, merge 78df50b)·
   vsp-custom(0cb26cb+731b871)에는 층1 반영 완료 — **본 레포는 미반영**.
-- **층 1 → `engine/`(4.13.12) 대조 감사 + 선별 이식**: 겹침 추정(lock-window =
-  4.13.3~7 stateful 핀 계열 · 삭제 2xx 정직화 = 4.13.9 · check-with-source =
-  4.13.11) vs 신규 유력(**SQL self-closing NULL 셀 드롭·시프트 — GetSqlQuery/
-  GetTableContents는 실데이터 게이트 도구라 최우선** · version=active 편집 소실
-  경고(check_inactive) · CreateStructure fields→DDL 실생성 · FUGR 활성화
-  레시피+UXX 제외 · enhancement category 방출 · 긴 SQL 400 재시도 ·
-  truncated/total_rows 플래그 · 예외 type 불신-메시지 본문 우선). sc4sap
-  v4.14.0 수정을 참조 구현으로 대조 가능. 수리 시 UPSTREAM-FIX-HANDOFF 갱신 동반.
+- ~~**층 1 → `engine/`(4.13.12) 대조 감사 + 선별 이식**~~ → ✅ **완료
+  (2026-07-18, 엔진 4.13.13+4.13.14)**: 12항목 판정(신규 6·부분 2·설명 1·
+  겹침 3, 사전 추정 정정 2 — 예외 type은 4.13.0 기반영·FUGR은 설명만 격차),
+  SQL self-closing NULL 셀 최우선 이식 + CreateStructure 실생성 +
+  FM 정직성. 11-② 삭제 재조회 404는 병리 미재현으로 기각(Known-remaining
+  #9 후보). 정본 = `docs/reference/audits/2026-07-18-5-13-layer1-audit.md`,
+  UPSTREAM-FIX-HANDOFF §12~§14. 새-컨텍스트 리뷰 PASS. 상세는 헤더
+  2026-07-18 블록.
 - **층 2 → interactive/core 지식 이식**: conventions 확장(field-typing·
   function-module-rule·clean-code) + 신규 2건(abapgit-roundtrip-rule·
   source-repair-protocol) + DD03L 실측 정본·DEC 오버플로·null 정규화 등 8건.
