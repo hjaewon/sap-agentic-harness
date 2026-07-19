@@ -289,14 +289,32 @@
   .harness/RULES.md·LESSONS.md 무수정 준수. E2E 실호출 편입은 후속 후보
   (감사 §6-리스크 2)
 
+- 2026-07-19 | **잔여 소진 스프린트 착수** (사용자 지시 "5-12 제외 몽땅" —
+  오케스트레이션 세션·실행 전량 모델 지정 위임, 기준=GOAL.md) — W0 전수
+  스윕 정본(docs/reference/audits/2026-07-19-remaining-backlog-sweep.md,
+  실행 A24·유보 B4·대기 C12) · W1a `adapters/vsp/SAFETY-PROFILES.md` 신설
+  (§8.4 실행 가능 수준 — 모드별 allowlist·기계/절차 등급 구분·오프라인
+  프로브 3종 재실측) · W4a FI 첫 팩(packs/modules/fi 5파일+README —
+  포인터+얇은 발췌 구조, FI-001~005 소스 재검증 저술) · Phase 3 런 계획
+  동결(phases/4-gated-deploy 7스텝 + .harness/runs/20260719-4-gated-deploy
+  계약·매니페스트, 스펙은 red 워커가 아닌 계획 시점 동결로 승격[게이트
+  무결성], config.json prompt v1.1 서버증거 대조 의무[AC-15 (c)안 — Bash
+  개방 기각: 스파이크가 부모 bypass env 상속으로 오염 판별], deploy-shim
+  신설[R1 공백 split 해소]) · CONSULT 실사용 기록(FI-004→스펙 요구 2,
+  KR·SKAT→요구 3 — PLANNING §0, Phase 4 실사용 기준 충족분). SAP
+  프리플라이트 VERIFY_PASS. 병행: 엔진 W3a(low 무동작 파라미터 4종 제거 +
+  11-⑩ Delete 로컬 4종 Option A) 위임 진행 중
+
 ## Next
 
-- **다음 착수 = 사용자 판단 대기** (5-13 전체 종결). 후보: ① Phase 3
-  리뷰 게이트 편입 구현(5-11 스펙 확정분 — harness-plan 계획 경유) ②
-  엔진 잔여(11-⑩ Delete 로컬 계열 설계 판단·관찰 2건) ③ packs Phase 4
-  (비전 제2축 모듈 지식팩 — 미착수). 전 기간 유효: 무인 SAP write 금지
-  (5-11) · final-harness 플러그인 업데이트 금지(5-12) · 동결 sc4sap-custom
-  드리프트 1파일 정리는 사용자 판단
+- **스프린트 진행 중** (GOAL.md가 기준): W3a 완료·검수·커밋 후
+  4-gated-deploy 런 기동(attended bridge, 리뷰 스텝 재시도 예산 5) → W2
+  완주(AC-8·14·15·drift) → W3b(11-⑦·A-6·A-9·A-10 후속 조사→수리 배치) →
+  W4b(런의 실제 게이트 FAIL을 LESSONS→harness-lesson 경유 1건 승격) → W5
+  (잔챙이 A-13~17·21~23 + Phase 5 판정 + 게이트 5종 + 스프린트 전체
+  새-컨텍스트 리뷰 + HANDOFF/STATE/커밋 + 사용자 결정 목록 보고). 전 기간:
+  무인 상시 개방 금지(5-11 재론은 사용자)·5-12 제외·QA/PRD 금지·row-data
+  2종 게이트 유지
 
 ## Attempts & dead ends
 

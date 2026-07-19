@@ -41,10 +41,11 @@
 - scripts/vsp-env.ps1 — SAP 자격증명 주입 (dot-source)
 - src/ — 하네스가 관리하는 ABAP 소스 (abapGit 호환 네이밍)
 - domain/abap/ — RULES.seed.md(규칙 후보풀 — 무인 주입 안 됨)·CHECKLIST.md
+- packs/modules/ — Domain Packs(DESIGN §12 이중 구조): CONSULT 본체(사람 소유 세션 전용 — 무인 주입 안 됨) + RULES.seed(팩 로컬 FI-NNN 승격 후보 풀)
 - .harness/ — 엔진 상태 (GOAL·STATE·RULES·LESSONS·VERIFY-PATTERNS) — 스텝이
   직접 수정 금지 (엔진이 관리)
 - adapters/vsp/ — COMMANDS.md(명령 전수 실측)·VERIFY-PATTERNS.md(마커 상세
-  정본)·vsp.lock.json(v2.38.1-91 lock)
+  정본)·SAFETY-PROFILES.md(모드별 write 게이트 프로파일)·vsp.lock.json(v2.38.1-94 lock)
 - adapters/final-harness.lock.json — 엔진 lock (v0.17.3)
 - DESIGN.md·HANDOFF.md·docs/DECISIONS.md — 메타 문서 (하네스를 만드는 프로젝트용)
 
