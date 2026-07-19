@@ -3,10 +3,11 @@
 ## ① 헤더
 
 - **실측 일자**: 2026-07-11
-- **vsp 버전**: `vsp version v2.38.1-86-gaab1275 (commit: aab1275, built: 2026-07-11T05:38:44Z)` —
-  `adapters/vsp/vsp.lock.json`의 `verified_commit`/`binary.build_command`와 일치 확인
+- **vsp 버전 (실측 시점)**: `vsp version v2.38.1-86-gaab1275 (commit: aab1275, built: 2026-07-11T05:38:44Z)` —
+  실측 당시 lock `verified_commit`과 일치했다. 현행 lock은 편입(D-037)으로 `5a8bedb`(v2.38.1-94)를
+  pin하며, 그 재검증·in-repo 스모크는 `adapters/vsp/vsp.lock.json`의 `reverification`/`in_repo_smoke`가 보존한다.
 - **시스템**: IDES-DEV, SID S4H, client 100 (`vsp system info` 재실행으로 확인, §2-1)
-- **바이너리**: `D:\Claude for SAP\vsp-custom\build\vsp.exe`
+- **바이너리**: `vsp\build\vsp.exe` (D-030 편입 — 레포 내 서브트리 빌드, 비커밋; 빌드 명령 = `adapters/vsp/vsp.lock.json`의 `binary.build_command`)
 - **lock 참조**: `adapters/vsp/vsp.lock.json`(command_contract 10건) — 본 문서가 그 계약의
   실측 상세판. lock의 10건에 더해, `vsp --help` 전체 명령 표면(44개 top-level 명령)을
   1회 조사해 §14-2(drift/export)·§14-9(syntax check) 후보를 식별했다.

@@ -14,7 +14,8 @@ SAP ABAP 개발을 AI 하네스로 수행하는 **단일 레포 · 두 트랙**.
   vsp-custom은 **Engine의 SAP 실행 백엔드이자 적용 경로와 독립인 트랙 A 완료 증거
   백엔드**이며, 사람 작업의 유일한 SAP 접점은 아니다(DESIGN.md §3 — powerup 엔진은
   트랙 A에서 쓰지 않음). 소유 전략: **final-harness는 D-018 분리 유지 + 버전 lock**,
-  **vsp-custom은 D-030으로 편입 확정(분기 통합 직후 실행 — D-018 vsp 조항 supersede)**.
+  **vsp-custom은 D-030으로 레포 내 `vsp/`에 편입 완료(D-037 — 히스토리 비이식 스냅샷·
+  바이너리 비커밋; D-018 vsp 조항 supersede)**.
 - **트랙 B — 대화형 플러그인 (검증 완료)** = `interactive/` — 하네스 중립 코어(지식 177·
   페르소나 26·절차 16·정책) + MCP 서버 번들 + 어댑터 3사(Claude/Codex/Antigravity).
   번들의 소스 정본은 레포 내 **`engine/`**(D-017 편입) — 엔진 수리→재번들→반영은

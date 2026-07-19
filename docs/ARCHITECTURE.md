@@ -14,8 +14,9 @@
 - **트랙 A(하네스 트랙)** — Direct 기본·Guided 명시 승격·Engine attended의
   3 실행 구조와 P0~P4 Policy를 직교 매핑한다. final-harness는 Engine,
   vsp-custom CLI는 Engine 실행·공통 완료 증거 backend다. 사람 Direct/Guided의
-  적용 경로는 트랙 B MCP·vsp CLI·abapGit이다. 두 실행 의존은 외부 레포로
-  분리 유지한다(D-018) — vsp는 D-030으로 편입 확정, 실행은 통합 직후.
+  적용 경로는 트랙 B MCP·vsp CLI·abapGit이다. final-harness는 외부 레포로
+  분리 유지하고(D-018), vsp는 레포 내 `vsp/`로 편입 완료다(D-030·D-037 —
+  히스토리 비이식 스냅샷·바이너리 비커밋).
 - **트랙 B(대화형 플러그인)** — Node MCP 서버 + 3사 어댑터. 도구 표면 소스 정본은 레포 내
   engine/(D-017 편입), 배포 형태는 interactive/server/의 번들.
 
@@ -26,7 +27,7 @@
 | 의존 | 역할 | lock 파일 · 고정값 |
 |---|---|---|
 | final-harness | 트랙 A Engine attended(자체 제작 독립 제품) | `adapters/final-harness.lock.json` schema v2 계약 — `verified`·`candidate`·`history`·`safety_state` 분리 |
-| vsp-custom | Engine 실행 backend·적용 경로와 독립인 Track A 완료 증거 backend(CLI) | `adapters/vsp/vsp.lock.json` — 통합 시 로컬 우월분 **v2.38.1-94** 채택(write 프로파일 게이트·재검증 포함, 평가 §4). lock 파일이 커밋 sha·바이너리 sha256의 정본. 편입은 통합 직후(D-030) |
+| vsp-custom | Engine 실행 backend·적용 경로와 독립인 Track A 완료 증거 backend(CLI) | `adapters/vsp/vsp.lock.json` — 로컬 우월분 **v2.38.1-94**(write 프로파일 게이트·재검증 포함, 평가 §4). lock 파일이 원천 커밋 sha·재현 빌드 바이너리 sha256·명령 계약·provenance의 정본. 편입 완료(레포 내 `vsp/`, D-030·D-037 — 바이너리 비커밋) |
 | engine/ (MCP 서버) | 트랙 B 도구 표면 소스 정본 | 레포 내 편입(D-017). 수리→재번들→interactive/server 반영은 `interactive/server/UPDATE-RUNBOOK.md` 절차로만 |
 
 두 외부 의존의 분리 근거는 D-018, `engine/`만 편입한 대조 근거는 D-017이다. vsp는

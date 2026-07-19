@@ -33,12 +33,12 @@ param(
 )
 
 # pinned by adapters/vsp/vsp.lock.json - keep in sync
-# machine-specific path (this is the main machine - binary_main_machine); the
-# secondary machine's path is lock's "binary" entry.
-$VSP = "D:\claude for SAP\vsp\vsp-custom\build\vsp.exe"
+# in-repo build (D-030): the repo's vsp/ subtree is the source of truth; the
+# binary is built (non-committed) at vsp/build/vsp.exe per lock "binary.build_command".
+$VSP = Join-Path $PSScriptRoot "..\vsp\build\vsp.exe"
 
 if (-not (Test-Path -LiteralPath $VSP)) {
-    Write-Output "ENV_FAIL: vsp binary not found at $VSP"
+    Write-Output "ENV_FAIL: vsp binary not built at $VSP - build it per adapters/vsp/vsp.lock.json build_command (source: vsp/)"
     exit 1
 }
 

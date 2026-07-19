@@ -117,3 +117,37 @@ jobs:
       - name: Track B -> Guided bridge 테스트
         shell: cmd
         run: powershell -NoProfile -File .\scripts\test-promote-track-b-run.ps1
+
+  vsp-build:
+    # vsp-custom 편입(D-030/D-037) — 레포 내 vsp/ 서브트리에서 in-repo 재현 빌드 +
+    # 오프라인 계약 스모크. 바이너리는 비커밋(lock binary.build_command로 재현)이라
+    # CI가 매번 빌드해 명령 계약을 assert한다. 온라인 명령(deploy/atc/test 등)은
+    # SAP 자격증명·네트워크 부재로 여기서 못 돈다 — 오프라인 3종 + 파서 패키지 테스트만.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: vsp/go.mod
+          cache-dependency-path: vsp/go.sum
+
+      - name: build (vsp · CGO0 · trimpath)
+        working-directory: vsp
+        run: CGO_ENABLED=0 go build -trimpath -o build/vsp ./cmd/vsp
+
+      - name: 오프라인 계약 스모크 — lint (Error만 비-0, clean 파일 exit 0)
+        working-directory: vsp
+        run: ./build/vsp lint --file embedded/abap/zadt_test_simple_report.prog.abap
+
+      - name: 오프라인 계약 스모크 — parse (exit 0)
+        working-directory: vsp
+        run: ./build/vsp parse --file embedded/abap/zadt_test_simple_report.prog.abap
+
+      - name: 오프라인 계약 스모크 — execute --help gated write 문구
+        working-directory: vsp
+        run: ./build/vsp execute --help | grep -i "write permissions"
+
+      - name: 검증 중심 계약 핵심 패키지 테스트 (abaplint · CGO0 green 실측)
+        working-directory: vsp
+        run: CGO_ENABLED=0 go test ./pkg/abaplint/...

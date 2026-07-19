@@ -1,27 +1,70 @@
 {
-  "_comment": "D-018 버전 lock — vsp 갱신 시 이 lock의 명령 계약을 재검증한 뒤에만 갱신한다. 업스트림 동기 절차: 반기 fetch → 분기 검토 → 리베이스 판단 (docs/reference/DECISIONS.md D-018 — D-030 편입 확정으로 supersede, 편입 실행 전까지 이 lock 유효)",
+  "_comment": "D-018 버전 lock은 D-030 편입 실행으로 supersede됐다. 소스 정본은 이제 레포 내 `vsp/`(git archive 스냅샷)이며 이 파일은 외부 레포 pin에서 '빌드·명령 계약·provenance 기록'으로 성격이 전환됐다. 편입 범위·계약은 D-030(편입 확정)·D-036(통째 편입 + 검증 중심 사용 계약)·D-037 참조. 바이너리는 비커밋(빌드는 머신/CI 몫) — `source_provenance.imported_commit` + `binary.build_command`가 재현 기준.",
   "locked_at": "2026-07-18",
-  "repo": {
-    "local_path": "D:\\Claude for SAP\\vsp-custom",
-    "origin": "https://github.com/hjaewon/vsp-custom.git",
-    "upstream": "https://github.com/oisee/vibing-steampunk.git"
-  },
+  "imported_at": "2026-07-19",
   "verified_commit": "5a8bedb866c60f54ef76a752e86b167dbabb6e0a",
+  "source_provenance": {
+    "_comment": "vsp/ 하위 트리는 원천 레포 HEAD를 git archive로 스냅샷 전개한 것이다(히스토리 비이식). 원 레포 이력에는 정리 전 세션 기록에 비공개 접속 식별 정보가 잔존 실측되어, 커밋 이력을 이식하지 않고 tracked 파일만 스냅샷으로 편입했다.",
+    "origin": "https://github.com/hjaewon/vsp-custom.git",
+    "upstream": "https://github.com/oisee/vibing-steampunk.git",
+    "license": "MIT (upstream oisee/vibing-steampunk)",
+    "go_module": "github.com/oisee/vibing-steampunk",
+    "imported_commit": "5a8bedb866c60f54ef76a752e86b167dbabb6e0a",
+    "imported_version": "v2.38.1-94-g5a8bedb",
+    "imported_at": "2026-07-19",
+    "source_head_confirmed": "착수 시 `git -C <원천> rev-parse HEAD` = 5a8bedb866c60f54ef76a752e86b167dbabb6e0a (= verified_commit), 작업트리 clean 실측.",
+    "method": "git archive snapshot — 히스토리 비이식(원 레포 이력에 정리 전 세션 기록 잔존 실측이 근거)",
+    "source_tracked_file_count": 745,
+    "imported_file_count": 567,
+    "excluded_paths": [
+      {
+        "path": "reports/",
+        "file_count": 155,
+        "reason": "원 레포의 작업 일지·연구 기록 영역 — 비공개 접속 식별 정보 잔존 실측, 제품 코드 아님"
+      },
+      {
+        "path": "contexts/",
+        "file_count": 22,
+        "reason": "원 레포의 세션 핸드오프 기록 영역 — 비공개 접속 식별 정보 잔존 실측, 제품 코드 아님"
+      },
+      {
+        "path": "2026-03-21-224059-last-login-fri-mar-20-152839-on-ttys003.txt",
+        "file_count": 1,
+        "reason": "세션 콘솔 캡처 파일 — 로그인/터미널 세션 식별 정보 잔존, 제품 코드 아님"
+      }
+    ],
+    "excluded_total": 178,
+    "privacy_recheck": {
+      "_comment": "편입 트리(vsp/) 전체 재점검 — 소스 무수정(삭제만 허용) 원칙. 실값으로 보이는 접속 좌표가 남으면 추가 제외 대상이었으나 0건.",
+      "date": "2026-07-19",
+      "patterns_checked": "SAP_URL= / SAP_USER= / SAP_PASSWORD= / ashost / desude / .su 실호스트 / IPv4:port / .env·credential 파일",
+      "result": "실값 0 — 전량 placeholder·문서 더미·테스트 픽스처(host, your-sap-host, dev/developer, secret, YOUR_*, a4h.local, dev.example.com, prod.example.com, 127.0.0.1, example.com, secret123, SAP_PASSWORD=*** 마스킹). credential_cmd.go/_test.go는 기능 소스+테스트 픽스처.",
+      "additional_exclusions": 0
+    }
+  },
   "binary": {
-    "path": "D:\\Claude for SAP\\vsp-custom\\build\\vsp.exe",
-    "sha256": "0B9B3A33D098A249C70CF4014C7EED9B23B2234994F9A802D78E673487515E74",
-    "size_bytes": 18138112,
-    "build_command": "CGO_ENABLED=0 go build -ldflags \"-s -w -X main.Version=v2.38.1-94-g5a8bedb -X main.Commit=5a8bedb -X main.BuildDate=2026-07-18T02:53:23Z\" -o build/vsp.exe ./cmd/vsp",
-    "built_at": "2026-07-18T02:53:23Z"
+    "_comment": "레포 상대 경로 · 비커밋(vsp/.gitignore의 `/build/`·`*.exe`가 ignore, 루트 git status 미노출 실측). 빌드는 머신/CI 몫. build_command로 재현.",
+    "path": "vsp\\build\\vsp.exe",
+    "committed": false,
+    "go_version": "go1.26.4 windows/amd64",
+    "build_command": "cd vsp && CGO_ENABLED=0 go build -trimpath -ldflags \"-s -w -X main.Version=v2.38.1-94-g5a8bedb -X main.Commit=5a8bedb -X main.BuildDate=2026-07-18T11:53:07+09:00\" -o build/vsp.exe ./cmd/vsp",
+    "build_date_embedded": "2026-07-18T11:53:07+09:00",
+    "build_date_source": "원천 커밋 5a8bedb의 committer date(`git show -s --format=%cI`) — 재현성 위해 벽시계 대신 고정",
+    "sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
+    "size_bytes": 18115584,
+    "built_at": "2026-07-19T13:39:25Z",
+    "reproducible": {
+      "verdict": "YES",
+      "_comment": "-trimpath + BuildDate 고정으로 경로·시각 독립 재현 빌드. D-018 시절 lock sha(0B9B3A33…/B10405459…)와 달라지는 것은 정상 — 새 빌드 파라미터(-trimpath 추가·BuildDate 고정)를 쓴 새 lock이다.",
+      "method": "동일 build_command 2회(산출물 sha256 기록 → 삭제 → 재빌드 → sha256 재계산)",
+      "build1_sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
+      "build2_sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
+      "identical": true,
+      "size_bytes_both": 18115584,
+      "measured": "2026-07-19 · go1.26.4 · windows/amd64"
+    }
   },
-  "binary_main_machine": {
-    "_comment": "동일 커밋 0b03ef2·동일 build_command 재현, --version 출력 lock과 정확 일치 + 오프라인 명령 계약 스모크 통과, 바이트 차는 Go 빌드 경로 임베딩 아티팩트로 판정 — 2026-07-13",
-    "path": "D:\\claude for SAP\\vsp\\vsp-custom\\build\\vsp.exe",
-    "sha256": "B10405459D5428045DFC55BB9CC4C2184C1C18BEBC3B3C18DC10304F3D960999",
-    "size_bytes": 18115072,
-    "built_at": "2026-07-13T04:12:56Z"
-  },
-  "version_output": "vsp version v2.38.1-94-g5a8bedb (commit: 5a8bedb, built: 2026-07-18T02:53:23Z)",
+  "version_output": "vsp version v2.38.1-94-g5a8bedb (commit: 5a8bedb, built: 2026-07-18T11:53:07+09:00)",
   "command_contract": [
     {
       "command": "vsp lint --file <f> | --stdin",
@@ -109,6 +152,16 @@
     "_": "go test ./... 분리 기록 (S3 · D-027 로드맵 §9.6). vsp 전체 test가 green이 아니어도 현 lock binary는 쓸 수 있다. 다만 실패를 숨기지 않고 계약 관련/무관으로 나눠 적는다.",
     "measured": "2026-07-16 · CGO_ENABLED=0 · windows/amd64 · go1.26.4 · HEAD 0b03ef2(=verified_commit) · 작업트리 clean",
     "scope_note": "vsp-custom을 읽기만 했다. 소스 수정 0 — 수리는 별도 repo 작업이며 사용자 결정 사항이다(§9.6).",
+    "in_repo_smoke": {
+      "_": "D-030 편입 후 레포 내 vsp/에서 in-repo 빌드 산출물로 오프라인 명령 계약 스모크 재현 (SAP 미접속). lock command_contract의 오프라인 3종 실측.",
+      "measured": "2026-07-19 · in-repo vsp/build/vsp.exe(sha256 fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9) · windows/amd64 · go1.26.4 · 오프라인",
+      "sample": "vsp/embedded/abap/zadt_test_simple_report.prog.abap",
+      "results": [
+        "vsp lint --file <sample> → \"No issues found\" · exit 0 (계약: Error만 비-0, clean 파일이라 0) ✅",
+        "vsp parse --file <sample> → 파스트리 출력 · exit 0 ✅",
+        "vsp execute --help → \"Requires write permissions. Code can be inline or from a file.\" 존재 (계약: gated write, 기본 차단) ✅"
+      ]
+    },
     "lock_command_contract": {
       "verdict": "PASS",
       "_": "계약에 등재된 명령 중 오프라인 2종은 이 lock binary로 직접 실측했고, 나머지는 SAP 접속이 필요해 S5 이전에는 판정하지 않는다.",

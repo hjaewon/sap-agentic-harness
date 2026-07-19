@@ -350,10 +350,10 @@ gated write 이후 `vsp source read <TYPE> <NAME>`로 반영을 대조한다(CLA
 더미 호스트로도 재현되며 실 write가 발생하지 않는다 — AC-10 실증(spike-evidence.json
 part_b)이 쓴 방식을 더미 호스트로 축약한 것.
 
-바이너리는 lock 고정 경로: `D:\Claude for SAP\vsp-custom\build\vsp.exe`.
+바이너리는 lock 상대 경로: `vsp\build\vsp.exe` (D-030 편입 · 비커밋 · lock `binary.build_command`로 빌드).
 
 ```bash
-VSP="D:/Claude for SAP/vsp-custom/build/vsp.exe"
+VSP="vsp/build/vsp.exe"   # 레포 루트 기준 상대경로 (D-030 편입, 비커밋)
 printf 'REPORT zsah_probe.\nWRITE / 42.\n' > zsah_probe.prog.abap
 DUMMY=(SAP_URL="https://dummy.invalid:44300" SAP_CLIENT=100 SAP_USER=DUMMY SAP_PASSWORD=DUMMY)
 

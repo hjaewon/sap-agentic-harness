@@ -852,3 +852,18 @@
 - **대안·기각**: 검사기(파서·lint)만 추출 편입 — 기각: 한 Go 모듈에 얽힌 코드의 분할 수술 비용 + 편입된 검사기와 외부 잔류 배포기가 두 정본이 되는 드리프트 위험 + lock 계약이 절반 잔존. 배포기(deploy/copy)는 트랙 A 배포 백엔드로 이미 실사용 중이라 제외 실익 없음.
 - **잔여(편입 실행 세션으로)**: 방식(subtree 등)·레포 내 경로·in-repo 빌드·CI Go 잡·lock/게이트 경로 재정합(D-030 영향 조항)은 실행 세션의 소규모 설계로 확정.
 - **불변(재확인)**: R-002(MCP 모드 금지)·R-003(DEV tier write)·실데이터 2종 호출별 승인·무인 write 봉인(D-034 관문 전) 유지 — 편입 범위와 무관.
+
+## D-037 · 2026-07-19 · vsp 편입 실행 설계 — git archive 스냅샷 · 경로 vsp/ · 세션 기록류 제외 (D-030·D-036 실행 완결)
+
+- **결정**: D-030·D-036이 실행 세션으로 미룬 편입 방식·경로·빌드·CI·lock 재정합을 확정·집행한다.
+  ① **방식** = 원천(`hjaewon/vsp-custom`) HEAD `5a8bedb`(v2.38.1-94-g5a8bedb)의 **git archive 스냅샷**을 최상위 `vsp/`로 전개하고 **히스토리는 비이식**한다(tracked 파일만 편입, 커밋 이력 미이식).
+  ② **경로** = 레포 최상위 `vsp/`. 소스 정본이 in-repo 서브트리로 이동한다(외부 레포 pin 종료).
+  ③ **제외** = 세션 기록류 **178파일**(reports/ 155 · contexts/ 22 · 최상위 터미널 세션 로그 1). 제품 코드가 아니라 원 레포의 작업 일지·핸드오프·콘솔 캡처다. 편입 tracked 파일 = 745 중 **567**.
+  ④ **빌드** = in-repo `CGO_ENABLED=0 go build -trimpath` + BuildDate를 원천 커밋 시각(`2026-07-18T11:53:07+09:00`, 커밋 committer date)으로 **고정** → 경로·벽시계 독립 **재현 빌드 실측**(동일 build_command 2회, sha256 = `fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9` 동일, size 18115584). **바이너리·빌드 캐시는 비커밋**(HANDOFF 설계 제약 1 — `vsp/.gitignore`의 `/build/`·`*.exe`가 ignore, 빌드는 머신/CI 몫).
+  ⑤ **오프라인 계약 스모크 3종 통과** (in-repo 빌드 산출물, SAP 미접속): `vsp lint --file <sample>` → "No issues found" exit 0 · `vsp parse --file <sample>` → 파스트리 exit 0 · `vsp execute --help` → "Requires write permissions" gated 문구 확인(sample = `vsp/embedded/abap/zadt_test_simple_report.prog.abap`).
+  ⑥ **lock 성격 전환** = `adapters/vsp/vsp.lock.json`을 외부 버전 lock에서 **빌드·명령 계약·provenance 기록**으로 전환한다(`source_provenance` 신설 — imported_commit·method·excluded_paths·privacy_recheck; 머신별 binary 블록 제거; `binary`는 레포 상대 경로+비커밋; `in_repo_smoke` 기록). `scripts/quality-gate-sap.ps1`·`scripts/verify-sap.ps1`은 머신별 폴백 경로를 버리고 **레포 상대 단일 경로**(`$PSScriptRoot\..\vsp\build\vsp.exe`)만 본다.
+  ⑦ **CI** = `.github/workflows/offline-gates.yml`에 `vsp-build` 잡(ubuntu) 신설 — `setup-go@v5`(go-version-file `vsp/go.mod`) → in-repo 빌드 → 오프라인 계약 스모크 3종 + 검증 중심 계약 핵심 패키지 테스트 `go test ./pkg/abaplint/...`(CGO0 green 로컬 실측 후 포함). 전체 `go test ./...`는 기지 실패 4패키지(캐시/레코딩/jseval — lock `unrelated_known_failures`)가 있어 CI 미포함.
+- **근거**: 편입 전 실사에서 원 레포 세션 기록 영역에 비공개 접속 식별 정보 잔존을 실측(HEAD 평문 1건 + git 히스토리에 정리 전 기록 다수 — 과거 정리 커밋이 히스토리 재작성을 생략) → 히스토리 이식은 그 기록을 새 레포 이력으로 전파하므로 기각. 편입 트리(`vsp/`) 재점검 실측 = 잔존 실값 **0건**(전량 placeholder·문서 더미·테스트 픽스처). 세션 기록류 제외는 Go 코드 분할이 아니므로 D-036 "통째 편입(코드 분할 없음)"의 취지(파서류 검증 자립·두 정본 드리프트 방지) 훼손 없음. 재현 빌드 고정은 분기 통합 세션에서 실증된 외부 바이너리 의존 마찰(품질 게이트가 머신별 vsp.exe 부재로 fail-closed 정지)의 근본 해소.
+- **대안·기각**: (a) **git subtree 히스토리 포함** — 위 잔존 세션 기록이 새 레포 이력으로 전파되어 기각. (b) **subtree --squash** — 스냅샷과 실질 등가이나 HEAD의 잔존 세션 기록이 그대로 들어오고 merge 구조만 추가돼 이득 없음. (c) **검사기만 추출** — D-036에서 기각 확정(코드 분할 수술 비용·두 정본 드리프트·lock 절반 잔존), 재확인. (d) **바이너리 커밋** — 18MB 산출물 + 재현 가능(-trimpath·BuildDate 고정)이라 커밋 불요, HANDOFF 설계 제약 1로 비커밋 확정.
+- **불변(재확인)**: R-002(MCP 모드 금지)·R-003(DEV tier write)·실데이터 2종 호출별 승인·write_profile_gate·무인 write 봉인(D-034 관문 전) 유지 — 편입 방식과 무관. 원천 레포는 무수정 보존(처분은 사용자 몫).
+- **영향**: 주 머신은 다음 pull 후 **in-repo 빌드 1회 필요**(quality-gate·verify가 in-repo 경로만 봄). D-018의 vsp 조항 **완전 종결**(final-harness 분리만 존속). DESIGN.md §1 좌표표·§2 소유 서술·§10 구조도, docs/ARCHITECTURE.md, CLAUDE.md, COMMANDS.md·SAFETY-PROFILES.md·review-step.md 경로를 편입 후 사실로 재정합(이 세션). 원천 레포의 origin 미푸시 1커밋(5a8bedb)은 원천 레포 사정으로 편입과 무관(스냅샷은 로컬 HEAD 기준) — 사용자 인지 항목.

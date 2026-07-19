@@ -62,7 +62,7 @@ run의 기대 동작 기준은 `.harness/runs/{run-id}/index.json`의 각 step `
 
 ## vsp read 명령 (연결 시 교차 참조 전용 — 게이트 아님)
 
-바이너리는 `vsp.lock.json` 고정본 `D:\Claude for SAP\vsp-custom\build\vsp.exe`. 아래는
+바이너리는 `vsp.lock.json` 상대 경로 `vsp\build\vsp.exe`(D-030 편입 · 비커밋). 아래는
 **read 계열만** — write(deploy/copy/execute)는 **절대 금지**(Forbidden 절).
 
 | 용도 | 명령 | 근거·주의 |

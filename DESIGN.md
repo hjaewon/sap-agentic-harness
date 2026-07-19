@@ -58,7 +58,7 @@
 | 역할 | Git 레포 | 로컬 경로 (참고) | 버전 | 라이선스 |
 |---|---|---|---|---|
 | **하네스 엔진** | `https://github.com/hjaewon/claude-fable-final.git` | `D:\claude-practice\claude-fable-final` | 검증 lock: `adapters/final-harness.lock.json` (v0.17.1 cf42b64, §15-F 재검증 2026-07-11) | 자작 |
-| **SAP 검증/배포 백엔드** | `https://github.com/hjaewon/vsp-custom.git` | `D:\claude for SAP\vsp\vsp-custom` | 검증 lock: `adapters/vsp/vsp.lock.json` (aab1275, 빌드 2026-07-11) | MIT — 업스트림 `oisee/vibing-steampunk` |
+| **SAP 검증/배포 백엔드** | 레포 내 `vsp/` (D-030 편입 — 원천 `hjaewon/vsp-custom` HEAD `5a8bedb`의 git archive 스냅샷, 히스토리 비이식·D-037) | `vsp/` (본 레포 서브트리) | 빌드·명령 계약·provenance: `adapters/vsp/vsp.lock.json` (원천 v2.38.1-94-g5a8bedb, 바이너리 비커밋) | MIT — 업스트림 `oisee/vibing-steampunk` |
 | 지식 시드 (동결 — 지식 수정 금지, 2026-07-10) | `https://github.com/hjaewon/sc4sap-custom.git` | `D:\claude for SAP\sc4sap-custom` | — | MIT — 업스트림 `babamba2/superclaude-for-sap` |
 | **지식 정본 + 3사 대화형 트랙** | 본 레포 `interactive/` (2026-07-10 subtree 병합, 플러그인명 sap-agentic-harness) | `D:\claude for SAP\sap-agentic-harness\interactive` | L5+리뷰 반영 | MIT 승계 — 설계: `interactive/DESIGN.md` |
 | 비교 검토된 MCP 서버 | `https://github.com/hjaewon/abap-mcp-adt-powerup.git` | `D:\claude for SAP\abap-mcp-adt-powerup` | v4.13.0 | — |
@@ -105,15 +105,16 @@ vsp CLI만 쓴다. 어느 경로로 적용했든 Track A 완료 증거는 동일
 vsp CLI read-back·syntax/activation·unit/ATC 체인이다. 적용 도구의 success
 응답을 완료 증거로 바꾸지 않는다(D-025, 재기준 v2 §0·§4·§5).
 
-`final-harness`와 `vsp-custom`은 물리적으로 한 코드베이스로 섞지 않는다 (**D-018로
-확정, 2026-07-11** — 원래 근거였던 "기술 스택 상이"는 D-017이 반박했듯 배치 문제라
-폐기하고 아래 근거로 교체). 둘 다 독립 레포로 유지하고, 본 레포는 문서·템플릿·스킬·
-설정만 가진다. 이유: ① **소비 계약이 바이너리다** — 본 레포가 소비하는 것은 vsp CLI
-실행뿐이며(verify가 exe를 호출할 뿐, engine/과 달리 수리→재번들→동봉 루프가 없다)
-어떤 게이트도 vsp 소스를 읽지 않는다. ② **업스트림이 살아 있다** — oisee/vibing-steampunk
-활발(2026-07 실측), 편입=결별의 기회비용이 크다. 대신 부트스트랩 시 두 의존을 **버전
-lock**(커밋 sha·바이너리 해시·명령 계약)으로 고정한다(§16). 재론 트리거: vsp 수리의
-2-레포 분산 마찰 3회 실증 시 (D-018).
+`vsp-custom`은 D-030으로 레포 내 `vsp/`에 **편입**됐다(소스 정본 = in-repo 서브트리 —
+원천 `hjaewon/vsp-custom` HEAD `5a8bedb`의 git archive 스냅샷, 히스토리 비이식·D-037).
+사용 계약은 **검증 중심**(파서·lint·parse·test·source read)으로 보증하고 write 계열은
+기존 안전 장치(write 프로파일 게이트·SAFETY-PROFILES·R-003)를 그대로 유지한다(D-036).
+바이너리는 **비커밋**이며 빌드는 머신/CI 몫이다 — `adapters/vsp/vsp.lock.json`의
+`binary.build_command`(`CGO_ENABLED=0 -trimpath`, BuildDate를 원천 커밋 시각으로 고정한
+재현 빌드)가 재현 기준이고, CI `vsp-build` 잡이 매번 빌드해 명령 계약을 assert한다.
+`final-harness`만 **D-018 취지의 분리 + 버전 lock**을 유지한다 — 본 레포는 그 엔진을
+문서·템플릿·스킬·설정으로 소비하며 소스를 섞지 않는다(승격 절차 §16). vsp 편입 판단의
+근거·대안 기각·불변 조건은 DECISIONS D-018→D-030→D-036→D-037이 보존한다.
 
 ## 3. 백엔드 결정: vsp-custom vs abap-mcp-adt-powerup
 
@@ -352,6 +353,9 @@ sap-agentic-harness/
     modules/
       README.md                  ← 이중 구조 규약 (§12)
   src/                           ← 하네스가 관리하는 ABAP 소스 (abapGit 호환 파일명)
+  vsp/                           ← SAP 검증/배포 백엔드 소스 (D-030 편입 — 원천 스냅샷,
+                                    히스토리 비이식·D-037; 바이너리 build/vsp[.exe]는
+                                    비커밋, lock build_command로 빌드)
 ```
 
 정본 규약: verify 패턴의 정본은 `adapters/vsp/VERIFY-PATTERNS.md`다. harness-tailor가
