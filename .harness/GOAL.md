@@ -16,20 +16,21 @@ sap-adt-lessons-pack.md` 138~160행)을 트랙 A 방법론 시드로 반영. 목
 
 ## Success criteria (기계 검증 가능)
 
-- [ ] **감사표**: 팩 층3 8항목 각각 판정(신규/보강/기반영) + 목적지 + 근거
+- [x] **감사표**: 팩 층3 8항목 각각 판정(신규/보강/기반영) + 목적지 + 근거
       (기반영 판정은 기존 좌표 제시). 감사 정본 =
       `docs/reference/audits/2026-07-18-5-13-layer3-audit.md`.
-- [ ] **반영 완료**: 신규/보강 판정분이 목적지에 실재. RULES.seed 추가분은
+- [x] **반영 완료**: 신규/보강 판정분이 목적지에 실재. RULES.seed 추가분은
       기존 S-0NN 부정형+출처 형식·기존 번호 연속. `.harness/RULES.md`·
       `.harness/LESSONS.md` 무수정(시드/문서 경유 규약). VERIFY-PATTERNS
       수정은 정본(adapters/vsp)에 — `.harness/` 스텁은 포인터 정합만.
-- [ ] **리뷰 게이트 스펙 §6 보강**: 층3-1·층3-5 재료 반영 + 승인 결정
+- [x] **리뷰 게이트 스펙 §6 보강**: 층3-1·층3-5 재료 반영 + 승인 결정
       (엄격도·BLOCKED 정책 등 §5 계열) 무변경 — D-021 정합 유지.
-- [ ] **게이트 5종 green 유지** (트랙 A 문서 변경이라 interactive 게이트
+- [x] **게이트 5종 green 유지** (트랙 A 문서 변경이라 interactive 게이트
       비영향이 정상 — 실행으로 확인). CLAUDE.md 수치 비영향(지식 아님) 확인.
-- [ ] **새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0)** — 리뷰어가 팩 원문 대
-      반영본 대조 + 기반영 판정 좌표 재확인.
-- [ ] **HANDOFF·STATE 기록 + 커밋** (§5-13 층3 완료 표기 = 5-13 전체 종결).
+- [x] **새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR 0)** — 리뷰어가 팩 원문 대
+      반영본 대조 + 기반영 판정 좌표 재확인. (2026-07-19 실측: BLOCKER/
+      MAJOR/MINOR 0, INFO 3)
+- [x] **HANDOFF·STATE 기록 + 커밋** (§5-13 층3 완료 표기 = 5-13 전체 종결).
 
 ## Verification method
 

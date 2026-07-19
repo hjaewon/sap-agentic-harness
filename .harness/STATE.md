@@ -275,15 +275,28 @@
   갱신 불요·interactive 게이트/CLAUDE.md 수치 비영향 판정. GOAL.md는
   층3 기준 세팅 완료(미체크 상태로 재개)
 
+- 2026-07-19 | **5-13 층3 완료 = 5-13 전체 종결** (오케스트레이션 세션 —
+  이식 sonnet·리뷰 opus 위임) — 감사 문서(2026-07-18-5-13-layer3-audit.md)
+  파일별 계획 verbatim 반영: RULES.seed(원천 2→3곳 + S-026·S-027 [verify]
+  + 표제 4종→6종 동반 수리) / VERIFY-PATTERNS §⑤ 안티패턴 2불릿(미검사
+  유형 green 오인 금지·오라클 불신) / ARCHITECTURE 신설 절 "방법론 관례"
+  4건(세로 관통·liveness·결함 목록=표본·미검증 회수) / 리뷰 게이트 스펙
+  §6 AC-14·15 additive(기존 AC 1~13·§5 무변경, INSUFFICIENT_CONTEXT 기존
+  용례 정합 — D-021 불침해). 게이트 5종 green(coverage exit 2 = .omc 매칭
+  0 정보성 경고·links 599/0·verify-engine 4.13.14·smoke 155·doctor 5 OK).
+  새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR/MINOR 0, INFO 3 — verbatim
+  3블록·팩 8항목 좌표 전량 실측·§6 additive·외부 레포 무수정 재확증).
+  .harness/RULES.md·LESSONS.md 무수정 준수. E2E 실호출 편입은 후속 후보
+  (감사 §6-리스크 2)
+
 ## Next
 
-- **5-13 층3 반영 실행부터 재개**: `.harness/GOAL.md`(층3 성공 기준) +
-  감사 정본 `docs/reference/audits/2026-07-18-5-13-layer3-audit.md`의
-  파일별 반영 계획을 그대로 실행(위임 권장) → 게이트 5종 green 확인 →
-  새-컨텍스트 독립 리뷰 PASS → HANDOFF §5-13 층3 완료 표기(=5-13 전체
-  종결) + STATE 기록 + 커밋. 제약: `.harness/RULES.md`·LESSONS.md 무수정
-  (시드/문서 경유) · 동결 레포 읽기만(R-004) · 무인 SAP write 금지(5-11) ·
-  final-harness 플러그인 업데이트 금지(5-12)
+- **다음 착수 = 사용자 판단 대기** (5-13 전체 종결). 후보: ① Phase 3
+  리뷰 게이트 편입 구현(5-11 스펙 확정분 — harness-plan 계획 경유) ②
+  엔진 잔여(11-⑩ Delete 로컬 계열 설계 판단·관찰 2건) ③ packs Phase 4
+  (비전 제2축 모듈 지식팩 — 미착수). 전 기간 유효: 무인 SAP write 금지
+  (5-11) · final-harness 플러그인 업데이트 금지(5-12) · 동결 sc4sap-custom
+  드리프트 1파일 정리는 사용자 판단
 
 ## Attempts & dead ends
 
