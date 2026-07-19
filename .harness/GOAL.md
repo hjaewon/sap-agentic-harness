@@ -5,61 +5,63 @@
 
 ## Task
 
-**잔여 백로그 전체 소진 스프린트 (2026-07-19, 사용자 지시 — "5-12 제외 몽땅")** —
-오케스트레이션 세션(실행 전량 모델 지정 서브에이전트 위임), Wave별 기계 검증 +
-새-컨텍스트 독립 리뷰. 무인 상시 개방 여부·승인 설계 변경(E2E 실호출 편입)·push는
-작업이 아니라 정책 결정이므로 스프린트 끝 **사용자 결정 목록**으로 이월.
-
-Wave 구성: W0 정찰 → W1 Phase 3 계획(SAFETY-PROFILES + harness-plan) → W2 Phase 3
-런·완주 → W3 엔진 잔여 → W4 packs Phase 4 → W5 잔챙이·Phase 5 판정·종합.
+**주/보조 머신 분기 통합 세션 (2026-07-19)** — 실행 정본 =
+`docs/reference/audits/2026-07-19-branch-divergence-assessment.md` (결정 5건 확정
+완료). 병합 베이스 = 원격 main(주 머신 줄기), 로컬 우월 자산(§4 대차대조표)을
+그 위에 이식. 오케스트레이션 세션 — git 상태 조작·조율·커밋은 메인, 파일 해결·
+검증·리뷰는 전량 모델 지정 서브에이전트 위임.
 
 ## Success criteria (기계 검증 가능)
 
-- [ ] **W0 — 정찰**: 잔여 작업 전수 목록(실행 A / 사용자 유보 B / 트리거 대기 C)
-      확보 — A 전 항목이 W1~W5 어딘가에 배치됨.
-- [ ] **W1 — Phase 3 계획**: `adapters/vsp/SAFETY-PROFILES.md` 실재(DESIGN §8.4
-      "실행 가능한 수준" — 모드별 허용/차단 명령 allowlist + 차단 동작 검증 절차) +
-      harness-plan 계획 동결(배포 단위마다 [구현→기계검증]→[리뷰 스텝]→[배포 스텝]
-      배치, 리뷰 스텝 재시도 예산 ≥5 — 스펙 §4.1·§4.2 계약) + 계획 린트 통과.
-- [ ] **W2 — Phase 3 완주 (DESIGN §13 Phase 3 완료 기준 전 항목)**:
-      ① 객체 1건이 전체 체인(deploy→activate→drift check→ATC→unit test)을 통과해
-      SAP에 실재 ② drift check가 out-of-band 변경(하네스 밖 채널의 $TMP 수정)을
-      실검출 1회 ③ **AC-8: 기계 검증을 전부 통과한 실제 시맨틱 결함을 리뷰
-      게이트가 차단(red) → 수정본 PASS(green) 실증 1회** ④ 신설 AC-14·15의 동작
-      증거(캡슐 미검증 유형 명시·리뷰어 vsp read-only 실측 대조) ⑤ run 기록 정직
-      (실패·재시도 있으면 그대로 기록).
-- [ ] **W3 — 엔진 잔여**: 11-⑩(Delete 로컬 4종) 설계 판정 후 수리 또는 근거 기각 +
-      관찰 2건(add-if-missing GET 비직렬화·low 무동작 파라미터) 처리 + W0 목록 A의
-      엔진 항목 전부 판정. 수리분 jest 역-검증·재번들 시 smoke 155 유지.
-- [ ] **W4 — packs Phase 4 (DESIGN §13 완료 기준)**: `packs/modules/<fi|co>/` 이중
-      구조(§12 — CONSULT 본체 + RULES.seed.md) 실재·interactive에서 선별 이식(동결
-      원본 아닌 레포 내 정본 사용) + CONSULT 단계 실사용 1회 + LESSONS 유래 규칙
-      1건 `.harness/RULES.md` 승격(자연 실패 없으면 의도적 실패 주입 허용 — 설계
-      명시, PROTOCOL/harness-lesson 절차 경유·대량 추가 금지).
-- [ ] **W5 — 잔챙이·종합**: W0 목록 A 전 항목 소진 또는 근거 기각 + Phase 5 착수
-      가능 판정 기록 + 게이트 5종 green + **스프린트 전체 대상 새-컨텍스트 독립
-      리뷰 PASS(BLOCKER/MAJOR 0)** + HANDOFF·STATE·(대안 기각 결정 발생 시
-      DECISIONS append) 갱신 + 커밋 + 사용자 결정 목록 보고.
+- [ ] **S1 — 병합 완료**: `origin/main` 기반 통합 브랜치에 로컬 main 병합, 충돌
+      전량(실측 48±α) 해소, 병합 커밋 생성. 양쪽 줄기 이력 무손실(커밋 그래프에
+      두 부모 보존, phase 산출물 양쪽 다 보존 — 결정 ⑵).
+- [ ] **S2 — 채택 원칙 준수** (평가 문서 §4·§5): 구조(로그 위치·게이트 신형
+      스크립트·CI·docs/reference/) = 원격 / 엔진 = 로컬 4.13.15 → **4.13.16
+      재채번 + CHANGELOG 통합 + provenance(integrity.json sourceCommit) 재바인딩**
+      / vsp lock = 로컬 v2.38.1-94 / FI 팩·지식 이식(5-13) = 로컬 /
+      final-harness = 원격 v0.20 candidate lock / 리뷰 게이트 = 원격 run-scoped
+      골격 + 로컬 캡슐은 무인 write 경로 부품(역할 분담 설계 문서 신설, 실배선
+      코드는 후속 백로그로 명시).
+- [ ] **S3 — 결정 로그 정리** (결정 ⑶·⑷): 정본 = `docs/reference/DECISIONS.md`
+      단일 체계. D-030(vsp 편입 확정 — subtree 실행은 통합 후 별도 단계) ·
+      D-031~034(로컬 D-020~023 재기술, 원 항목 supersede 표기) append. D-023
+      내용은 "무조건 상시 개방"이 아닌 "대화형 중심 틀 + U-gate 관문 경유 조건부
+      개방"으로 재기술(결정 ⑴). append-only 규약 준수(기존 항목 수정 없음).
+- [ ] **S4 — 게이트 정의 갱신 + 전량 green**: 원격 신형 게이트 스크립트 기준으로
+      CLAUDE.md 게이트 정의 갱신(check-migration-coverage.mjs 삭제 반영), 통합
+      트리에서 게이트 전체 실행 green. verify-engine이 재번들된 4.13.16 번들
+      무결성 OK + smoke tools 155.
+- [ ] **S5 — 서술 문서 통합**: HANDOFF·`.harness/STATE.md`·CLAUDE.md 를 두 줄기
+      상태를 무손실 통합한 서술로 갱신(재개점 = vsp 편입 D-030 실행). R/L 규칙
+      병존 재번호(원격 R-007[fi-version]→R-009 등, 로컬 R-007[sql]·R-008[repo]
+      보존, L 번호 동일 원칙).
+- [ ] **S6 — 원격 줄기 주장 재확인**: S1~S4 완주·CI green·v0.20 candidate 등
+      원격 줄기 핵심 주장을 새-컨텍스트 위임으로 실측 재확인(별도 worktree,
+      read-only) — 보고서 확보. 반증 발견 시 해당 자산 채택 보류 + 기록.
+- [ ] **S7 — 새-컨텍스트 독립 리뷰 PASS**: 통합 결과 전체(병합 커밋 + 후속
+      정리 커밋) 대상 read-only 리뷰, BLOCKER/MAJOR 0.
+- [ ] **S8 — 종결**: main을 통합 결과로 이동(fast-forward), 커밋 완료. push·
+      원격 stale 브랜치(feat-3a-carrflt-seed) 삭제는 사용자 판단 — 권고만 제시.
 
 ## Verification method
 
-1. Wave마다 기계 검증(node:test·jest·게이트 5종·라이브 red→green·exit code 실측)
-   후 새-컨텍스트 독립 리뷰(read-only, 작업 세션 주장 불신·실측 재확인) PASS를
-   확인하고 다음 Wave 진입. W5 리뷰는 스프린트 전체 diff 대상.
-2. SAP 잔존물: $TMP 임시 객체는 Wave 종료 시 실삭제·read-back 404·고아 잠금 0 확인
-   (Phase 3 완료 기준 산출물 1건은 의도 잔존 — 기록).
-3. `.harness/RULES.md` 변경은 W4 승격 1건(개별, PROTOCOL 경유)만 허용 — 그 외
-   무수정을 git diff로 확인.
+1. 병합 상태: `git rev-list --count` 두 부모 이력 포함 확인, `git status` clean,
+   충돌 마커 잔존 0 (`git grep -l '<<<<<<<'` = 0건).
+2. 게이트: 통합 트리의 신형 게이트 스크립트 전량 exit 0 + verify-engine OK +
+   smoke 155 실행 로그.
+3. 결정 로그: docs/reference/DECISIONS.md에 D-030~034 실재 + 기존 항목 diff
+   무수정 확인.
+4. 독립 리뷰: read-only 위임 리뷰어의 PASS 판정문(BLOCKER/MAJOR 0).
+5. SAP 접속 불요 — 이 세션은 레포 통합만, SAP write 0 (R-003 자동 충족).
 
 ## 제약 (전 기간 유효)
 
-- SAP write = DEV tier·$TMP 한정(R-003) + **attended bridge(메인 세션 감독)로만**.
-  무인 상시(headless) 개방은 스프린트 스코프 밖 — 사용자 결정.
-- 실데이터 row 2종(GetTableContents/GetSqlQuery)은 상시 게이트 유지 — 필요 시에만
-  개별 승인 요청.
-- 동결 레포 읽기만(R-004) · JNC-Dashboard 읽기만 · 5-12(claude-final v0.20 흡수)
-  및 그 트리거 대기 항목 제외 · 외부 레포 업스트림 기여 제외.
-- 엔진(execute.py) 무수정(스펙 B1·D-018 lock) · vsp.lock v2.38.1-94 계약 준수 —
-  vsp-custom 재수리가 필요해지면 D-018 재검증 절차 동반.
-- QA/PRD tier write 금지(R-003) · deploy/copy 후 source read 확인(R-006) ·
-  ENV/LOCK 마커 실패를 코드 결함으로 기록 금지(R-001).
+- 로컬 줄기 백업 = `origin/sprint-20260719` (이미 push) — 통합 실패 시 복구점.
+  원격 main 자체는 이 세션에서 rewrite 금지(push는 사용자 판단).
+- 동결 레포 읽기만(R-004) · 자격증명 커밋 금지(R-005) · append-only 결정 로그.
+- 무인 SAP write 봉인 유지 — D-023 재기술 전이며, 이 세션은 SAP 비접속.
+- final-harness 플러그인 업데이트 금지(5-12)는 원격 v0.20 candidate lock 채택
+  으로 대체 여부를 S2에서 판정(원격이 이미 흡수했으면 5-12 종결 표기).
+- 서브에이전트 위임 프롬프트는 순화 어휘 원칙(메모리 softened-security-wording)
+  준수 — 보안 오해 소지 서술어 금지.
