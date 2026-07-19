@@ -3,6 +3,10 @@
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
 > 작성 2026-07-10 · 최종 갱신 2026-07-19. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
+> **▶▶ 차기 세션 즉시 착수 = 헤더 내 「▶▶ 잔여 소진 스프린트 (2026-07-19)」 블록의
+> "차기 세션 착수 = W5 마감"부터. 그 블록이 재개 정본이며 멈춤 없이 W5를 끝까지
+> 완주할 것. `.harness/GOAL.md`가 스프린트 성공 기준. (세션 모델 Fable 유지 시
+> 같은 블록 §모델-전환 주의.)**
 > **트랙 A Phase 2 완료 (2026-07-12)** — 답사→계획 변경 기록(§13 완료 기준 충족) +
 > 무인 완주(2 steps, verify 실패 0, 리뷰 위반 0) + connected 채점 **5 PASS/0 FAIL**.
 > 채점이 발굴한 CLAS 배포 결함 3건은 **당일 전량 수리·라이브 검증 완료** —
@@ -280,6 +284,93 @@
 > 관찰 2) ③ packs Phase 4(비전 제2축 '모듈 전문성 축적', 미착수). 전 기간
 > 유효: 무인 SAP write 금지(5-11) · final-harness 플러그인 업데이트 금지
 > (5-12) · 동결 sc4sap-custom 드리프트 1파일 정리는 사용자 판단.
+>
+> ═══════════════════════════════════════════════════════════════════
+> **▶▶ 잔여 소진 스프린트 (2026-07-19) — 일시 정지 · 차기 세션 재개 (최상단 정본)**
+> ═══════════════════════════════════════════════════════════════════
+> 사용자 지시 "5-12 제외 잔여 몽땅"의 감독형 스프린트. **정지 사유**: 세션 모델이
+> Fable 5 → Opus로 자동 전환(사용자 인지, 아래 §모델-전환). 잔챙이 회수·커밋까지
+> 마치고 정지. **기준 = `.harness/GOAL.md`(스프린트 성공 기준) + 배치 정본
+> `docs/reference/audits/2026-07-19-remaining-backlog-sweep.md`(실행 A24·유보 B4·
+> 대기 C12).**
+>
+> **완주 (W0~W4 + 잔챙이):**
+> - **W2 = Phase 3(Gated Deploy) 완주 → main 병합(eca4d717)** = 5-11 리뷰 게이트
+>   실증 해소. phases/4-gated-deploy 7스텝: 검증용 결함 표본(마스터×텍스트 INNER
+>   JOIN 완전성 결함)이 기계 4층(lint·활성화·단위·ATC) 전부 green인데 검토
+>   게이트만 MAJOR/B2 미통과 처리(red 862ca3b3)→수정본(LEFT OUTER JOIN) 통과
+>   (green 3f678081)→캡슐본 배포→채점→서버 변경(drift) 검출·게이트 원복→증거
+>   통합. AC-8·14·15·drift 전부 기계 체커로 실증, run-summary completed·verify
+>   실패 0, 독립 리뷰 PASS. **런 중 계획 결함 2건 자가 수정**(S3 verify cmd 중첩
+>   인용 + 캡슐 상대경로 → run-deploy-gate.mjs / S6 체커 필드명 verdict→
+>   classification + pin 테스트) — 정지→수정→재개 절차로 처리, PLANNING §8 기록.
+> - **W3 = 엔진 4.13.15** (3수리: 11-⑩ Delete 로컬 4종 전용 clear 경로[단일 공백
+>   라이브 프로브]·low 무동작 파라미터 4종 제거·CreateProgramLow 타입 가드[A-9])
+>   + 후속 조사(11-⑦·A-6·A-10 = 문서화 유보 판정, A-8 종결). jest 655/5·재번들
+>   155·독립 리뷰 PASS. **미커밋 아님 — 커밋 b438abdf.**
+> - **W4 = FI 첫 팩**(packs/modules/fi 5+README, 포인터+얇은 발췌) + Phase 4
+>   완료 기준 충족: CONSULT 실사용(PLANNING §0에서 FI-004→스펙 요구 2 편입) +
+>   **규칙 승격 L-002→R-007**(SQL 완전성, 커밋 d0fd1a28).
+> - **W1 = SAFETY-PROFILES.md**(§8.4 실행 가능 수준) + 계획 동결(커밋 e0fedd0d).
+> - **잔챙이(커밋 53f9407c)**: A-17 스키마 description 정정(2벌)·A-23 DESIGN §14
+>   표 정합. A-13/15/16/22 유보 판정(근거 = 스윕 문서·이 블록).
+> - **소품 정직 판정**: A-12(RFC 백엔드 개통) = **SE37 수동 RFC-enable 지점에서
+>   정직 중단**(사람 절차는 아래 §트리거-대기). A-18(RenameObject 잠금) = rename
+>   write가 MCP 전용이라 R-002 하 CLI 라이브 불가, 수리는 정적 확인(화이트박스
+>   유닛테스트는 vsp-custom 레포 작업 — §트리거-대기). A-20 실측: IDES 기본 ATC
+>   변형은 Error급 미방출(exit 상승 미검증 잔존). A-3 실측: **vsp v2.38.1-94는
+>   CLAS 테스트 include 배포 지원**(ADR-002 "미지원" 전제 역전 — 아래 결정 필요).
+>
+> **▶ 차기 세션 착수 = W5 마감 (미완 — 이것부터 끝까지):**
+> 1. **스프린트 전체 새-컨텍스트 종합 리뷰** — 각 Wave는 개별 리뷰됐으나 **스프린트
+>    전체 diff(main 기준 이번 세션 커밋 전량) 종합 리뷰는 미실시**. read-only
+>    독립 리뷰어로 BLOCKER/MAJOR 0 확인.
+> 2. **문서 동기화**(문서 계약): `docs/PRD.md` 로드맵 Phase 3 "미착수"→완료 ·
+>    `docs/ADR.md` ADR-002 갱신(CLAS 테스트 include 배포 지원 확인 — append) ·
+>    DESIGN §13 Phase 3 완료 기준에 실증 1회 반영 여부 · DESIGN/DECISIONS에
+>    "drift 실증기는 비-vsp MCP 채널을 정당하게 쓴다" 한 줄(PRD 비목표와의 긴장
+>    고정, 리뷰 권고).
+> 3. **A-21 반전 정정 판단**(도메인): 실측상 offline `vsp lint`는 Error **4종**만
+>    (hardcoded_credentials·commit_in_loop는 소스상 connected ATC/codeanalysis
+>    전용, cli_extra.go:532-549 lint 등록 7종에 미포함). **이번 세션 5-13 층3이
+>    RULES.seed 표제를 "4종→6종"으로 바꾼 것이 실측과 상충** + CHECKLIST.md도
+>    6종을 "offline lint Error"로 귀속 → 두 파일의 귀속을 "4종 offline lint / 2종
+>    connected ATC"로 재프레이밍(단순 치환 아님, 도메인 판단). VERIFY-PATTERNS
+>    §②-1 "4종"은 정확·무수정.
+> 4. **게이트 5종 green + HANDOFF·STATE 최종 + 종결 커밋.**
+> 5. **사용자 결정 목록 제시**(스프린트 산출 — 아래 §사용자-결정).
+>
+> **§모델-전환 (재발 방지 — 정본):** Fable 5 세션이 Opus로 자동 전환된 유력 원인 =
+> **Fable 5 안전 분류기 트리거**(cybersecurity 도메인 오분류 → Opus 자동 폴백).
+> 이 스프린트에 보안 소재(권한 검사 코드·SQL 프로브·"적대적/우회/차단" 어휘)가
+> 많았던 것과 맞물림. **보강 원인**: 글로벌 `~/.claude/settings.json`이
+> `"model":"opus[1m]"`이라 `/model` 세션 지정이 리셋되면 Opus로 복귀. **재발
+> 방지**: ① 보안 오해 소재·어휘 회피(메모리 softened-security-wording 정본 —
+> 실제 취약점 패턴 코드 프로브는 순화로 안 되니 소재 자체 최소화) ② Fable 유지가
+> 목적이면 세션 중 `/usage`로 주기 확인 + 전환 감지 시 `/model` 재설정, 또는
+> settings 조정(사용자 판단 — 자산이라 미변경) ③ 대규모 스프린트는 세션 분할.
+> (정확한 트리거 로그는 미문서화 — 전환 시 메시지 확인이 확정 경로.)
+>
+> **§사용자-결정 (스프린트 산출 — 차기 세션 W5에서 제시):**
+> ① 무인 상시(headless) write 개방 여부 — Phase 3 완주로 AC-8 실증됐으니 5-11
+>    재론 가능(현재도 감독 하 $TMP write는 유효, 상시 개방만 미결). ② 실데이터 RFC
+>    E2E의 Phase 3 완료 기준 편입(층3-⑤, 설계 변경). ③ ADR-002 재배치(CLAS 테스트
+>    include 배포 지원 확인 — 신규 ADR append 승인). ④ A-6 `.sc4sap` 프로젝트
+>    폴더명 개명 의사(있으면 profile.ts+launch.cjs 동기화). ⑤ A-21 재프레이밍
+>    정정 승인. ⑥ **push 여부**(main에 이번 세션 커밋 다수 — 미push). ⑦ B목록
+>    (동결 드리프트 1파일 정리·vsp install abapgit·엔진 3-8).
+>
+> **§트리거-대기 추가(스프린트 발굴):** ● A-12 RFC 백엔드 개통 = 사람 절차:
+>    (A) `C:\Users\USER\.sc4sap\profiles\IDES-DEV\sap.env` 백업 후 `SAP_RFC_BACKEND
+>    =soap` 한 줄 추가+MCP 재시작(soap 노드 405 확인) → (B) ZMCP_ADT_UTILS FM 3종
+>    MCP 생성[install-sap-assets Step 1, 자산 동봉·엔진 4.13.1로 생성 가능,
+>    Local Interface 헤더는 인라인 시그니처로 변환] → (C) **SE37 수동 RFC-enable**
+>    (자동 불가 지점) → (D) ReadTextElementsBulk env 에러 소멸 확인 → WriteText
+>    ElementsBulk $TMP E2E. ● A-18 RenameObject 라이브 격상 = vsp-custom에 삭제
+>    실패 분기 유닛테스트 추가(외부 레포·별도 승인). ● HANDOFF §3 "SAP_RFC_BACKEND
+>    =odata" 표기 부정확 — 실물 sap.env에 그 줄 없음(기본값 odata 해석), 정정 후보.
+>
+> ═══════════════════════════════════════════════════════════════════
 > 방향성 판정: 비전 4축 중 3축(하네스 개발·컨설턴트/환경관리·경량화) 실현, 1축(vsp
 > 오프라인 검증)은 실측 하향이 이미 설계 반영(Phase 1.5 재정의). 직시할 사실 —
 > 실물 ABAP 산출은 연습 객체 4건($TMP)뿐이고 packs(Phase 4, 비전 제2축 '모듈 전문성

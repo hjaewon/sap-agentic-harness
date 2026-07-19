@@ -305,16 +305,27 @@
   프리플라이트 VERIFY_PASS. 병행: 엔진 W3a(low 무동작 파라미터 4종 제거 +
   11-⑩ Delete 로컬 4종 Option A) 위임 진행 중
 
+- 2026-07-19 | **잔여 소진 스프린트 W0~W4 완주 + 잔챙이** (오케스트레이션 —
+  실행 전량 위임) — W2 Phase 3 완주·main 병합(eca4d717, 검토 게이트 실증
+  AC-8·14·15·drift, run-summary completed·verify 0, 독립 리뷰 PASS, 런 중
+  계획 결함 2건 자가 수정) · W3 엔진 4.13.15 3수리+조사(jest 655/5·155·리뷰
+  PASS, b438abdf) · W4 FI 팩+R-007 승격(d0fd1a28) · W1 SAFETY-PROFILES+계획
+  (e0fedd0d) · 잔챙이 A-17·A-23(53f9407c). 소품 정직 판정: A-12 SE37 수동
+  지점 중단·A-18 R-002 하 정적확인·A-21 실측 반전(offline lint 4종). **정지
+  사유 = Fable 5→Opus 자동 전환(사용자 지시 일시 정지)** — 원인·재발방지는
+  HANDOFF 헤더 §모델-전환. 상세 = HANDOFF 「▶▶ 잔여 소진 스프린트」 블록
+
 ## Next
 
-- **스프린트 진행 중** (GOAL.md가 기준): W3a 완료·검수·커밋 후
-  4-gated-deploy 런 기동(attended bridge, 리뷰 스텝 재시도 예산 5) → W2
-  완주(AC-8·14·15·drift) → W3b(11-⑦·A-6·A-9·A-10 후속 조사→수리 배치) →
-  W4b(런의 실제 게이트 FAIL을 LESSONS→harness-lesson 경유 1건 승격) → W5
-  (잔챙이 A-13~17·21~23 + Phase 5 판정 + 게이트 5종 + 스프린트 전체
-  새-컨텍스트 리뷰 + HANDOFF/STATE/커밋 + 사용자 결정 목록 보고). 전 기간:
-  무인 상시 개방 금지(5-11 재론은 사용자)·5-12 제외·QA/PRD 금지·row-data
-  2종 게이트 유지
+- **▶ W5 마감부터 재개**(멈춤 없이 끝까지): HANDOFF 헤더 「▶▶ 잔여 소진
+  스프린트 (2026-07-19)」 블록 "차기 세션 착수 = W5 마감" 5항목 =
+  ① 스프린트 전체 새-컨텍스트 종합 리뷰(main 대비 이번 커밋 전량) ② 문서
+  동기화(PRD Phase 3·ADR-002·DESIGN/DECISIONS drift 채널) ③ A-21 반전 정정
+  판단(offline lint 4종 — 이번 세션 층3 표제 변경이 실측과 상충) ④ 게이트
+  5종+HANDOFF/STATE 최종+종결 커밋 ⑤ 사용자 결정 목록 제시. GOAL.md =
+  스프린트 성공 기준. 전 기간: 5-12 제외·무인 상시 개방은 사용자·QA/PRD
+  금지·row-data 2종 게이트·동결 읽기만. **세션 모델 Fable 유지 시 §모델-전환
+  주의(보안 오해 소재·어휘 회피).**
 
 ## Attempts & dead ends
 
