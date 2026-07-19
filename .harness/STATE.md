@@ -592,3 +592,4 @@
 ## 분기 통합 세션 상태 (2026-07-19)
 
 - 2026-07-19 | 분기 통합 세션 진행 중 — 원격(주 머신) 구조를 정본으로 채택하고 로컬(보조 머신) 줄기 기록을 「보조 머신 줄기 기록」 절로 무손실 편입. `.harness/` 상태 5파일(RULES·LESSONS·STATE·GOAL·profile.json) 병합 해결 단계이며, 규칙·교훈은 문구 불변·번호만 조정해 병존(원격 R-007→R-009·L-002→L-004, 로컬 R-007[sql]·R-008[repo]·L-002[sql-completeness]·L-003[repo-sync] 보존). 이후 작업은 원격 run-scoped 규약을 따른다.
+- 2026-07-19 | 분기 통합 세션 완주 — 병합 `7a37ee90`(충돌 48 전량 해소·부모 2 보존) + provenance 재바인딩 `cf110c36` + 종결 커밋. 게이트 전량 green(코어 6종+PS 3종 exit 0·smoke 155; snapshot 음성시험 러너는 이 머신 자식 프로세스 수거 비결정 블록 — 17개 시나리오 개별 유효 실측으로 보증, 기계 완주 정본=CI). 새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR/MINOR 0, INFO 3 — merge-tree로 무마커 중복 8핸들러 정리 확증). GOAL S1~S8 전항 충족. 다음 = vsp-custom 편입 실행(D-030). 이 항목이 singleton STATE의 마지막 기록 — 이후는 run-scoped.

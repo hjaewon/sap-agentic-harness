@@ -21,6 +21,22 @@
 > green**(§9 신형 게이트) · **③ 새-컨텍스트 독립 리뷰** **→ 직후 vsp-custom 편입 착수
 > (D-030, ⑷ — subtree vendoring·in-repo 빌드·`vsp.lock.json` 재작성·CI Go 잡; 아래 본류
 > ⛔ vsp 블록의 '미결정'은 이 결정으로 종결)**.
+> **→ ✅ 통합 세션 완주 (2026-07-19, 오케스트레이션 세션 — 충돌 해결 6그룹·원격 검증·
+> 리뷰 전량 모델 지정 위임)**: 병합 `7a37ee90`(충돌 48 전량 해소, 부모 = 원격 5fd70c68 +
+> 로컬 3d762168) + ① provenance 재바인딩 `cf110c36`(sourceCommit=병합 커밋,
+> verify-engine OK@4.13.16·fa5698d351c7) ② 게이트 전량 green — 코어 6종(snapshot·
+> links·verify-engine·engine-provenance·smoke 155·manifests) + PS 3종(23/16/17) 전부
+> exit 0; 음성시험 = smoke 16/16 완주 · snapshot 러너는 이 머신 자식 프로세스 수거
+> 비결정 블록(Windows spawn 계열 환경 제약, 시나리오 고유 아님 실측)이라 17개 시나리오
+> 개별 유효 실측으로 보증(기계 완주 정본 = CI ubuntu) ③ 새-컨텍스트 독립 리뷰
+> **PASS(BLOCKER/MAJOR/MINOR 0, INFO 3)** — 리뷰어가 merge-tree로 무마커 중복(조용한
+> 병합 결함)의 존재를 독립 재구성해 8핸들러 전량 정리 확증 + append-only 무결(115+/0-)
+> + 양쪽 phase 산출물 바이트 보존(diff 0) + 크로스 정합 표본 전건. 부수: 병합이 가져온
+> 주 머신 판본 quality-gate-sap.ps1이 이 머신에서 fail-closed 즉사 → 머신별 경로 폴백
+> 수리(양 머신 실행 가능, 병합 커밋 포함). 원격 줄기 사전 검증(S6) = 반증 0·함정 7건
+> 기록. **▶▶ 다음 착수 = vsp-custom 편입 실행(D-030)** — push·stale 브랜치
+> (feat-3a-carrflt-seed) 삭제·주/보조 SAP 프로파일 명(IDEA-JNC vs IDES-DEV) 확인은
+> 사용자 결정 대기.
 >
 > **확정된 통합 결정 5건 (평가 문서 §5):**
 > - **⑴ 방향 = 절충**: 대화형(attended) 중심 틀(원격 재기준 3축 Direct/Guided/Engine)을

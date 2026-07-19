@@ -28,35 +28,35 @@
 
 ### Success criteria (기계 검증 가능)
 
-- [ ] **S1 — 병합 완료**: `origin/main` 기반 통합 브랜치에 로컬 main 병합, 충돌
+- [x] **S1 — 병합 완료**: `origin/main` 기반 통합 브랜치에 로컬 main 병합, 충돌
       전량(실측 48±α) 해소, 병합 커밋 생성. 양쪽 줄기 이력 무손실(커밋 그래프에
       두 부모 보존, phase 산출물 양쪽 다 보존 — 결정 ⑵).
-- [ ] **S2 — 채택 원칙 준수** (평가 문서 §4·§5): 구조(로그 위치·게이트 신형
+- [x] **S2 — 채택 원칙 준수** (평가 문서 §4·§5): 구조(로그 위치·게이트 신형
       스크립트·CI·docs/reference/) = 원격 / 엔진 = 로컬 4.13.15 → **4.13.16
       재채번 + CHANGELOG 통합 + provenance(integrity.json sourceCommit) 재바인딩**
       / vsp lock = 로컬 v2.38.1-94 / FI 팩·지식 이식(5-13) = 로컬 /
       final-harness = 원격 v0.20 candidate lock / 리뷰 게이트 = 원격 run-scoped
       골격 + 로컬 캡슐은 무인 write 경로 부품(역할 분담 설계 문서 신설, 실배선
       코드는 후속 백로그로 명시).
-- [ ] **S3 — 결정 로그 정리** (결정 ⑶·⑷): 정본 = `docs/reference/DECISIONS.md`
+- [x] **S3 — 결정 로그 정리** (결정 ⑶·⑷): 정본 = `docs/reference/DECISIONS.md`
       단일 체계. D-030(vsp 편입 확정 — subtree 실행은 통합 후 별도 단계) ·
       D-031~034(로컬 D-020~023 재기술, 원 항목 supersede 표기) append. D-023
       내용은 "무조건 상시 개방"이 아닌 "대화형 중심 틀 + U-gate 관문 경유 조건부
       개방"으로 재기술(결정 ⑴). append-only 규약 준수(기존 항목 수정 없음).
-- [ ] **S4 — 게이트 정의 갱신 + 전량 green**: 원격 신형 게이트 스크립트 기준으로
+- [x] **S4 — 게이트 정의 갱신 + 전량 green**: 원격 신형 게이트 스크립트 기준으로
       CLAUDE.md 게이트 정의 갱신(check-migration-coverage.mjs 삭제 반영), 통합
       트리에서 게이트 전체 실행 green. verify-engine이 재번들된 4.13.16 번들
       무결성 OK + smoke tools 155.
-- [ ] **S5 — 서술 문서 통합**: HANDOFF·`.harness/STATE.md`·CLAUDE.md 를 두 줄기
+- [x] **S5 — 서술 문서 통합**: HANDOFF·`.harness/STATE.md`·CLAUDE.md 를 두 줄기
       상태를 무손실 통합한 서술로 갱신(재개점 = vsp 편입 D-030 실행). R/L 규칙
       병존 재번호(원격 R-007[fi-version]→R-009 등, 로컬 R-007[sql]·R-008[repo]
       보존, L 번호 동일 원칙).
-- [ ] **S6 — 원격 줄기 주장 재확인**: S1~S4 완주·CI green·v0.20 candidate 등
+- [x] **S6 — 원격 줄기 주장 재확인**: S1~S4 완주·CI green·v0.20 candidate 등
       원격 줄기 핵심 주장을 새-컨텍스트 위임으로 실측 재확인(별도 worktree,
       read-only) — 보고서 확보. 반증 발견 시 해당 자산 채택 보류 + 기록.
-- [ ] **S7 — 새-컨텍스트 독립 리뷰 PASS**: 통합 결과 전체(병합 커밋 + 후속
+- [x] **S7 — 새-컨텍스트 독립 리뷰 PASS**: 통합 결과 전체(병합 커밋 + 후속
       정리 커밋) 대상 read-only 리뷰, BLOCKER/MAJOR 0.
-- [ ] **S8 — 종결**: main을 통합 결과로 이동(fast-forward), 커밋 완료. push·
+- [x] **S8 — 종결**: main을 통합 결과로 이동(fast-forward), 커밋 완료. push·
       원격 stale 브랜치(feat-3a-carrflt-seed) 삭제는 사용자 판단 — 권고만 제시.
 
 ### Verification method
