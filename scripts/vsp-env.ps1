@@ -1,8 +1,20 @@
 # vsp-env.ps1 - dot-source helper: inject SAP_* env vars for the vsp CLI.
 #
+# Read-only by DEFAULT (machine-enforced). The default run injects the SAP
+# credentials AND sets SAP_READ_ONLY=true, so the vsp write-profile gate
+# (adapters/vsp/vsp.lock.json - write_profile_gate) rejects every write-capable
+# subcommand (deploy/copy/execute/install/source write|edit/recover) client-side,
+# before any network call. Read commands and `vsp test` are unaffected.
+#
+# -Write opts OUT of read-only: it does NOT set SAP_READ_ONLY (and removes any
+# inherited value), and instead propagates SAP_TIER from the profile sap.env
+# (its value if present, else 'dev'). The gate only permits writes on the dev
+# tier, so -Write is the deploy-step wrapper path (see VERIFY-PATTERNS.md sec 4).
+#
 # Usage (dot-source so the variables land in YOUR session):
-#   . scripts\vsp-env.ps1                       # default profile IDES-DEV
-#   . scripts\vsp-env.ps1 -ProfileName KR-DEV
+#   . scripts\vsp-env.ps1                       # default profile IDES-DEV, read-only
+#   . scripts\vsp-env.ps1 -ProfileName KR-DEV   # read-only
+#   . scripts\vsp-env.ps1 -Write                # write mode (deploy-step wrapper only)
 #
 # Source of values: <sc4sap home>\profiles\<ProfileName>\sap.env
 #   sc4sap home = $env:SC4SAP_HOME_DIR if set, else $HOME\.sc4sap
@@ -17,7 +29,8 @@
 # PowerShell 5.1 compatible. ASCII only.
 
 param(
-    [string]$ProfileName = "IDES-DEV"
+    [string]$ProfileName = "IDES-DEV",
+    [switch]$Write
 )
 
 $sc4sapHome = if ($env:SC4SAP_HOME_DIR) { $env:SC4SAP_HOME_DIR } else { Join-Path $HOME ".sc4sap" }
@@ -133,5 +146,25 @@ if ($ProfileName -eq 'IDES-DEV') {
     $env:SAP_INSECURE = "true"
 }
 
+# Write-profile gate control (adapters/vsp/vsp.lock.json - write_profile_gate).
+# Default = machine-enforced read-only: SAP_READ_ONLY=true makes the vsp gate
+# reject every write-capable subcommand before any network call. -Write opts
+# out and instead pins SAP_TIER (dev-only writes) for the deploy-step wrapper.
+if ($Write) {
+    Remove-Item Env:\SAP_READ_ONLY -ErrorAction SilentlyContinue
+    if ($profileVars.ContainsKey('SAP_TIER') -and -not [string]::IsNullOrEmpty($profileVars['SAP_TIER'])) {
+        $env:SAP_TIER = $profileVars['SAP_TIER']
+    } else {
+        $env:SAP_TIER = 'dev'
+    }
+} else {
+    $env:SAP_READ_ONLY = "true"
+}
+
 Write-Output "vsp-env: profile '$ProfileName' loaded from $sapEnvPath"
 Write-Output "vsp-env: set SAP_URL, SAP_CLIENT, SAP_USER (from SAP_USERNAME), SAP_PASSWORD$(if ($ProfileName -eq 'IDES-DEV') { ', SAP_INSECURE' })"
+if ($Write) {
+    Write-Output "vsp-env: WRITE mode - SAP_READ_ONLY unset, SAP_TIER=$env:SAP_TIER (writes gated to dev tier)"
+} else {
+    Write-Output "vsp-env: READ-ONLY mode - SAP_READ_ONLY=true (writes blocked client-side)"
+}

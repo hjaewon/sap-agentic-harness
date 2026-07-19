@@ -7,14 +7,16 @@ SAP ABAP 개발을 AI 하네스로 수행하는 **단일 레포 · 두 트랙**.
 
 - **트랙 A — 하네스 트랙** = Direct(기본) + Guided(명시 승격) + final-harness
   **Engine attended**(자체 제작, 별도 레포)와 **vsp-custom CLI**. unattended는 단순
-  미착수가 아니라 D-025·재기준 v2 §7 해제 전 **`sealed`**다. 사람 소유 Direct/Guided의
-  SAP 적용은 트랙 B MCP·사람 vsp CLI·사용자 abapGit 모두 허용된다. vsp-custom은
-  **Engine의 SAP 실행 백엔드이자 적용 경로와 독립인 트랙 A 완료 증거 백엔드**이며,
-  사람 작업의 유일한 SAP 접점은 아니다(DESIGN.md §3 — powerup 엔진은 트랙 A에서 쓰지
-  않음). 두 외부 의존의 소유 전략은 **D-018 확정: 분리 유지 + 부트스트랩 시 버전
-  lock** (편입 기각).
-- **트랙 B — 대화형 플러그인 (검증 완료)** = `interactive/` — 하네스 중립 코어(지식 217·
-  페르소나 26·절차 15·정책) + MCP 서버 번들 + 어댑터 3사(Claude/Codex/Antigravity).
+  미착수가 아니라 D-025·재기준 v2 §7 해제 전 **`sealed`**다. **무인은 이 대화형 중심
+  틀 안의 관문(§7 U-gate) 통과로 사용 가능하다(통합 결정 ⑴ — 로컬 Phase 3 실증 + 무인
+  조건부 개방 D-034[구 로컬 D-023]가 관문 재료; 재기술 전 실사용 보류).** 사람 소유
+  Direct/Guided의 SAP 적용은 트랙 B MCP·사람 vsp CLI·사용자 abapGit 모두 허용된다.
+  vsp-custom은 **Engine의 SAP 실행 백엔드이자 적용 경로와 독립인 트랙 A 완료 증거
+  백엔드**이며, 사람 작업의 유일한 SAP 접점은 아니다(DESIGN.md §3 — powerup 엔진은
+  트랙 A에서 쓰지 않음). 소유 전략: **final-harness는 D-018 분리 유지 + 버전 lock**,
+  **vsp-custom은 D-030으로 편입 확정(분기 통합 직후 실행 — D-018 vsp 조항 supersede)**.
+- **트랙 B — 대화형 플러그인 (검증 완료)** = `interactive/` — 하네스 중립 코어(지식 177·
+  페르소나 26·절차 16·정책) + MCP 서버 번들 + 어댑터 3사(Claude/Codex/Antigravity).
   번들의 소스 정본은 레포 내 **`engine/`**(D-017 편입) — 엔진 수리→재번들→반영은
   `interactive/server/UPDATE-RUNBOOK.md` 절차로만.
 - 품질 모델: **1명 작업 + 1명 새-컨텍스트 리뷰(read-only) + SAP 기계 검증**.

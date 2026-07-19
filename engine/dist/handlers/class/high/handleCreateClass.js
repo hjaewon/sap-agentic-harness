@@ -63,15 +63,18 @@ async function handleCreateClass(context, params) {
     try {
         const client = (0, clients_1.createAdtClient)(connection, logger);
         const adtClass = client.getClass();
+        // Resolve the system's logon/master language so the create payload stamps
+        // the description into the right language slot. The vendored create
+        // hardcodes EN, so on a non-EN logon system (e.g. CS/KO) the description
+        // lands in the EN slot and reads back empty (HANDOFF §6 backlog 11-⑫).
+        // Falls back to EN when systeminformation is unavailable.
+        const masterLanguage = await (0, adtLogonLanguage_1.resolveLogonLanguage)(connection, logger);
         // Use AdtClass.create() which handles the full workflow automatically:
         // validate → create → check → lock → check(inactive) → update → unlock → check → activate
         // AdtClass.create() handles cleanup (unlock) in its catch block, so we should let errors propagate
         logger?.info(`Creating class with AdtClass: ${className}`);
         let state;
         try {
-            // [11-⑫] resolve the logon language so the description lands in the
-            // right language row on non-EN systems; EN fallback.
-            const masterLanguage = await (0, adtLogonLanguage_1.resolveLogonLanguage)(connection, logger);
             state = await adtClass.create({
                 className,
                 packageName: args.package_name,

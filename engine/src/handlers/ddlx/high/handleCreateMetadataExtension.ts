@@ -76,9 +76,15 @@ export async function handleCreateMetadataExtension(
     const client = createAdtClient(connection);
     const shouldActivate = args.activate !== false;
 
-    // Create — [11-⑫] resolve the logon language so the description lands in
-    // the right language row on non-EN systems; EN fallback.
+    // Resolve the system's logon/master language so the create payload stamps
+    // the description into the right language slot. The DDLX builder already
+    // threaded masterLanguage into adtcore:masterLanguage but still hardcoded
+    // adtcore:language="EN", so on a non-EN logon system the description landed
+    // in the EN slot and read back empty (HANDOFF §6 backlog 11-⑫). Falls back
+    // to EN when systeminformation is unavailable.
     const masterLanguage = await resolveLogonLanguage(connection, logger);
+
+    // Create
     await client.getMetadataExtension().create({
       name,
       description: args.description || name,

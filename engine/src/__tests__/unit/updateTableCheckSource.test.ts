@@ -1,42 +1,40 @@
 /**
  * Regression test for the UpdateTable pre-check "checks the wrong version"
- * defect (HANDOFF §6 engine backlog 11-⑪ — same root as the structure §7 fix).
+ * defect (HANDOFF §6 engine backlog 11-⑪, the UpdateTable sibling of the
+ * 4.13.11 structure fix).
  *
  * handleUpdateTable runs a "check new DDL code before update" step by calling
  * client.getTable().check({ tableName, ddlCode }, 'inactive'). The vendored
- * AdtTable.check() USED TO:
- *   (a) drop config.ddlCode and check-run the object's *stored* inactive
- *       version instead (runTableCheckRun(…, undefined, version)) — so the
- *       pre-check never validated the NEW code; and
- *   (b) return the raw check response UNPARSED (unlike the structure path,
- *       whose checkStructure parses + throws), so AdtTable.check always reported
- *       errors:[] and the handler's checkNewCodePassed was ALWAYS true — the
- *       pre-check could never block a bad update.
- * Together these meant a real syntax error in the new DDL slipped past the
- * pre-check and only surfaced at the write PUT, as SAP's opaque "Kein Sichern
- * wegen Fehler in Quelle. Details erhalten Sie mit Prüfung." — the details
- * never shown.
+ * AdtTable.check() USED TO drop config.ddlCode and check-run the object's
+ * *stored* inactive version instead (runTableCheckRun(..., undefined, ...)) —
+ * so the pre-check never validated the new code. When the stored version was
+ * valid, the pre-check passed and the real syntax error in the new DDL only
+ * surfaced at the write PUT, as SAP's opaque "Kein Sichern wegen Fehler in
+ * Quelle. Details erhalten Sie mit Prüfung."
  *
- * The fix (4.13.12), both in the vendored AdtTable.check():
- *  - forwards config.ddlCode as the source to validate (check-with-source), so
- *    the pre-check validates the NEW DDL and surfaces the real error BEFORE the
- *    PUT (blocking the bad write with an honest message);
- *  - parses the result with parseCheckRunResponse and throws on a real error
- *    (skipping DDIC-benign warnings, never a bare message) — mirroring
- *    checkStructure.
+ * Unlike AdtStructure.check (which throws on errors), AdtTable.check returns
+ * the raw /checkruns response WITHOUT evaluating it — the CheckTableLow tool
+ * relies on that non-throwing contract and parses the result itself. So the
+ * 4.13.12 fix has two parts:
+ *   1. AdtTable.check() now forwards config.ddlCode (check-with-source), so the
+ *      pre-check validates the NEW DDL (this also revives the CheckTableLow
+ *      documented ddl_code path).
+ *   2. handleUpdateTable now parses that result and BLOCKS the write when the
+ *      new DDL has real errors, surfacing the honest SAP detail BEFORE the PUT.
  *
  * SAP-independent: drives the real handler through the real AdtClient over a
  * fake IAbapConnection that answers /checkruns differently depending on whether
  * the request carried source (chkrun:content) — mirroring live SAP.
  *
- * Reverse-verify: with the ddlCode-forward reverted, every /checkruns request is
- * source-less → the "valid code" case fails (no source-carrying request). With
- * the parse+throw reverted, the "real error" case fails (the bad update is not
- * blocked and the write PUT is issued).
+ * Reverse-verify: with either half reverted (ddlCode-forward OR handler-eval),
+ * the pre-check no longer blocks — the stored-version check (checkNoSource is
+ * clean) passes and the write PUT is issued, so the error/no-PUT cases fail.
  */
 
 process.env.ADT_ACCEPT_CORRECTION = 'false';
-process.env.SAP_VERSION = 'S4'; // not ECC — handleUpdateTable rejects ECC up front
+// UpdateTable takes a different ECC path when SAP_VERSION=ECC — keep the
+// standard path under test.
+delete process.env.SAP_VERSION;
 
 import { handleUpdateTable } from '../../handlers/table/high/handleUpdateTable';
 
@@ -58,13 +56,13 @@ const CHECK_REAL_ERROR_XML =
   '<chkrun:checkRunReports xmlns:chkrun="http://www.sap.com/adt/checkrun">' +
   '<chkrun:checkReport chkrun:reporter="abapCheckRun" chkrun:status="processed" chkrun:statusText="Errors found">' +
   '<chkrun:checkMessageList>' +
-  '<chkrun:checkMessage chkrun:type="E" chkrun:shortText="Field MANDT: data element MANDT is unknown"/>' +
+  '<chkrun:checkMessage chkrun:type="E" chkrun:shortText="Field MANDT: data element MANDT does not exist"/>' +
   '</chkrun:checkMessageList>' +
   '</chkrun:checkReport>' +
   '</chkrun:checkRunReports>';
 
-// status="notProcessed", no messages — the empty-shell inactive-version case
-// that must produce an honest, status-carrying error (never bare).
+// status="notProcessed", no messages — the case that historically produced a
+// bare/empty error; the honest fallback must carry the status.
 const CHECK_NOTPROCESSED_XML =
   '<?xml version="1.0" encoding="UTF-8"?>' +
   '<chkrun:checkRunReports xmlns:chkrun="http://www.sap.com/adt/checkrun">' +
@@ -82,8 +80,13 @@ class FakeConnection {
   captured: CapturedRequest[] = [];
   /** Answer for /checkruns requests that carry source (chkrun:content). */
   checkWithSource: string;
-  /** Answer for /checkruns requests without source (stored-version check). */
-  checkNoSource: string = CHECK_NOTPROCESSED_XML;
+  /**
+   * Answer for /checkruns requests without source (stored-version check).
+   * Defaults to OK: the stored version is valid, so reverting the fix (which
+   * makes the pre-check fall back to a source-less stored-version check) lets
+   * the bad new DDL slip through to the PUT — exactly the pre-fix pathology.
+   */
+  checkNoSource: string = CHECK_OK_XML;
 
   constructor(checkWithSource: string) {
     this.checkWithSource = checkWithSource;
@@ -129,12 +132,12 @@ class FakeConnection {
 }
 
 const GOOD_DDL =
-  "@EndUserText.label : 'x'\n" +
+  "@EndUserText.label : 'test'\n" +
   '@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE\n' +
   '@AbapCatalog.tableCategory : #TRANSPARENT\n' +
   '@AbapCatalog.deliveryClass : #A\n' +
   '@AbapCatalog.dataMaintenance : #RESTRICTED\n' +
-  'define table zsah_tbl_test { key mandt : mandt not null; key id : abap.char(10); }';
+  'define table ztst_table { key mandt : mandt not null; key id : abap.char(10); }';
 
 const checkruns = (c: FakeConnection) =>
   c.captured.filter((r) => r.method === 'POST' && r.url.includes('/checkruns'));
@@ -152,7 +155,7 @@ describe('UpdateTable pre-check validates the NEW DDL (backlog 11-⑪)', () => {
     const context = { connection, logger: undefined } as any;
 
     const result = await handleUpdateTable(context, {
-      table_name: 'ZSAH_TBL_TEST',
+      table_name: 'ZTST_TABLE',
       ddl_code: GOOD_DDL,
       activate: true,
     });
@@ -174,11 +177,12 @@ describe('UpdateTable pre-check validates the NEW DDL (backlog 11-⑪)', () => {
   });
 
   it('surfaces the REAL check error before the write PUT (no opaque failure)', async () => {
+    // Stored version is valid (checkNoSource=OK); only the NEW DDL has an error.
     const connection = new FakeConnection(CHECK_REAL_ERROR_XML);
     const context = { connection, logger: undefined } as any;
 
     const result = await handleUpdateTable(context, {
-      table_name: 'ZSAH_TBL_TEST',
+      table_name: 'ZTST_TABLE',
       ddl_code: GOOD_DDL,
       activate: true,
     });
@@ -186,27 +190,26 @@ describe('UpdateTable pre-check validates the NEW DDL (backlog 11-⑪)', () => {
     expect(result.isError).toBeTruthy();
     const text = JSON.stringify(result);
     // The actual SAP check detail is surfaced — not an opaque "error in source".
-    expect(text).toContain('data element MANDT is unknown');
-    // The bad update was blocked BEFORE the write PUT. (Reverting the parse+throw
-    // makes checkNewCodePassed always true → the PUT is issued → this fails.)
+    expect(text).toContain('Field MANDT: data element MANDT does not exist');
+    // The bad update was blocked BEFORE the write PUT.
     expect(sourcePuts(connection).length).toBe(0);
   });
 
-  it('never throws a bare, empty "Table check failed:" (honest status)', async () => {
+  it('never surfaces a bare, empty check error (honest status on notProcessed)', async () => {
     const connection = new FakeConnection(CHECK_NOTPROCESSED_XML);
     const context = { connection, logger: undefined } as any;
 
     const result = await handleUpdateTable(context, {
-      table_name: 'ZSAH_TBL_TEST',
+      table_name: 'ZTST_TABLE',
       ddl_code: GOOD_DDL,
       activate: true,
     });
 
     expect(result.isError).toBeTruthy();
     const text = JSON.stringify(result);
-    // Honest: carries the check status, never a bare "Table check failed: ".
+    // Honest: carries the check status, never an empty "New code check failed:".
     expect(text).toContain('notProcessed');
-    expect(text).not.toMatch(/Table check failed:\s*(?:\\n|")/);
+    expect(text).not.toMatch(/New code check failed:\s*(?:\\n|")/);
     expect(sourcePuts(connection).length).toBe(0);
   });
 });

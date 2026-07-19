@@ -397,6 +397,172 @@
   ddd3878) · 엔진 11-⑩ · doctor 핀 드리프트(codex 0.144.3·agy 1.1.1) · vsp source
   read lock 편입 · 5-5 fetch 참조.
 
+## 보조 머신 줄기 기록 (2026-07-13~19, 분기 기간)
+
+<!-- 분기 통합 2026-07-19: 아래는 보조 머신(로컬) 줄기가 2026-07-15 동결 이후에도 singleton STATE에 계속 append 한 기록이다. 위 ## Done / ## Next(원격 주 머신 줄기)이 구조 정본이며, 두 줄기 기록의 무손실 병존을 위해 로컬 고유 기록을 이 절에 편입한다. 원격·로컬이 각자 독립 수행한 엔진 4.13.12(11-⑪·⑫)는 양 줄기에 중복으로 남되 무손실 원칙상 병존시킨다. 이후 작업은 원격 규약(run-scoped .harness/runs/<run-id>/)을 따른다. -->
+
+### Done (보조 머신 줄기)
+
+- 2026-07-17 | 감사 보완 2건 완료 (워밍업, 2026-07-17 객관 감사 등재분) —
+  ① Codex 0.144.3 재검증 스모크(sonnet 위임): installed+enabled + 캐시
+  core/server 전체 패키징 실측, 스모크 후 marketplace/plugin 완전 제거로
+  평시 복원(이 머신 평시 = disabled가 아니라 **완전 미설치** 실측) →
+  compatibility.json 0.144.3·verified 2026-07-17 갱신 → doctor **5 OK/0
+  FAIL(exit 0)**. ② CLAUDE.md 헤드라인 지식 217→175·절차 15→16(실측 정합:
+  knowledge .md 175·procedures .md 16). 게이트 5종 green, 독립 리뷰
+  (sonnet, read-only) PASS — 기준 전 항목 충족·스코프 이탈 0
+
+- 2026-07-17 | 엔진 11-⑪·⑫ Wave 완료 (4.13.12, opus 위임 + 세션 재시작 걸쳐
+  2단계 진행) — ① 11-⑪ Table check-with-source **2계층**(vendored ddlCode 전달
+  + 핸들러 PUT 전 차단 — table check는 non-throwing 계약이라 선례 '1줄' 추정
+  부정확 발견) ② 11-⑫ Create 로그온 언어 도달 가능 8종 확장(DCL은 죽은 코드
+  판정·미수정). jest **599/0(+19)**·두 수리 모두 두 계층 역-검증 실측, 라이브
+  red→green(11-⑪ 명확 재현·해소, 11-⑫는 CS 박스 EN 관용으로 델타 관측 불가 —
+  jest+4.13.10 선례가 정본 증거), $TMP 생성 8·삭제 8·고아 잠금 0, 재번들
+  OK@4.13.12·155 유지, CHANGELOG·UPSTREAM-FIX-HANDOFF §5·§10·§11 갱신.
+  **새-컨텍스트 리뷰(opus) PASS — BLOCKER/MAJOR 0**, MINOR 4(전부 문서 등재로
+  수용). 신규 관찰 = ADT /checkruns 세션 캐시 stale 재반환(Known-remaining #8).
+  중간 인계 파일(docs/wave-4.13.12-report.md)은 마감 후 삭제 — 내용은
+  CHANGELOG·UPSTREAM-FIX-HANDOFF·HANDOFF·이 항목으로 흡수
+
+- 2026-07-18 | **§5-4 보완 세션 완료** (오케스트레이션 — 실행 전량 서브에이전트
+  위임: Go 수리·lock 재검증·MINOR 5건·자격증명 구조·Part B 재실증 각 opus,
+  Codex 스모크 sonnet, 정찰 Explore) — ① vsp-custom 5a8bedb: CLI write 8종
+  진입점 게이트(SAP_READ_ONLY·SAP_TIER≠dev dial 이전 거부, go test 16케이스,
+  오프라인 프로브 4종) ② lock v2.38.1-94 재검증(계약 10종 라이브 전부 통과·
+  JNC 델타 5항목·$TMP 정리·고아 잠금 0) ③ 리뷰 게이트 MINOR 5건 실코드
+  (42→46 — ④ 캡슐 basename이 실제 배포 결함이었음을 vsp 소스로 실측)
+  ④ 자격증명 미공급 구조(vsp-env read-only 기본+-Write opt-in·verify-sap
+  자체 조달·VERIFY-PATTERNS §④ 관례 — execute.py 스크럽은 엔진 lock·B1
+  충돌로 기각) ⑤ Part B 재실증(AC-10) → step 5 completed(반증 이력 보존) +
+  스펙 §3·§5-4·§7 정합화 ⑥ 새-컨텍스트 리뷰 PASS(BLOCKER/MAJOR 0) + 게이트
+  5종 green(Codex 0.144.5 재검증 동반). 부수: tdd-guard.py 로컬 수리
+  (tests/ 인식+레포 밖 제외 — 훅 ask의 bypass 관통 승인 폭주 해소, 무추적
+  이 머신 한정). 무인 write 금지(5-11) 계속 유효(개방은 Phase 3 완주 후)
+
+- 2026-07-18 | **5-13 층1 완료** (같은 오케스트레이션 세션, 감사·수리·리뷰
+  전량 위임) — 대조 감사 12항목(신규 6·부분 2·설명 1·겹침 3, 사전 추정 정정
+  2) → 엔진 **4.13.13**(SQL self-closing NULL 셀 위치보존+메타 3필드+400
+  재시도 — T000 라이브 red→green, GetTableContents 공유 파서 동반 치유) +
+  **4.13.14**(CreateStructure fields→DDL 실생성·거짓 성공 제거 — $TMP 라이브
+  red→green + FM check_inactive 경고 + 설명 3건). 11-② 병리 미재현 기각,
+  lock-window는 engine stateful-핀 유지 결정. jest 599→643/5(역-검증 전
+  항목), 재번들 155 유지·번들 byte 동일, 새-컨텍스트 리뷰 PASS(BLOCKER/
+  MAJOR 0). 감사 정본 = docs/reference/audits/2026-07-18-5-13-layer1-audit.md.
+  후속 권고: 동결 sc4sap-custom 전일 드리프트 1파일 정리(사용자 판단)
+
+- 2026-07-18 | **5-13 층2 완료** (오케스트레이션 세션 — 감사·이식·리뷰 전량
+  위임: 감사 opus·이식 sonnet·리뷰 opus) — **선결 판정**: 정본 = 원본 신판
+  (동결 sc4sap HEAD common/*.md — 07-17 f7257c0+ffb422b가 팩 층2를 이미
+  접어 넣어 팩을 상회, 8항목 커버리지 누락 0, L1 관례 실측 = 본문 verbatim
+  +재배치 링크만 재경로). **이식** = conventions 수정 3(clean-code
+  null-vs-zero·field-typing DD03L step0+필드명≠의미·function-module RFC
+  타입/DEC 오버플로/FUGR 단일 컴파일+UXX) + 신규 2(abapgit-roundtrip-rule·
+  source-repair-protocol) 전부 verbatim(신규 링크가 conventions 내부
+  형제라 재경로 0) + **배선 4**(sap-executor 표+2행·sap-debugger +1줄·
+  create-program FUGR 레시피·review-checklist +2항 — 3항째 활성화-증거는
+  층1 #6 기반영+source-repair-protocol 내장으로 의도 제외, 리뷰어 타당
+  판정) + 매니페스트 규약 18→20종(catch-all 기포섭)·CLAUDE.md 지식
+  175→177(실측). 게이트 5종 green(smoke 155·links 599/0·doctor 5 OK,
+  엔진 무변경). **새-컨텍스트 리뷰 PASS(BLOCKER/MAJOR 0·INFO 3)** —
+  verbatim byte 대조·8항목 좌표 재확증·배선 f7257c0 대조·동결 레포
+  무손상 실측. 감사 정본 =
+  docs/reference/audits/2026-07-18-5-13-layer2-audit.md. 부수: 첫 리뷰어
+  기동이 오작동 빈 응답(도구 0회) → 새 컨텍스트 재기동으로 정상 수행
+
+- 2026-07-18 | **5-13 층3 감사 완료·반영 대기** (같은 세션, 토큰 소진으로
+  실행 전 중단) — 감사(opus 위임) 판정: 신규 3(②결함목록=표본·⑦미검증
+  표시 회수·⑧오라클 의심)·보강 3(①게이트 미검사 산출물·③세로 관통·
+  ④liveness)·기반영 2(⑤독립 검증=D-019 등·⑥메모리 루프=PROTOCOL — 중복
+  주입 안 함). 반영 계획(구체 문안 포함) 정본 =
+  docs/reference/audits/2026-07-18-5-13-layer3-audit.md. 요지: RULES.seed
+  S-026·S-027(+헤더 원천 2→3곳, 표제 4종→6종 동반 수리) / VERIFY-PATTERNS
+  §⑤ 안티패턴 2불릿 / 계획 관례 = docs/ARCHITECTURE.md 신설 절 4건 /
+  리뷰 게이트 스펙 §6 additive AC-14·AC-15(승인 결정 불변). DESIGN.md
+  갱신 불요·interactive 게이트/CLAUDE.md 수치 비영향 판정. GOAL.md는
+  층3 기준 세팅 완료(미체크 상태로 재개)
+
+- 2026-07-19 | **5-13 층3 완료 = 5-13 전체 종결** (오케스트레이션 세션 —
+  이식 sonnet·리뷰 opus 위임) — 감사 문서(2026-07-18-5-13-layer3-audit.md)
+  파일별 계획 verbatim 반영: RULES.seed(원천 2→3곳 + S-026·S-027 [verify]
+  + 표제 4종→6종 동반 수리) / VERIFY-PATTERNS §⑤ 안티패턴 2불릿(미검사
+  유형 green 오인 금지·오라클 불신) / ARCHITECTURE 신설 절 "방법론 관례"
+  4건(세로 관통·liveness·결함 목록=표본·미검증 회수) / 리뷰 게이트 스펙
+  §6 AC-14·15 additive(기존 AC 1~13·§5 무변경, INSUFFICIENT_CONTEXT 기존
+  용례 정합 — D-021 불침해). 게이트 5종 green(coverage exit 2 = .omc 매칭
+  0 정보성 경고·links 599/0·verify-engine 4.13.14·smoke 155·doctor 5 OK).
+  새-컨텍스트 독립 리뷰 PASS(BLOCKER/MAJOR/MINOR 0, INFO 3 — verbatim
+  3블록·팩 8항목 좌표 전량 실측·§6 additive·외부 레포 무수정 재확증).
+  .harness/RULES.md·LESSONS.md 무수정 준수. E2E 실호출 편입은 후속 후보
+  (감사 §6-리스크 2)
+
+- 2026-07-19 | **잔여 소진 스프린트 착수** (사용자 지시 "5-12 제외 몽땅" —
+  오케스트레이션 세션·실행 전량 모델 지정 위임, 기준=GOAL.md) — W0 전수
+  스윕 정본(docs/reference/audits/2026-07-19-remaining-backlog-sweep.md,
+  실행 A24·유보 B4·대기 C12) · W1a `adapters/vsp/SAFETY-PROFILES.md` 신설
+  (§8.4 실행 가능 수준 — 모드별 allowlist·기계/절차 등급 구분·오프라인
+  프로브 3종 재실측) · W4a FI 첫 팩(packs/modules/fi 5파일+README —
+  포인터+얇은 발췌 구조, FI-001~005 소스 재검증 저술) · Phase 3 런 계획
+  동결(phases/4-gated-deploy 7스텝 + .harness/runs/20260719-4-gated-deploy
+  계약·매니페스트, 스펙은 red 워커가 아닌 계획 시점 동결로 승격[게이트
+  무결성], config.json prompt v1.1 서버증거 대조 의무[AC-15 (c)안 — Bash
+  개방 기각: 스파이크가 부모 bypass env 상속으로 오염 판별], deploy-shim
+  신설[R1 공백 split 해소]) · CONSULT 실사용 기록(FI-004→스펙 요구 2,
+  KR·SKAT→요구 3 — PLANNING §0, Phase 4 실사용 기준 충족분). SAP
+  프리플라이트 VERIFY_PASS. 병행: 엔진 W3a(low 무동작 파라미터 4종 제거 +
+  11-⑩ Delete 로컬 4종 Option A) 위임 진행 중
+
+- 2026-07-19 | **잔여 소진 스프린트 W0~W4 완주 + 잔챙이** (오케스트레이션 —
+  실행 전량 위임) — W2 Phase 3 완주·main 병합(eca4d717, 검토 게이트 실증
+  AC-8·14·15·drift, run-summary completed·verify 0, 독립 리뷰 PASS, 런 중
+  계획 결함 2건 자가 수정) · W3 엔진 4.13.15 3수리+조사(jest 655/5·155·리뷰
+  PASS, b438abdf) · W4 FI 팩+R-007 승격(d0fd1a28) · W1 SAFETY-PROFILES+계획
+  (e0fedd0d) · 잔챙이 A-17·A-23(53f9407c). 소품 정직 판정: A-12 SE37 수동
+  지점 중단·A-18 R-002 하 정적확인·A-21 실측 반전(offline lint 4종). **정지
+  사유 = Fable 5→Opus 자동 전환(사용자 지시 일시 정지)** — 원인·재발방지는
+  HANDOFF 헤더 §모델-전환. 상세 = HANDOFF 「▶▶ 잔여 소진 스프린트」 블록
+
+- 2026-07-19 | **잔여 소진 스프린트 W5 마감 = 스프린트 종결** (오케스트레이션 —
+  문서 동기화 sonnet·A-21 opus·A-14 sonnet·수리 sonnet·종합 리뷰 opus 위임) —
+  ① 종합 독립 리뷰(211fabef..HEAD): 1차 FAIL(MAJOR 1 = gate-e2e prompt_version
+  스테일 red 46/45/1 실측·MINOR 3) → 수리(ac5b8f31: 테스트 1.1 정렬 46/46
+  green·agy 1.1.4 재-핀 doctor 5 OK·DESIGN §14 item4/8 정합) → **재판정
+  PASS(0/0/0)**. ② 문서 동기화(6a4102be): PRD Phase 3·4 완료 표기(상시 개방
+  결정 대기 명시)·ADR-002 Addendum·DESIGN §13 drift 채널+D-022 append.
+  ③ A-21 소스 재검증 확증 → RULES.seed·CHECKLIST 4/2 재프레이밍(VERIFY-
+  PATTERNS §②-1 무수정). ④ A-14 excludeTools 미작동 실측(3중 근거) → AG
+  README 권장 철회·재실측 트리거·compatibility 1.1.4 재-핀. ⑤ A-7 = KR#5
+  문서화 유보 판정. 게이트 5종 최종 green. A 목록 24항 전량 소진(실행 12·
+  부분 정직 1[A-20]·유보/이관 11). Phase 5 착수 가능 판정 기록. GOAL 전 기준
+  충족. 부수: opus 위임 빈 응답 오작동 2회 — 재기동·재개로 해소(층2 선례 동형)
+
+- 2026-07-19 | **push 분기 발견 + 두 줄기 전수 조사** — 사용자 지시 push 거부
+  (non-fast-forward)로 주/보조 6일 분기 실측(공통 조상 8d09e571, 로컬 67·원격
+  65커밋·공유 0). 사용자 정정("pull부터") → L-003→R-008 규칙화. 로컬 줄기
+  `sprint-20260719` 가지 push(무손실 백업). 위임 조사 2건(원격 의미 조사 opus·
+  충돌 지도 sonnet, 전 과정 read-only·트리 불변 실측): 실충돌 48파일 ·
+  D-020~023 4중 충돌(원격은 로그를 docs/reference/로 이전, D-029까지 자체
+  진행) · R-007/L-002 번호 충돌(내용은 별개 유효) · 엔진 4.13.12 병렬 중복
+  (로컬 4.13.15 strict superset) · 리뷰 게이트+파일럿 이중 구현(캡슐 vs
+  run-scoped) · 원격 재기준(v0.19 3축·unattended=sealed·v0.20 candidate
+  staged·CI green 주장)이 로컬 D-023(무인 개방)과 방향 상충 — 같은 사용자가
+  두 머신에서 반대 방향 승인 상태. 평가 정본 =
+  docs/reference/audits/2026-07-19-branch-divergence-assessment.md
+
+### Next (보조 머신 줄기, 분기 시점 계획)
+
+- **다음 착수 = 분기 통합 세션 실행** (결정 5건 전부 확정 2026-07-19 — 새 세션
+  권장). 실행 정본 = docs/reference/audits/2026-07-19-branch-divergence-
+  assessment.md §5(결정)·§6(기계 작업)·§7(베이스): ⑴ 절충안(대화형 중심 틀 +
+  무인은 관문 경유) ⑵ 리뷰 게이트 역할 분담(원격 run-scoped 골격 + 무인 write
+  경로에 로컬 캡슐 편입) ⑶ 원격 로그 구조 + 로컬 4건 D-031~034 재번호 + ADR
+  내용 reference 이동 ⑷ vsp 편입 확정(통합 직후 D-030) ⑸ 베이스 = 원격 main +
+  로컬 우월 자산(엔진 4.13.15·vsp lock 94·FI 팩·지식 이식·캡슐 게이트) 이식.
+  통합 완료 기준: 충돌 48파일 해소·게이트(신형 기준) green·독립 리뷰 PASS·main
+  push. 5-12는 원격 S1~S4 채택으로 통합에서 해소 예정. 로컬 D-023 실사용은
+  재기술 전 보류. 스프린트 잔여 결정 ②③④⑤⑦은 통합 뒤로. 동결 드리프트
+  1파일은 사용자 판단.
+
 ## Attempts & dead ends
 
 <!-- one line per attempt, appended: date | task | what was tried | outcome -->
@@ -422,3 +588,7 @@
 - 2026-07-13 | 검사기 verify 명령 구성 | verdict 경로를 verify 명령 문자열에 포함 | 세션의 verdict 기록이 verify-surface WARN으로 찍힘(엔진의 위임 타겟 변경 감지, execute.py:614-618) — 비차단 예상 소음으로 판정
 - 2026-07-13 | 주 머신 첫 무인 기동 | 엔진 훅 미설치 상태로 스텝 실행 시도 | fail-closed 거부(quality-gate.json이 vsp.exe/훅 부재 감지 — 보조 머신만 설치돼 있었음) → install_engine.py 병합 설치로 해소(트랙 B MCP 훅 3개 보존)
 - 2026-07-13 | 에스코트 셸 명령 구성 | `!` bash 프롬프트에서 PowerShell dot-source(`. .\scripts\vsp-env.ps1`)+대시 인자를 직접 실행 | 실패(bash 파서가 PS 전용 구문을 오분해) → 전체를 `powershell -NoProfile -Command "..."` 한 겹으로 감싸 해소
+
+## 분기 통합 세션 상태 (2026-07-19)
+
+- 2026-07-19 | 분기 통합 세션 진행 중 — 원격(주 머신) 구조를 정본으로 채택하고 로컬(보조 머신) 줄기 기록을 「보조 머신 줄기 기록」 절로 무손실 편입. `.harness/` 상태 5파일(RULES·LESSONS·STATE·GOAL·profile.json) 병합 해결 단계이며, 규칙·교훈은 문구 불변·번호만 조정해 병존(원격 R-007→R-009·L-002→L-004, 로컬 R-007[sql]·R-008[repo]·L-002[sql-completeness]·L-003[repo-sync] 보존). 이후 작업은 원격 run-scoped 규약을 따른다.

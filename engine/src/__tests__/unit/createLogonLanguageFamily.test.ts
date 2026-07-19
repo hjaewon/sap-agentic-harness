@@ -1,26 +1,29 @@
 /**
- * Regression tests for the create-payload logon-language mismatch across the
- * REMAINING create paths (HANDOFF §6 engine backlog 11-⑫), extending the
- * 4.13.10 fix (§5 / backlog 11-⑧, which covered view/domain/dataElement) to the
- * eight other create handlers whose vendored payloads still hardcoded
- * adtcore:language="EN" / adtcore:masterLanguage="EN":
- *   Class, Interface, Program, Package, Table, Structure,
- *   ServiceDefinition (SRVD), MetadataExtension (DDLX).
+ * Regression tests for the create-payload EN-hardcoding remainder
+ * (HANDOFF §6 engine backlog 11-⑫), the mechanical extension of the 4.13.10
+ * logon-language fix (backlog 11-⑧) to the other reachable create builders.
  *
- * On a non-EN logon system (live: KR-DEV, logon language KO) those creates
- * SUCCEED (SAP tolerates the EN→logon-language normalization) but the
- * description is stored in the EN language row and shows empty under the KO
- * logon — real user demand: a fork bundle had been hand-edited in 19 places to
- * force KO. Each handler now resolves the logon language from the live ADT
- * system-information document (same source GetSystemInfo reads) and injects it
- * as master_language; EN remains only the discovery-unavailable fallback.
+ * 4.13.10 resolved the logon language only for the three live-proven create
+ * paths (DDLS view, domain, data element). The remaining vendored create
+ * payloads still hardcoded adtcore:language / adtcore:masterLanguage = "EN":
+ * class, interface, program, package, table, structure, service definition and
+ * metadata extension (DDLX). Those creates SUCCEED (SAP tolerates the
+ * EN→logon-language normalization), but the description lands in the EN text
+ * slot and reads back empty on a non-EN logon system (IDES=CS, real users=KO).
  *
- * SAP-independent: drives the real handlers through the real AdtClient over a
- * fake IAbapConnection advertising KO, and pins the resolved language on the
- * create POST body. Reverse-verify: revert the handler resolve+inject (or the
- * vendored builder edits) and the create POST carries EN again → these fail.
- * (DCL/accessControl create is deliberately NOT covered — no handler routes to
- * it, so its vendored EN hardcoding is unreachable dead code; see CHANGELOG.)
+ * The fix (4.13.12) plugs each reachable create handler into the same dynamic
+ * resolveLogonLanguage() infrastructure: the handler resolves the system's
+ * logon language and injects it as master_language / masterLanguage, and the
+ * vendored builder stamps both adtcore:language and adtcore:masterLanguage from
+ * it (EN stays as the discovery-unavailable fallback).
+ *
+ * SAP-independent: drives each real handler through the real AdtClient over a
+ * fake IAbapConnection whose systeminformation endpoint advertises CS (same
+ * pattern as createLogonLanguageConsistency for the 4.13.10 trio).
+ *
+ * Reverse-verify: with the builder EN→${masterLanguage} substitution (or the
+ * handler injection) reverted, the create POST carries language="EN" and the
+ * "CS" assertions fail.
  */
 
 process.env.ADT_ACCEPT_CORRECTION = 'false';
@@ -59,7 +62,7 @@ class FakeConnection {
   /** When false, the systeminformation endpoint 404s (fallback path). */
   systemInfoAvailable = true;
   /** Language advertised by the systeminformation endpoint. */
-  systemLanguage = 'KO';
+  systemLanguage = 'CS';
 
   setSessionType(type: 'stateful' | 'stateless') {
     this.sessionMode = type;
@@ -102,8 +105,8 @@ class FakeConnection {
       }
       return ok(
         JSON.stringify({
-          systemID: 'DEV',
-          client: '700',
+          systemID: 'S4H',
+          client: '100',
           language: this.systemLanguage,
           userName: 'TESTER',
         }),
@@ -112,19 +115,18 @@ class FakeConnection {
     if (url.includes('_action=LOCK')) return ok(LOCK_XML);
     if (url.includes('_action=UNLOCK')) return ok('');
     if (url.includes('/checkruns')) return ok(CHECK_OK_XML);
-    // Everything else (validation, create POST, activation, source PUT, reads)
-    // succeeds with an empty 200 — enough to reach and capture the create POST.
     return ok('');
   }
 
-  /** The create POST for the given collection (excludes validation/checkruns). */
+  /** The metadata create POST for the given collection. */
   createPost(collection: string): CapturedRequest | undefined {
     return this.captured.find(
       (r) =>
         r.method === 'POST' &&
         r.url.includes(collection) &&
         !r.url.includes('validation') &&
-        !r.url.includes('/checkruns'),
+        !r.url.includes('/checkruns') &&
+        !r.url.includes('systeminformation'),
     );
   }
 }
@@ -133,104 +135,106 @@ function makeContext(connection: FakeConnection) {
   return { connection, logger: undefined } as any;
 }
 
-// Each case names the create-POST collection URL and how to invoke the handler.
+// Each reachable create handler newly plugged into resolveLogonLanguage (11-⑫).
 const CREATE_CASES = [
   {
     name: 'CreateClass',
-    collection: '/oo/classes',
+    collection: '/sap/bc/adt/oo/classes',
     run: (ctx: any) =>
       handleCreateClass(ctx, {
-        class_name: 'ZCL_SAH_LANG_TEST',
+        class_name: 'ZSAH_CLAS_TEST',
         package_name: '$TMP',
         description: 'language family test',
       }),
   },
   {
     name: 'CreateInterface',
-    collection: '/oo/interfaces',
+    collection: '/sap/bc/adt/oo/interfaces',
     run: (ctx: any) =>
       handleCreateInterface(ctx, {
-        interface_name: 'ZIF_SAH_LANG_TEST',
+        interface_name: 'ZSAH_IF_TEST',
         package_name: '$TMP',
         description: 'language family test',
       }),
   },
   {
     name: 'CreateProgram',
-    collection: '/programs/programs',
+    collection: '/sap/bc/adt/programs/programs',
     run: (ctx: any) =>
       handleCreateProgram(ctx, {
-        program_name: 'ZSAH_LANG_TEST',
+        program_name: 'ZSAH_PROG_TEST',
         package_name: '$TMP',
         description: 'language family test',
       }),
   },
   {
     name: 'CreatePackage',
-    collection: '/adt/packages',
+    collection: '/sap/bc/adt/packages',
     run: (ctx: any) =>
       handleCreatePackage(ctx, {
-        package_name: 'ZSAH_LANG_TEST',
-        description: 'language family test',
-        software_component: 'LOCAL',
+        package_name: 'ZSAH_PKG_TEST',
         super_package: 'ZSAH_PARENT',
+        software_component: 'HOME',
+        description: 'language family test',
       }),
   },
   {
     name: 'CreateTable',
-    collection: '/ddic/tables',
+    collection: '/sap/bc/adt/ddic/tables',
     run: (ctx: any) =>
       handleCreateTable(ctx, {
-        table_name: 'ZSAH_LANG_TBL',
+        table_name: 'ZSAH_TAB_TEST',
         package_name: '$TMP',
         description: 'language family test',
       }),
   },
   {
     name: 'CreateStructure',
-    collection: '/ddic/structures',
+    collection: '/sap/bc/adt/ddic/structures',
     run: (ctx: any) =>
       handleCreateStructure(ctx, {
-        structure_name: 'ZSAH_LANG_STRU',
+        structure_name: 'ZSAH_STRU_TEST',
         package_name: '$TMP',
         description: 'language family test',
         fields: [{ name: 'ID', data_type: 'CHAR', length: 10 }],
+        activate: false,
       }),
   },
   {
     name: 'CreateServiceDefinition',
-    collection: '/ddic/srvd/sources',
+    collection: '/sap/bc/adt/ddic/srvd/sources',
     run: (ctx: any) =>
       handleCreateServiceDefinition(ctx, {
-        service_definition_name: 'ZSAH_LANG_SRVD',
+        service_definition_name: 'ZSAH_SRVD_TEST',
         package_name: '$TMP',
         description: 'language family test',
+        activate: false,
       }),
   },
   {
     name: 'CreateMetadataExtension',
-    collection: '/ddic/ddlx/sources',
+    collection: '/sap/bc/adt/ddic/ddlx/sources',
     run: (ctx: any) =>
       handleCreateMetadataExtension(ctx, {
-        name: 'ZSAH_LANG_DDLX',
+        name: 'ZSAH_DDLX_TEST',
         package_name: '$TMP',
         description: 'language family test',
+        activate: false,
       }),
   },
 ] as const;
 
-describe('Create-payload logon-language extension — 8 remaining paths (backlog 11-⑫)', () => {
+describe('Create-payload logon-language remainder (backlog 11-⑫)', () => {
   for (const c of CREATE_CASES) {
-    it(`${c.name} stamps the create payload with the system logon language (KO)`, async () => {
+    it(`${c.name} stamps the create payload with the system logon language (CS)`, async () => {
       const connection = new FakeConnection();
-      await c.run(makeContext(connection));
+      const result = await c.run(makeContext(connection));
+      expect(result.isError).toBeFalsy();
 
       const post = connection.createPost(c.collection);
       expect(post).toBeDefined();
-      // The resolved logon language (KO) — not the old hardcoded EN — is stamped
-      // on BOTH language attributes. (Revert the fix → these carry EN → fail.)
-      expect(post?.data).toContain('adtcore:language="KO"');
-      expect(post?.data).toContain('adtcore:masterLanguage="KO"');
+      expect(post?.data).toContain('adtcore:language="CS"');
+      expect(post?.data).toContain('adtcore:masterLanguage="CS"');
       expect(post?.data).not.toContain('adtcore:language="EN"');
       expect(post?.data).not.toContain('adtcore:masterLanguage="EN"');
     });
@@ -238,7 +242,8 @@ describe('Create-payload logon-language extension — 8 remaining paths (backlog
     it(`${c.name} falls back to EN when systeminformation is unavailable`, async () => {
       const connection = new FakeConnection();
       connection.systemInfoAvailable = false;
-      await c.run(makeContext(connection));
+      const result = await c.run(makeContext(connection));
+      expect(result.isError).toBeFalsy();
 
       const post = connection.createPost(c.collection);
       expect(post).toBeDefined();

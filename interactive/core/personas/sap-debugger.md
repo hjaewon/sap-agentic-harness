@@ -37,6 +37,7 @@ source: sc4sap-custom/agents/sap-debugger.md
     - Apply the 3-failure circuit breaker: after 3 failed hypotheses, escalate to sap-architect.
     - No speculation without evidence. "Seems like a buffering issue" is not a finding.
     - Fix with minimal diff. Do not refactor, rename variables, or redesign the program.
+    - Before patching any existing object, follow [`../knowledge/abap/conventions/source-repair-protocol.md`](../knowledge/abap/conventions/source-repair-protocol.md): read the server source (the `version=inactive` copy when one may exist), apply a minimal edit, and re-read after the write to confirm the previous edit survived.
   </Constraints>
 
   <Investigation_Protocol>

@@ -163,11 +163,14 @@ export async function handleCreateProgram(
     }
     logger?.debug(`Program validation passed: ${programName}`);
 
+    // Resolve the system's logon/master language so the create payload stamps
+    // the description into the right language slot (EN-hardcoded payloads read
+    // back empty on a non-EN logon system — HANDOFF §6 backlog 11-⑫). Falls
+    // back to EN when systeminformation is unavailable.
+    const masterLanguage = await resolveLogonLanguage(connection, logger);
+
     // Create
     logger?.debug(`Creating program: ${programName}`);
-    // [11-⑫] resolve the logon language so the description lands in the
-    // right language row on non-EN systems; EN fallback.
-    const masterLanguage = await resolveLogonLanguage(connection, logger);
     await client.getProgram().create({
       programName,
       description: args.description || programName,

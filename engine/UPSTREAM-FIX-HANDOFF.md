@@ -1,4 +1,4 @@
-# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.12
+# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.15
 
 Paste this whole file into the Claude Code (or hand it to the maintainer) on the
 machine that holds the fork/upstream source. It is **self-contained**: for each
@@ -42,7 +42,10 @@ exact diffs from these commits if a hand-application drifts:
 | 4.13.9 | `4247dd89` | Silent-delete honesty (§3) + CreateProgram type guard (§4) |
 | 4.13.10 | `8711b67b` | Logon-language resolution (§5) + already-exists machine id (§6) |
 | 4.13.11 | `5373268e` | Structure check-with-source (§7) + low/CDS classic unit test (§8) |
-| 4.13.12 | (this release) | Table check-with-source + parse/throw (§7) + create logon-language for 8 more paths (§5) |
+| 4.13.12 | `(pending)` | Table check-with-source + handler blocks bad DDL (§10) + create-payload logon-language remainder × 8 (§11) |
+| 4.13.13 | `(pending)` | Real-data gate honesty: self-closing NULL cell drop/shift + row-count meta + sporadic-400 retry (§12) |
+| 4.13.14 | `(pending)` | DDIC write real-generation: CreateStructure fields→DDL (§13) + FM read inactive-edit-loss warning + description honesty (§14) |
+| 4.13.15 | `(pending)` | Local-include Delete family repaired — dedicated clear path replaces the broken `update('')` delegation (§15, client-package, backlog 11-⑩) + low unit-test schemas drop 4 cloud-only no-op params (§15, server) + `CreateProgramLow` type-substitution guard mirrored from the high-level (§4, Known-remaining #2) |
 
 > Note: commit `acad614d` is the authoritative 4.13.8 boundary (the CHANGELOG's
 > `## [4.13.8]` header was added retroactively — content is identical).
@@ -317,6 +320,24 @@ Schema-only enum edit; tool count unchanged.
 The compact `HandlerCreate` dispatcher delegates `PROGRAM.create` to this patched
 handler and inherits the guard (review-verified — no separate fix).
 
+### Low-level sibling (4.13.15, was Known-remaining #2)
+
+`engine/src/handlers/program/low/handleCreateProgram.ts` (`CreateProgramLow`) had
+the same defect and was left unguarded at 4.13.9 — its `program_type` schema
+advertised all six values with **no enum**, and the handler passed the raw type
+straight to the vendored `create()`. `CreateProgramLow(program_type:'function_group')`
+therefore created a `PROG/P` shell and reported `success:true` (live-reproduced
+on IDES `$TMP` via a `--exposition readonly,high,low` server; `SearchObject`
+confirmed the object was `PROG/P`, not `FUGR`). Fixed by **mirroring** the
+high-level guard into the low handler — the same `SUPPORTED_PROGRAM_TYPES`,
+`DEDICATED_TOOL_FOR_PROGRAM_TYPE` map, and pre-create reject block — and adding
+the same `enum:['executable','module_pool']` to the low `program_type` schema
+(so the MCP input-validation layer rejects an unsupported value before the
+handler too). The low-specific `session_id` / `session_state` / `skip_check`
+contract is untouched. Verified live red→green on IDES `$TMP`: pre-fix created a
+`PROG/P` shell (deleted, read-back 404); post-fix the call is rejected pre-wire
+and nothing is created.
+
 ### Also removed (4.13.9): CreateStructure dead lock/unlock pair
 
 `engine/src/handlers/structure/high/handleCreateStructure.ts` locked the
@@ -332,7 +353,9 @@ Create-family pins.
 
 - `engine/src/__tests__/unit/createProgramTypeGuard.test.ts` — each unsupported
   type refused with **zero** outbound requests; a supported type still reaches
-  the create POST (reverse-verified).
+  the create POST (reverse-verified). Covers **both** `CreateProgram` (high) and
+  `CreateProgramLow` (low, 4.13.15) — the low reverse-verify removes only the low
+  guard and fails exactly the four low reject cases.
 - `engine/src/__tests__/unit/createStructureNoDeadLock.test.ts` — asserts
   create→check→activate issues no structure LOCK/UNLOCK.
 
@@ -414,30 +437,22 @@ appends the HTTP status (`SAP Error: … [HTTP 400]`). See
 
 ### Scope note
 
-The 4.13.10 release resolved/injected the language on the three live-proven
-create paths (view/domain/dataElement). **4.13.12 extended the same
-`resolveLogonLanguage` infrastructure to the eight remaining create handlers**
-(HANDOFF §6 backlog 11-⑫): `handleCreateClass`, `handleCreateInterface`,
-`handleCreateProgram`, `handleCreatePackage`, `handleCreateTable`,
-`handleCreateStructure`, `handleCreateServiceDefinition` (SRVD),
-`handleCreateMetadataExtension` (DDLX) each now resolve the logon language and
-pass `masterLanguage` into the create config, and the vendored `class`,
-`interface`, `program`, `package`, `table`, `structure`, `serviceDefinition`,
-`metadataExtension` `create.js` builders emit it (their `Adt<Obj>` wrappers
-forward `master_language: config.masterLanguage`; DDLX already forwarded
-`masterLanguage` and only needed its `language="EN"` un-hardcoded). Types add
-`master_language?` (create params) + `masterLanguage?` (config). These creates
-did not *fail* on a non-EN system (the DDLS hard-reject is view-specific) but
-stored the description in the EN row so it showed empty under a non-EN logon —
-real demand was a fork bundle hand-edited in 19 places to force KO. Verified
-live on KR-DEV (logon language KO): the create POST carries the resolved language
-and the create succeeds (payload accepted, no rejection). **`DCL` /
-`accessControl` create is deliberately NOT extended** — no handler routes to it
-(unreachable dead code, same precedent as `tabletype`/`enhancement` in §3);
-`functionGroup/create.js` is outside the named 11-⑫ scope (FUGR-create verified
-green in 4.13.1). Both keep EN. The low-level `Create*Low` / compact paths call
-the same patched builders but do not resolve the language themselves — without a
-caller-supplied `master_language` they keep the EN default (unchanged semantics).
+At 4.13.10 only the three live-proven create paths (DDLS view, domain, data
+element) resolved/injected the language; the other EN-hardcoded create payloads
+were left untouched because those creates succeed on the CS box (EN→logon-
+language normalization is tolerated) and the description-drop was not observed
+for them. **§11 (4.13.12) extends the same `resolveLogonLanguage` injection to
+the remaining reachable create builders** — class, interface, program, package,
+table, structure, service definition, DDLX — so their descriptions land in the
+system's master-language slot too. Still not resolved (deliberately): the
+`accessControl` (DCL), `functionGroup`, `enhancement`, and `tabletype` create
+builders — `accessControl`/`enhancement`/`tabletype` are unreachable from any
+handler (dead from the engine's side) and FUGR is out of the named 11-⑫ scope
+(its create tolerates the normalization; verified green since 4.13.1). The
+low-level `Create*Low` / compact paths call the same patched builders but do not
+resolve the language themselves — without a caller-supplied
+`master_language`/`masterLanguage` they keep the EN default (unchanged
+semantics).
 
 ### Regression tests
 
@@ -717,31 +732,504 @@ to rewrite as a simple `FROM <table>`. Consumed by
 
 ---
 
+## §10 — Table pre-check must validate the new DDL (check-with-source) + handler blocks bad writes
+
+**The `UpdateTable` sibling of §7, but the deficiency is deeper.** 4.13.12.
+
+### Symptom
+
+`UpdateTable` with a DDL error (live-measured on IDES/CS: a field typed by a
+non-existent data element) returned `success: true` — the bad DDL was written
+and the object went inactive, the real error appearing only buried in
+`activation_warnings` (*"Pole BAD_FIELD: Typ komponenty nebo použitá doména není
+aktivní nebo neexistuje"* / *"Nametab … nelze generovat"*). The pre-check never
+caught it before the write PUT.
+
+### Root cause — two layers
+
+1. Same drop as §7: `handleUpdateTable` calls
+   `client.getTable().check({ tableName, ddlCode }, 'inactive')`, but the vendored
+   `AdtTable.check(config, status)` **silently dropped `config.ddlCode`**
+   (`runTableCheckRun(conn, 'abapCheckRun', name, undefined, version)`), so the
+   pre-check ran the *stored* version, not the new DDL.
+2. Unlike `AdtStructure.check` (which parses the `/checkruns` response and throws
+   on errors), `AdtTable.check` returns the **raw response without evaluating
+   it** — the low-level `CheckTableLow` tool relies on that non-throwing contract
+   and parses the result itself. So even with `ddlCode` forwarded, nothing in the
+   high-level `UpdateTable` path evaluated the result: `handleUpdateTable`
+   discarded the returned `checkResult` and set `checkNewCodePassed = true`
+   unconditionally.
+
+### Fix — client-package + server
+
+- **Client-package** (`patch-package`, marked `[powerup 4.13.12]`):
+  `structure/AdtStructure.js`'s sibling `table/AdtTable.js` `check()` now forwards
+  `config.ddlCode` as the source to validate (`runTableCheckRun(conn,
+  'abapCheckRun', name, config.ddlCode, version)`). This also revives the
+  low-level `CheckTableLow` tool's documented `ddl_code` validation, which the
+  same drop had silently defeated. Callers that pass no `ddlCode` (the post-unlock
+  inactive check) keep the prior saved-version behavior (`undefined`). `check()`
+  stays **non-throwing** — the `CheckTableLow` contract is unchanged.
+- **Server** (`engine/src/handlers/table/high/handleUpdateTable.ts`): the pre-check
+  step now parses the returned `checkResult` with `parseCheckRunResponse` and
+  **throws to block the write** when the new DDL has real errors, surfacing the
+  honest SAP detail *before* the write PUT — with the same DDIC tolerance
+  (`inactive version does not exist` / `importing from database`) and non-empty
+  status fallback as `checkStructure`. Because table's `check()` returns rather
+  than throws, the block-decision lives in the handler (not the client wrapper),
+  which is where it belongs given the `CheckTableLow` contract.
+
+### Regression test
+
+`engine/src/__tests__/unit/updateTableCheckSource.test.ts` — drives the real
+`handleUpdateTable` over a fake connection that answers `/checkruns` differently
+for source vs no-source: valid code → the pre-check carries the new DDL as base64
+source and the update completes; real check error (stored version clean, new DDL
+bad) → the exact SAP detail surfaced and **no** write PUT issued; `notProcessed`
+→ an honest status-carrying error (never bare). Reverse-verified in **both**
+layers: reverting the `ddlCode`-forward fails all three cases; neutralizing the
+handler block-decision fails the real-error and notProcessed cases (the bad write
+reaches the PUT).
+
+### Live verification
+
+On the 4.13.11 bundle `UpdateTable` with the bad DDL returned `success:true`
+(error only in `activation_warnings`); on 4.13.12 it returns an error with *"New
+code check failed: … doména není aktivní nebo neexistuje"* and leaves the table's
+stored version untouched (read back = clean shell), and a corrected DDL
+updates + activates cleanly (fresh session). **Observation (not a regression in
+the fix):** immediately re-running `UpdateTable` on the *same* table in the *same*
+connection after a blocked update returns ADT's per-session cached check result
+(the stale error) until a fresh session; ADT caches `/checkruns` per
+session/object, newly surfaced by the block. Out of scope to change.
+
+**Branch-integration note:** a second machine fixed this same defect in
+parallel (commit `0b304de7`) and additionally verified it live on a second
+system (KR-DEV, logon language KO). That parallel commit put the block-decision
+inside `AdtTable.check()` itself (client-package layer) rather than in the
+handler — which would have changed the `CheckTableLow`/`CheckObjectLow`
+low-tool contract to a thrown message string. That alternative was not carried
+into the merged tree; the handler-side design above (`check()` stays
+non-throwing, the `CheckTableLow` contract is unchanged) is what ships. See
+`engine/CHANGELOG.md` `[4.13.16]` for the full reconciliation record.
+
+---
+
+## §11 — Create-payload logon-language remainder (the reachable non-DDLS builders)
+
+**The mechanical extension of §5 to the other reachable create builders.** 4.13.12.
+
+### Symptom / root cause
+
+Same root as §5: the vendored create payloads hardcode `adtcore:language="EN"` /
+`adtcore:masterLanguage="EN"`. §5 fixed only view/domain/data-element; class,
+interface, program, package, table, structure, service definition and metadata
+extension (DDLX) still hardcoded EN. Those creates *succeed* (SAP tolerates the
+EN→logon-language normalization — confirmed live on the CS box: an EN-payload
+class create reads its description back fine), but on systems that do not
+tolerate it (the real-demand driver was a KO logon system) the description lands
+in the EN text slot and reads back empty.
+
+### Fix — server + client-package
+
+Each reachable create handler resolves the language with `resolveLogonLanguage()`
+(§5's `src/lib/adtLogonLanguage.ts`, EN fallback) and injects it into the create
+call; the vendored builders stamp both `adtcore:language` and
+`adtcore:masterLanguage` from it (`patch-package`, marked `[powerup 4.13.12]`).
+
+- **Handlers** (`engine/src/handlers/<obj>/high/handleCreate*.ts`):
+  `handleCreateClass`, `handleCreateInterface`, `handleCreateProgram`,
+  `handleCreatePackage`, `handleCreateTable`, `handleCreateStructure`,
+  `handleCreateServiceDefinition`, `handleCreateMetadataExtension` (DDLX).
+- **Client-package**: the eight `*/create.js` builders emit both language
+  attributes from a resolved `master_language`/`masterLanguage` (EN fallback);
+  the `AdtClass`/`AdtInterface`/`AdtProgram`/`AdtPackage`/`AdtStructure`/`AdtTable`/
+  `AdtServiceDefinition` wrappers forward `config.masterLanguage` to their builder
+  (DDLX's `AdtMetadataExtension` already forwarded it — only its builder's
+  hardcoded `adtcore:language="EN"` needed the substitution); the create-param and
+  config typings gain `master_language?` / `masterLanguage?`.
+
+### Deliberately not fixed
+
+`accessControl` (DCL), `functionGroup`, `enhancement`, `tabletype` create
+builders still hardcode EN. `accessControl`/`enhancement`/`tabletype` are
+**unreachable from any handler** (no `Create*` tool routes to them — dead from the
+engine's side, same judgment as the §3 dead-delete helpers), so they cannot be
+live-verified; FUGR create is out of the named 11-⑫ scope (tolerates the
+normalization). `resolveLogonLanguage` is the shared root if any is ever exposed.
+
+### Regression test
+
+`engine/src/__tests__/unit/createLogonLanguageFamily.test.ts` — drives all eight
+real handlers over a fake connection whose systeminformation advertises CS and
+pins `adtcore:language="CS"` / `adtcore:masterLanguage="CS"` on each create POST,
+plus EN-fallback cases when systeminformation 404s (reverse-verified: reverting a
+builder's `EN`→`${masterLanguage}` substitution or a handler's injection fails
+that type's CS case while the EN-fallback case still passes).
+
+### Live verification
+
+All eight create handlers succeed on the CS box with the new bundle and their
+descriptions read back via `SearchObject`. Note: because the CS box **tolerates**
+the EN payload (create succeeds, description reads back for both bundles), a
+red→green *description-slot* delta is not observable on this system for these
+types — the reverse-verified family test is the authoritative proof that the
+payload now carries the resolved language. The non-tolerant surfaces (DDLS,
+DOMA/DTEL) were already live-proven in §5.
+
+**Branch-integration note:** a second machine fixed this same defect in
+parallel (commit `0b304de7`) and additionally verified all eight create
+handlers live on a second, non-tolerant system (KR-DEV, logon language KO) —
+see `engine/CHANGELOG.md` `[4.13.16]`.
+
+---
+
+## §12 — Real-data gate honesty: self-closing NULL cell drop/shift, row-count meta, sporadic-400 retry
+
+**The two real-data gate tools (`GetSqlQuery`, `GetTableContents`) share one XML
+parser; three defects, one Wave.** 4.13.13. Server-only (no client-package patch).
+
+### Symptom
+
+A `GetSqlQuery` / `GetTableContents` result silently mis-attributes NULL-cell
+values. Live on an on-premise S/4HANA system, a read-only self-join of `T000`
+that makes exactly one middle row's column non-NULL and the rest NULL:
+
+```
+SELECT a~mandt, b~mtext AS bmtext, a~mtext
+FROM t000 AS a LEFT OUTER JOIN t000 AS b
+  ON b~mandt = a~mandt AND a~mandt = '200'
+ORDER BY a~mandt
+```
+
+returned `BMTEXT = "Ready-to-activate client"` on the **`MANDT=000`** row (which
+must be NULL) and `NULL` on the `MANDT=200` row that actually owns that value —
+confirmed by the unaffected `MTEXT` column of the same row. The single non-NULL
+value had shifted up over the two leading NULLs. The response also carried only
+`total_rows`, with no honest count of the rows actually returned.
+
+### Root cause
+
+Three independent defects in
+`dist/handlers/system/readonly/handleGetSqlQuery.js` (`parseSqlQueryXml`, reused
+by `dist/handlers/table/readonly/handleGetTableContents.js`):
+
+1. **Self-closing cell drop + shift.** The per-column cell regex
+   `/<dataPreview:data[^>]*>(.*?)<\/dataPreview:data>/g` requires a closing tag.
+   SAP emits a nil / NULL cell as self-closing `<dataPreview:data/>`, which the
+   pattern skips; it then spans forward to the *next* cell's `</dataPreview:data>`,
+   swallowing that value into one match. The column array comes up short and every
+   following row in that column shifts up. Both real-data gate tools call the same
+   function, so both are affected.
+2. **Self-contradicting meta.** The response carried only `total_rows`
+   (server-reported), never the count of rows actually parsed, so a truncated or
+   mis-parsed result looked complete.
+3. **Sporadic HTTP 400 on complex queries.** The handler issued the Data Preview
+   POST once and threw immediately; multi-way joins / long IN lists and concurrent
+   calls draw a transient 400 that succeeds on an immediate re-run.
+
+### Fix — server only
+
+`engine/src/handlers/system/readonly/handleGetSqlQuery.ts`:
+
+1. The cell regex becomes an alternation that matches the self-closing form first
+   and captures the paired form's body, walked with `matchAll` so cell position is
+   preserved:
+   `/<dataPreview:data(?:\s[^>]*?)?\/>|<dataPreview:data(?:\s[^>]*?)?>([\s\S]*?)<\/dataPreview:data>/g`.
+   A self-closing or empty cell → `null`; any other body (including a blank `" "`
+   CHAR value) is kept verbatim, so a nil NULL is distinguished from an empty
+   string. When columns still come out unequal (a genuinely ragged response the
+   parser cannot align) the per-column shape is surfaced as a new `ragged_columns`
+   field and logged, instead of silently shifting rows.
+2. The response adds `returned_row_count` (rows actually parsed), `server_total_rows`
+   (server total when the XML provides it) and `truncated` (`returned >= row_number`
+   or `server_total > returned`). `GetTableContents` inherits all of this through
+   the shared parser.
+3. The handler wraps the Data Preview call in a retry-once helper: a first-attempt
+   HTTP 400 (`isHttp400` — matches `err.response?.status === 400`) is retried
+   exactly once; any other error, or a second 400, propagates unchanged. The tool
+   description documents the 400 constraint and the alias-shortening / BETWEEN
+   work-arounds.
+
+### Regression test
+
+`engine/src/__tests__/handleGetSqlQuery.test.ts` — offline XML fixtures pin: the
+self-closing shift (a NULL keeps its row; the value stays on its own row),
+nil-vs-blank-CHAR distinction, the all-NULL column, the ragged-column warning
+(present when genuinely unaligned, absent when self-closing cells realign), the
+three meta fields across three truncation cases, and the 400 retry
+(retry-then-succeed / give-up-after-one-retry / no-retry-on-500) driving the real
+handler over a fake connection. It also drives the real `handleGetTableContents`
+to prove the shared parser fix flows through. Reverse-verified: reverting only the
+cell regex fails exactly the four alignment cases while the meta / retry cases stay
+green.
+
+### Live verification
+
+Same read-only `T000` self-join, same on-premise system. On 4.13.12 the value
+shifted onto the `MANDT=000` row and no row-count meta was present; on 4.13.13
+`BMTEXT` is `NULL` for 000/100/400/500 and `"Ready-to-activate client"` on the
+`MANDT=200` row (matching its `MTEXT`), with `returned_row_count=5`,
+`server_total_rows=5`, `truncated=false`. Read-only throughout; no write issued.
+
+---
+
+## §13 — CreateStructure generates real fields (false success removed)
+
+**`CreateStructure` discarded its required `fields` input and created an empty
+shell, then reported success.** 4.13.14. Server-only (no client-package patch).
+Backlog 5-13 layer 1 Wave 2, items 3 + 11-①.
+
+### Symptom
+
+`CreateStructure` takes `fields` as a required parameter, but the handler passed
+`create({ ddlCode: '' })` — an empty structure shell — and dropped the fields
+entirely (the handler even carried a comment: "field/include DDL generation is
+not yet implemented"). It then returned `{ success: true, activated: true }`.
+Live on IDES (S/4HANA, logon CS) on 4.13.13: creating `ZSAH_S_5713R` with fields
+`ID CHAR(10)` + `AMOUNT DEC(15,2)` reported success, but a read-back showed only
+a placeholder `component_to_be_changed : abap.string(0)` — **neither field was
+present**. A false success: the tool said the structure was built when it was an
+empty shell.
+
+### Root cause
+
+The ADT structure-create endpoint only produces a shell; the field DDL must be
+applied by a subsequent source write, which was never implemented. The `fields`
+input was validated for presence and then thrown away.
+
+### Fix — server only
+
+A new pure builder `engine/src/lib/structureDdl.ts` (`generateStructureDdl`)
+turns the field/include spec into DDIC `define structure` DDL. The header always
+emits `@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE` (item 11-①; a DDIC
+structure is rejected without it — the same annotation §7's check-with-source
+surfaces as the real error when missing). Built-in types resolve to
+`abap.<type>` with length/decimals where the kind requires them; a `data_element`
+resolves to the element name; `CURR`/`QUAN` optionally emit
+`@Semantics.amount.currencyCode` / `@Semantics.quantity.unitOfMeasure`. The
+builder throws on an **incomplete spec** — a length-bearing built-in with no
+length, an unsupported/unresolved `data_type`, a field with neither
+`data_element` nor a built-in `data_type`, an include carrying a suffix, or no
+fields/includes at all.
+
+`engine/src/handlers/structure/high/handleCreateStructure.ts` now generates the
+DDL **before any object is created** (an incomplete spec fails here with nothing
+on the wire — no half-built shell to clean up), then applies it: create the
+shell → check-with-source on the generated DDL (§7's `AdtStructure.check`
+ddlCode-forward) → lock → `update({ ddlCode }, { lockHandle })` → unlock → check
+inactive → activate. The write is pinned stateful right after the lock (§1 class:
+IDES recycles the connection, so a stateless PUT would evaporate the lock) —
+this supersedes the 4.13.9 "dead lock/unlock pair" removal (§4): the lock now
+brackets a real write. The 4.13.12 logon-language stamping on the shell create is
+preserved. Two additive `fields[]` params (`currency_reference`,
+`unit_reference`) and a `fields_applied` count in the response are new; no tool
+added/removed.
+
+### Regression tests
+
+`engine/src/__tests__/structureDdl.test.ts` (15 cases) pins the field/include
+rendering, the always-present enhancement.category, and every incomplete-spec
+throw. `engine/src/__tests__/handleCreateStructure.test.ts` drives the real
+handler over a fake connection and pins: the generated DDL (with the field lines
+and enhancement.category) is transmitted as the check-with-source base64 body;
+the lock brackets exactly one source PUT (lock < PUT < unlock); an incomplete
+spec fails with **zero** requests on the wire. Reverse-verified: removing the
+enhancement.category push, the incomplete-spec throw, or the ddlCode passed to
+the check each fails the matching cases. (The obsolete `createStructureNoDeadLock`
+test — which asserted the lock/unlock pair was absent — is superseded, since the
+lock now legitimately brackets the field write.)
+
+### Live verification
+
+IDES $TMP, red→green. 4.13.13 created `ZSAH_S_5713R` reporting success but read
+back as the empty `component_to_be_changed` placeholder. 4.13.14 created
+`ZSAH_S_5713G` with `ID CHAR(10)` + `AMOUNT DEC(15,2)` + `CREATED_ON DATS` and
+read back with all three fields present and `@AbapCatalog.enhancement.category`
+in the header. Both objects deleted and read-back-confirmed gone (404); no orphan
+lock.
+
+---
+
+## §14 — Function-module read honesty: inactive-edit-loss warning + descriptions
+
+**Reading `version='active'` returns the pre-edit source when an unactivated edit
+exists, silently masking a pending edit; and several FM/activation descriptions
+lacked load-bearing cautions.** 4.13.14. Server-only. Backlog 5-13 layer 1 Wave 3,
+items 2 / 4 / 5 / 6.
+
+### Symptom (item 2)
+
+`GetFunctionModule` / `ReadFunctionModule` default to `version='active'`. When an
+unactivated inactive version exists, the active read returns the *old* source; a
+caller that re-edits on top of it silently destroys the pending edit, and no gate
+catches it.
+
+### Fix — server only
+
+Both handlers gain a `check_inactive` parameter: when reading active, they also
+read the inactive version and, if it exists and its source **differs**, attach a
+`warning` to the response. The extra read is wrapped so it never fails or slows
+the main read (a missing inactive version is swallowed). `GetFunctionModule`
+defaults it **on** (interactive single reads); `ReadFunctionModule` defaults it
+**off** (opt-in — it is the bulk-read surface and the per-FM extra call would be
+costly). Description cautions added (items 4/5/6, description-only): the FM read
+descriptions state that a returned 'active' source is **not** proof of successful
+activation (item 6); `ActivateObjects` documents the FUGR recipe — activate the
+function group + its TOP include (FUGR/I) + every FM (FUGR/FF) + the SAPL<group>
+main program in ONE run, never include the system include L<group>UXX, never mix
+unrelated objects (item 4); `UpdateFunctionModule` states the write persists as
+the inactive version even when the post-write check fails and that check errors
+can originate from pre-existing defects in sibling FMs of the same group (item 5).
+
+### Regression tests
+
+`engine/src/__tests__/handleGetFunctionModule.test.ts` (6) and
+`handleReadFunctionModule.test.ts` (4) drive the real handlers over a fake
+connection serving active vs inactive source by `?version=`: differs → warning;
+identical → none; Get default reads inactive, Read default does not; a failing
+inactive read never breaks the main read; the activation-evidence caution is
+pinned in the description. `handleActivateObjects.test.ts` (3) and
+`handleUpdateFunctionModule.test.ts` (2) pin the FUGR-recipe and sibling-persist
+description text. Reverse-verified: suppressing the warning assignment fails the
+Get "differs → warning" case.
+
+### Live verification
+
+item 2's live repro requires provisioning a function group + FM and staging a
+divergent inactive version (an FM edited but not activated) — heavier than a
+$TMP structure and disproportionate to the deterministic jest + reverse-verify
+coverage above, so it was judged on the jest evidence (per the Wave's explicit
+allowance). items 4/5/6 are description-only.
+
+---
+
+## §15 — Local-include Delete family + low unit-test schema cleanup (4.13.15)
+
+Two fixes: a client-package repair that makes the four `DeleteLocal*` tools work
+at all (backlog 11-⑩ — was Known-remaining #1), and a server-side schema cleanup
+that drops four no-op params the §8 switch orphaned (was Known-remaining #6).
+
+### Symptom
+
+`DeleteLocalTypes` / `DeleteLocalDefinitions` / `DeleteLocalMacros` /
+`DeleteLocalTestClass` fail on **every** call, before any request reaches the
+wire, with `Failed to delete … : … code is required`. Live-reproduced on IDES
+(S/4HANA 2021, logon CS) on the 4.13.14 bundle against a `$TMP` class with all
+four includes populated: all four tools returned that error.
+
+### Root cause
+
+The four vendored high-level clients implement `delete()` as
+"delete by updating with empty code":
+`return this.update({ ...config, <kind>Code: '' })`. But `update()`'s first
+statement is `if (!config.<kind>Code) throw new Error('… code is required')`, and
+`''` is falsy — the guard throws **before** the lock, so the include-clearing PUT
+is never issued. A second falsy guard, `if (!includeSource)` /
+`if (!testClassSource)` in the low-level `updateClassInclude` /
+`updateClassTestInclude`, backstops the same failure one layer down.
+
+### Fix — client-package (delete family)
+
+Option A: give delete its own path instead of borrowing update's. In
+`patch-package` (`patches/@babamba2+mcp-abap-adt-clients+3.13.1.patch`, marked
+`[powerup 4.13.15]`):
+
+1. `class/includes.js` — new `clearClassInclude(connection, className,
+   includeType, lockHandle, transportRequest, sourceContentType)`: the same PUT
+   as `updateClassInclude` but **without** the `if (!includeSource)` guard,
+   sending an effectively-empty body (`EMPTY_INCLUDE_SOURCE = ' '`, a single
+   space). Handles `implementations` / `definitions` / `macros`.
+2. `class/testclasses.js` — new `clearClassTestInclude(connection, className,
+   lockHandle, transportRequest, sourceContentType)`, the testclasses-endpoint
+   twin (`EMPTY_TESTCLASS_SOURCE = ' '`).
+3. `class/AdtLocalTypes.js` / `AdtLocalDefinitions.js` / `AdtLocalMacros.js` /
+   `AdtLocalTestClass.js` — each `delete()` now runs its own chain: `lock →
+   setSessionType('stateful')` (the §1 4.13.7 pin — IDES recycles the connection
+   between requests, so a stateless PUT after the lock evaporates the ENQUEUE
+   lock) `→ clear PUT → unlock`, with unlock-on-error cleanup, calling the new
+   low-level clear function with the right include type.
+
+The common `if (!code)` guards on `update()` **and** the `if (!includeSource)` /
+`if (!testClassSource)` guards on the update helpers are deliberately left
+intact — a normal `Update*` with empty code must still be rejected. Relaxing the
+shared guard was rejected: it would let an accidental empty-code Update silently
+wipe a populated include (blast radius). The clear path is delete-only.
+
+### Fix — server (low unit-test schema)
+
+§8 (4.13.11) moved `RunClassUnitTestsLow` / `GetClassUnitTestStatusLow` /
+`GetClassUnitTestResultLow` onto the classic `/testruns` bridge, which left four
+`inputSchema` params the handlers' destructuring never reads: `title` +
+`context` on the run tool, `with_long_polling` on the status tool,
+`with_navigation_uris` on the result tool. Removed from the three schemas
+(handler logic untouched). The consumed params stay — `scope` / `risk_level` /
+`duration` feed the `abapUnitClassic` options block, `format` is honoured by the
+result reader.
+
+### Clear-payload probe (live, required before the repair)
+
+The clear payload is not empty string. On IDES `$TMP`, a **single space** PUT to
+`/sap/bc/adt/oo/classes/<c>/includes/{implementations,testclasses}` is accepted
+by S/4HANA and normalised to an **empty** include — the inactive read-back
+returned `""` on both endpoints. A literal `''` re-trips the falsy guards, so the
+clear functions send a single space. Judged by read-back, never by error absence
+(§3 discipline).
+
+### Regression tests
+
+- `src/__tests__/unit/deleteLocalIncludesFamily.test.ts` drives all four real
+  delete handlers over a fake `IAbapConnection` (the §1
+  `vendoredClientLockChainStatefulSession` pattern) and pins, per family member:
+  the chain succeeds, a stateful LOCK precedes the clear PUT to `/includes/<type>`,
+  every request from lock through the write is stateful (the 4.13.7 pin), the
+  write body is the single space, and an UNLOCK follows. **Reverse-verified by
+  reversing the `patch-package` patch**: with `delete()` back on `update('')` all
+  four cases FAIL (guard throws, no PUT); re-applying restores green.
+- `src/__tests__/unit/lowUnitTestSchemaShape.test.ts` asserts the four removed
+  keys are absent from the three `inputSchema.properties` and the consumed params
+  are still present (reverse-verified — re-adding a key fails it).
+
+### Live verification
+
+On the 4.13.14 bundle all four Delete tools failed "…code is required"; on the
+freshly-bundled 4.13.15 (spawned via the plugin launch path, live connection
+confirmed by `GetSystemInfo`) all four returned success and the inactive
+read-back confirmed each populated include (`local types` / `definitions` /
+`macros` / `test class`) emptied to `""`. The `$TMP` probe class was deleted and
+read-back-confirmed gone (404); no orphan lock. Tool count unchanged (155) — the
+schema change removes properties, not tools.
+
+---
+
 ## Known-remaining defects (still present upstream)
 
 Confirmed against the reference `HANDOFF.md` §6 backlog. These are **not** fixed
 in the reference implementation and remain in the original sources. Where a fix
 was only reasoned (not live-staged) it is flagged **code-review-verified only**.
 
-1. **Local Delete family always fails at the client level (backlog 11-⑩).**
+1. **~~Local Delete family always fails at the client level (backlog 11-⑩).~~
+   RESOLVED in 4.13.15 — see §15.**
    `AdtLocalTestClass` / `AdtLocalTypes` / `AdtLocalMacros` /
-   `AdtLocalDefinitions` `.delete()` are implemented as `update(code: '')`, but
+   `AdtLocalDefinitions` `.delete()` were implemented as `update(code: '')`, but
    every `update()` rejects empty code with "… code is required" **before**
    locking — so `DeleteLocalTestClass` / `DeleteLocalTypes` / `DeleteLocalMacros`
-   / `DeleteLocalDefinitions` can never succeed. Separate defect class from §1
-   (not a lock-session leak). *Code-review-verified only* (found during the
-   4.13.7 audit; no live repro staged). Related: a class with no testclasses
-   include cannot be updated (the include-create ADT POST is unsupported) — bundle
-   with the missing Create-side tool.
+   / `DeleteLocalDefinitions` could never succeed. Separate defect class from §1
+   (not a lock-session leak). Fixed by the §15 dedicated clear path (live
+   red→green). Still open (Create-side gap): a class has no `CreateLocalTestClass`
+   / `CreateLocalTypes` / … tool — an include is first populated through the
+   corresponding `Update*` tool; adding dedicated create tools is a feature
+   extension, recorded as a candidate only.
 
-   *(The former item 2 — `AdtTable.check` drops `ddlCode`, backlog 11-⑪ — was
-   fixed in 4.13.12; see §7. `CreateTableLow` and the compact table-create path
-   still hardcode EN, mirroring the `Create*Low` note under §5.)*
-
-2. **`CreateProgramLow` shares the §4 substitution root.** The low-level tool
-   calls the same type-ignoring vendored `create()` directly and was left
-   untouched to keep the §4 fix minimal to the named high-level tool (low-level
-   caller contract differs — separate judgment).
+2. **~~`CreateProgramLow` shares the §4 substitution root.~~ RESOLVED in
+   4.13.15 — see §4.** The low-level tool called the same type-ignoring vendored
+   `create()` directly with no guard and no schema enum, so
+   `CreateProgramLow(program_type:'function_group')` created a `PROG/P` shell and
+   reported success (live-reproduced on IDES `$TMP`). Fixed by mirroring the §4
+   high-level guard into the low handler (`SUPPORTED_PROGRAM_TYPES` +
+   `DEDICATED_TOOL_FOR_PROGRAM_TYPE` + pre-create reject) and adding the same
+   `enum:['executable','module_pool']` to the low `program_type` schema; the
+   low-specific `session_id`/`session_state`/`skip_check` contract is unchanged.
 
 3. **Un-reached full-chain stateless leaks in the client wrappers.** The other
    object wrappers' full-chain `update()` paths without a `lockHandle`
@@ -763,8 +1251,40 @@ was only reasoned (not live-staged) it is flagged **code-review-verified only**.
    object is functionally complete; a deeper diagnosis needs a `DD01T` real-data
    query and was deferred. Observation only, no defect claimed.
 
-6. **Low unit-test schema still advertises 4 cloud-only no-op parameters**
-   (harmless leftover after §8) — a follow-up cleanup candidate, not a fault.
+6. **~~Low unit-test schema still advertises 4 cloud-only no-op parameters~~
+   RESOLVED in 4.13.15 — see §15.** The harmless leftover after §8 (`title` /
+   `context` / `with_long_polling` / `with_navigation_uris`) is removed from the
+   three low-tool schemas; the consumed params are kept.
+
+7. **`accessControl` (DCL) / `functionGroup` / `enhancement` / `tabletype`
+   create payloads still hardcode EN (after §11).** `accessControl` /
+   `enhancement` / `tabletype` are unreachable from any handler (dead from the
+   engine's side); `functionGroup` create is reachable but out of the named 11-⑫
+   scope (tolerates the normalization, green since 4.13.1). Plug them into
+   `resolveLogonLanguage` (§5/§11) if any is ever exposed or proves affected on a
+   non-tolerant system.
+
+8. **ADT caches `/checkruns` per session/object (observation, surfaced by §10).**
+   After a `UpdateTable` blocked by the §10 pre-check, an immediate same-session
+   retry of the same table returns the cached (stale) check result until a fresh
+   session. Pre-existing ADT behavior, harmless in normal use; not a defect in the
+   fix.
+
+9. **`DeleteStructure` reports success from the deletion-result parse, not a
+   read-back (backlog 5-13 layer 1 Wave 3, item 11-② — investigated, deliberately
+   not repaired).** The concern was whether the unlocked deletion-framework POST
+   can return a no-op 2xx (object survives) that the 4.13.9 `assertDeletionSucceeded`
+   parse (`del:isDeleted`) reports as success. Live on IDES: deleting an unlocked
+   `$TMP` structure via `assertDeletionSucceeded` reported success **and** a
+   read-back confirmed 404 (genuinely gone) — the no-op pathology did **not**
+   reproduce, and `assertDeletionSucceeded` already throws on `isDeleted != "true"`
+   (the locked/refused case, §3). Reproducing a genuine no-op (2xx claiming
+   deletion while the object survives) needs an unusual server state; per the
+   Wave's "no over-repair unless the pathology is demonstrated" instruction, the
+   handler was left unchanged. Hardening candidate: sc4sap-custom v4.14.0 promotes
+   `DeleteStructure` to an explicit lock → `DELETE(lockHandle)` → read-back-404
+   flow (verifying by absence, not by a non-error) — adopt it if a no-op case is
+   ever observed.
 
 ---
 
@@ -785,17 +1305,18 @@ sed -n '1,$p' patches/@babamba2+mcp-abap-adt-clients+3.13.1.patch
 
 The `3.13.1.patch` hunks are grouped by `[powerup 4.13.N]` markers: `4.13.7` =
 §1 wrapper pins, `4.13.9` = §3 deletion honesty, `4.13.10` = §5 language +
-add-if-missing, `4.13.11` = §7 structure check, `4.13.12` = §7 table check +
-§5 language extension (8 more create builders/wrappers/typings). When porting to
-the client package's own repo, apply the equivalent edit in its TypeScript
-`src/core/**` / `src/utils/**` (the patch targets the compiled `dist/`).
+add-if-missing, `4.13.11` = §7 structure check, `4.13.12` = §10 table
+check-with-source + §11 create-payload language remainder (8 builders + wrappers
++ typings). When porting to the client package's own repo, apply the equivalent
+edit in its TypeScript `src/core/**` / `src/utils/**` (the patch targets the
+compiled `dist/`).
 
 ### Run the regression suites
 
 ```bash
 cd engine
 npm ci            # re-applies patch-package via the prepare hook
-npm test          # jest unit suites — reference passes 599/0 at 4.13.12 (5 skipped)
+npm test          # jest unit suites — reference passes 572/0 at 4.13.10, 580/0 at 4.13.11, 599/0 at 4.13.12, 611/5skip at 4.13.13, 643/5skip at 4.13.14, 655/5skip at 4.13.15
 ```
 
 Focused run of just the fix suites:
@@ -805,11 +1326,13 @@ npx jest updateClassStatefulSession updateInterfaceStatefulSession \
   updateProgramStatefulSession updateHandlersStatefulSessionFamily \
   createHandlersStatefulSessionFamily vendoredClientLockChainStatefulSession \
   updateFunctionGroupContentTypeNegotiation deletionResultHonesty \
-  createProgramTypeGuard createStructureNoDeadLock \
+  createProgramTypeGuard structureDdl handleCreateStructure \
   createLogonLanguageConsistency createViewErrorBody \
   isAlreadyExistsErrorMachineId updateStructureCheckSource \
   updateTableCheckSource createLogonLanguageFamily \
-  unitTestClassicLowCds getSqlQueryGate readonlyGuard
+  handleGetFunctionModule handleReadFunctionModule \
+  unitTestClassicLowCds getSqlQueryGate readonlyGuard \
+  deleteLocalIncludesFamily lowUnitTestSchemaShape
 ```
 
 Every suite is reverse-verified in the reference (revert the fix → the pinned

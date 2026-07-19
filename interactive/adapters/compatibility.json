@@ -1,7 +1,7 @@
 {
   "_comment": "어댑터별 검증 버전 고정 (DESIGN.md §4-2). 버전이 올라가면 스모크 재실행 후 갱신. 동기화 점검: node interactive/scripts/doctor.mjs",
   "_evidence_rule": "version 핀은 **재검증한 뒤에만** 올린다 (D-027 로드맵 §9.5). 설치된 버전을 확인한 것만으로 핀을 따라 올리면, 그 버전에서 동작한다는 근거 없이 동작한다고 주장하게 된다. 각 항목의 smoke에는 무엇을 실제로 쟀는지를, not_measured에는 재지 않은 것을 적는다.",
-  "verified": "2026-07-16",
+  "verified": "2026-07-19",
   "claude-code": {
     "version": "2.1.211",
     "manifest": ".claude-plugin/plugin.json (+ marketplace.json)",
@@ -10,21 +10,21 @@
     "not_measured": "2.1.211에서 create-program E2E 재완주는 하지 않음 — 2026-07-10 증거 재사용"
   },
   "codex": {
-    "version": "0.144.4",
+    "version": "0.144.5",
     "manifest": ".codex-plugin/plugin.json + .agents/plugins/marketplace.json",
     "install": "codex plugin marketplace add <repo> → codex plugin add sap-agentic-harness@sap-agentic-harness",
-    "smoke": "PASS — 2026-07-16 재검증(0.144.4): 재생성한 .agents/plugins/marketplace.json을 파싱해 sap-agentic-harness@sap-agentic-harness를 version 0.1.0으로 인식. toggle-plugin.mjs on → `installed, enabled` / off → `installed, disabled` 왕복 확인 후 **평시 OFF(disabled)로 원상 복귀**",
-    "not_measured": "0.144.4에서 세션을 띄워 스킬을 실제 소비하는 E2E는 재실행하지 않음 — 2026-07-11 증거 재사용",
+    "smoke": "PASS — installed+enabled, 캐시에 core/server 전체 패키징 확인 (0.144.1 최초 2026-07-10, 0.144.3 재실측 2026-07-17, 0.144.5 재실측 2026-07-18 — 스모크 후 marketplace/plugin 완전 제거로 평시 미설치 복원)",
+    "not_measured": "0.144.5에서 세션을 띄워 스킬을 실제 소비하는 E2E는 재실행하지 않음 — 2026-07-11 증거 재사용",
     "mcp": "codex mcp add sap --env NODE_PATH=<keyring> -- node <bundle> --exposition=readonly",
     "p2": "unsupported — row-data 2종은 config.toml의 disabled_tools 하드 차단이 정본(승인 모드 의존 금지, adapters/codex/README.md 실측). human approval broker 전까지 P2 미지원"
   },
   "antigravity": {
-    "agy": "1.1.1",
+    "agy": "1.1.4",
     "manifest": "plugin.json (루트, agy 전용)",
     "install": "agy plugin install <repo>",
-    "smoke": "PASS — 2026-07-16 재검증(1.1.1): `agy plugin validate ./interactive` → skills 11 processed · agents 1 processed (1.0.16 실측치와 동일). **read-only 검증이라 설치 상태를 건드리지 않았다** (1.0.7 최초 2026-07-10, 1.0.16 2026-07-11)",
-    "not_measured": "1.1.1에서 세션의 스킬 소비 E2E 미실행. excludeTools 하드 차단도 현 버전 미실증 → P2 unsupported 유지",
-    "mcp": "플러그인 번들 미지원(1.0.7 실측 · 1.1.1 validate에서도 mcpServers skipped로 재확인) — 전역 mcp_config 수동 등록",
+    "smoke": "PASS — skills 11 + agents 1 (1.0.7 최초 2026-07-10, 1.0.16 재실측 2026-07-11, 1.1.4 재실측 2026-07-19 — A-14 프로브: enable/노출/disable/복원 정상, excludeTools 필터는 미작동 실측)",
+    "not_measured": "1.1.4에서 세션의 스킬 소비 E2E는 미실행 — A-14는 설치·노출 상태 전이 프로브이며 스킬 소비 자체는 검증 대상이 아니었음. excludeTools 하드 차단 미작동은 위 smoke에서 실측 완료 → P2 unsupported 유지",
+    "mcp": "플러그인 번들 미지원(1.0.7 실측) — 전역 mcp_config 수동 등록",
     "note": "문서상 2.0 표면 이행 중 — agy 메이저 업 시 재검증"
   }
 }
