@@ -48,7 +48,7 @@
     {
       "step": 2,
       "name": "review-gate",
-      "status": "pending",
+      "status": "completed",
       "verify": "powershell -Command \"node scripts/review-gate/review-gate.mjs --unit phases/4-gated-deploy/unit.json --state phases/4-gated-deploy/state --config scripts/review-gate/config.json; exit $LASTEXITCODE\"",
       "targets": [
         "src/**",
@@ -61,7 +61,11 @@
       "domains": [
         "abap",
         "sap"
-      ]
+      ],
+      "started_at": "2026-07-19T12:26:09+0900",
+      "summary": "분기 판정: state/에 verdict-862ca3b3…json(FAIL·MAJOR·B2) 존재 → 재시도(수정 워커) 분기(스펙 §4.2). 이전 verify exit 1 진단(1줄): 그것은 실패가 아니라 설계된 1차 시도 결과 — 1차 워커가 소스 무수정으로 완료 보고 후 엔진 review-gate가 red 캡슐을 심사해 MAJOR/B2로 FAIL 기록(AC-8 red 절반)이므로, 재시도인 지금 나는 직전(무수정) 시도와 다르게 JOIN 수정을 적용한다. 단일 수정: verdict finding(요구 3 완전성)대로 START-OF-SELECTION SELECT의 'INNER JOIN skat'을 'LEFT OUTER JOIN skat'으로 교체 — 결합 조건 3개(skat~ktopl=ska1~ktopl AND skat~saknr=ska1~saknr AND skat~spras=@sy-langu) 불변. 이제 로그온 언어 SKAT 텍스트 없는 SKA1 계정도 목록에 포함되고 txt50은 공란이 된다. 의미 변경은 47행 JOIN 키워드 1건이 유일하며, 48~49행은 넓어진 키워드에 맞춘 ON 조건 연속행 정렬(공백만, 조건·로직 불변). findings 밖 로직 무수정, 테스트 기대값 불변. 기계 검증 전 체인 재실행(green 재스테이징): ①lint(vsp lint --file) 'No issues found' exit 0 ②deploy(-Write … '$TMP') 'Updated PROG/P ZSAH4_GL_LIST' + 'Successfully updated and activated' VERIFY_PASS exit 0(idempotent update) ③test PROG 'Total: 5 passed, 0 failed' exit 0 ④atc PROG 'Total: 10 finding(s)'(WARN 2 버퍼우회 SKA1/SKAT JOIN line 47 + INFO 8: ORDER BY 부재 3·SLIN 시간대 1·텍스트 미외부화 4, Error급 0) exit 0 ⑤source read PROG exit 0. 서버 원문 대조: green 서버 소스에 LEFT OUTER JOIN 존재·INNER JOIN 부재·F_SKA1_KTP 존재, 로컬 src와 정규화 바이트 일치(local_eq_server_normalized=true), sha256_normalized=eb37e56e858c1897b380754f6d6f9a0718e5a565773f66c8a9046a9e1514127f, content 5027자. verification.json을 green으로 재작성(mode=green, machine_checks 4층 exit 0·unit_test.failed 0, uncovered_by_machine 2건 유지[JOIN 완전성은 어느 기계층도 미검증·AUTHORITY-CHECK 런타임 미검증], server_evidence=재배포 후 fresh source read 원문+hash). node phases/4-gated-deploy/checks/check-verification.mjs green → CHECK_OK verification(green) exit 0. raw-source-read.txt도 green 캡처로 갱신. state/ 산출물: verdict-862ca3b3…json(FAIL·MAJOR·B2) 존재. green verdict-<hash>.json + state.json.pass_records 1건은 본 워커가 만들지 않는다 — 엔진 verify(review-gate.mjs)가 green 캡슐(변경된 src+verification.json으로 해시 재계산, red와 상이)을 재심사해 opus 리뷰어를 실기동하고 PASS 시 생성한다. 리뷰어 서브에이전트 기동은 엔진 몫이라 본 워커는 review-gate.mjs를 직접 실행하지 않았다. Forbidden 준수: spec.md·scripts/review-gate/**(config 포함) 무수정, $TMP 외 write 없음, row-data 도구(GetTableContents/GetSqlQuery) 미호출, 커밋 없음. 리뷰어가 스펙 결함을 지적한 것이 아니므로 blocked 아님.",
+      "contract": "green 캡슐 준비 완료 — src/zsah4_gl_list.prog.abap는 LEFT OUTER JOIN(요구 3 충족), phases/4-gated-deploy/state/verification.json은 mode=green + fresh server_evidence(sha256_normalized=eb37e56e…), check-verification.mjs green exit 0. ZSAH4_GL_LIST는 $TMP에 green으로 배포·활성화된 상태. 엔진 verify(review-gate.mjs)가 green 캡슐 재심사 PASS 시 state.json.pass_records[<green hash>]와 state/capsules/<green hash>/를 생성하며, step 3 deploy-gate가 그 해시로 PASS 캡슐을 찾아 배포한다.",
+      "completed_at": "2026-07-19T12:47:04+0900"
     },
     {
       "step": 3,
