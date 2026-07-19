@@ -128,7 +128,7 @@
     {
       "step": 6,
       "name": "evidence-consolidation",
-      "status": "pending",
+      "status": "completed",
       "verify": "powershell -Command \"node phases/4-gated-deploy/checks/check-phase-evidence.mjs; exit $LASTEXITCODE\"",
       "targets": [
         "phases/4-gated-deploy/**"
@@ -138,7 +138,11 @@
       ],
       "domains": [
         "sap"
-      ]
+      ],
+      "started_at": "2026-07-19T13:47:16+0900",
+      "summary": "phases/4-gated-deploy/state/phase3-evidence.json 작성 완료 — 전 필드를 실측 산출물에서만 전사. ac8: red_capsule_hash=862ca3b3b29e70df29ccf074bb7acf2a90c0f1a64524df654f209acbb8203bd8(verdict classification=FAIL, MAJOR/B2 — SELECT 45~51행의 SKA1-SKAT INNER JOIN(skat~spras=@sy-langu)이 로그온 언어 텍스트 없는 계정을 목록·요약에서 조용히 탈락시킴, 스펙 요구 3 완전성 위반), green_capsule_hash=3f67808198550a31789c3a87125eee99685d3db2393ccc8e7bdd2f9540b2c370(state.json.pass_records 등재, verdict classification=PASS) — 기계 검증 4층(offline_lint/deploy_activation/unit_test/atc) 전부 green인 상태에서 리뷰 게이트만 이 결함을 차단한 실증. ac14: verification.json.uncovered_by_machine 2건(JOIN 데이터완전성·AUTHORITY-CHECK 런타임 미검증) 그대로 개수 전사, capsule_embedded=true(PASS 캡슐 state/capsules/3f67808…/verification/content에 동일 내용 실재 확인). ac15: server_evidence_embedded=true, mechanism='wrapper vsp source read → capsule verification block (prompt v1.1)' — pass_records.prompt_version=1.1과 일치 확인. drift: drift_detected=true, marker=DRIFT-DEMO-20260719-4-gated-deploy-7D458D9D(state/drift-evidence.json 원문 전사). probes: transport_readonly(SAP_ENABLE_TRANSPORTS=true로만 조회 가능, list 6건+get 상세 조회, write 미시도)·atc_error_exit(ZSAH4_ATCPROBE로 유도 시도했으나 IDES 기본 변형은 Error급 미탐지, 프로브 정리 완료·404 확인)·clas_include_deploy(v2.38.1-94에서 CLAS 테스트 include 배포 지원 확인 — ADR-002 '미지원' 판정 갱신 대상, 프로브 정리 완료·404 확인) — probes-evidence.json에서 각 요지 전사. chain: full_chain_green=true(step3 캡슐 배포·step4 채점의 green을 근거로만 true). 경위: 최초 재검증에서 check-phase-evidence.mjs가 verdict-*.json의 최종판정 필드를 v.verdict로 읽어(실제 스키마는 v.classification) AC-8 판정이 state/ 실제 내용과 무관하게 영구 실패함을 발견 — checks/ 밖 파일 수정은 이 스텝 Forbidden 위반이라 본 워커는 스크래치패드 격리 사본으로 수정 가설을 실증한 뒤 blocked+구체적 수정안으로 보고하고 중단; 계획 소유자(오케스트레이션 세션)가 이를 수용해 check-phase-evidence.mjs 2행을 v.classification으로 수정(경위 주석 포함)하고 스키마를 고정하는 tests/check-phase-evidence.test.mjs를 신설, PLANNING.md §8에 동반 발견 3으로 전 경위를 기록 — 본 워커가 node phases/4-gated-deploy/checks/check-phase-evidence.mjs를 재실행해 'CHECK_OK phase3-evidence' exit 0을 직접 확인한 뒤 completed로 전환.",
+      "contract": "AC-8: red=862ca3b3b29e70df29ccf074bb7acf2a90c0f1a64524df654f209acbb8203bd8(FAIL·MAJOR/B2, INNER JOIN 완전성 위반) → green=3f67808198550a31789c3a87125eee99685d3db2393ccc8e7bdd2f9540b2c370(PASS, pass_records 등재) — 기계검증 4층 green인 실제 결함을 게이트가 차단한 실증 1회.\nAC-14: uncovered_by_machine 2건(JOIN 데이터완전성·AUTHORITY-CHECK 런타임 미검증), capsule_embedded=true.\nAC-15: server_evidence_embedded=true, mechanism='wrapper vsp source read → capsule verification block (prompt v1.1)'.\ndrift: marker=DRIFT-DEMO-20260719-4-gated-deploy-7D458D9D — out-of-band(MCP UpdateProgram+ActivateObjects) 변조를 source read로 검출 후 deploy-gate 경로로 원복 확인(drift_detected=true, restored=true).\nprobes: transport read-only(SAP_ENABLE_TRANSPORTS 필요)·ATC Error급의 vsp exit 영향은 억지 없이 미확인으로 유지·CLAS 테스트 include 배포 지원 확인(ADR-002 갱신 대상) — probes-evidence.json에 각 기록.",
+      "completed_at": "2026-07-19T13:58:29+0900"
     }
   ],
   "created_at": "2026-07-19T00:00:00+0900"
