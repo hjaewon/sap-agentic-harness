@@ -1,7 +1,7 @@
 # HANDOFF — 프로젝트 전체 상태와 재개 지침
 
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
-> 작성 2026-07-10 · 최종 갱신 2026-07-16. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
+> 작성 2026-07-10 · 최종 갱신 2026-07-19. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
 >
 > ═══════════════════════════════════════════════════════════════════
@@ -52,6 +52,45 @@
 > 경로 문제 자체가 소멸(quality-gate-sap.ps1 폴백 2경로도 in-repo 빌드 경로로
 > 갱신 대상). 잔여 사용자 확인 1건: 주/보조 SAP 프로파일 명(IDEA-JNC vs IDES-DEV —
 > 같은 시스템의 머신별 프로파일로 추정, SAFETY-PROFILES §⑦에 정직 병기됨).
+>
+> **→ ✅ vsp-custom 편입 완결 (2026-07-19, 오케스트레이션 세션 — 조사·실행·게이트·
+> 리뷰 전량 모델 지정 위임)**: 원천(`D:\Claude for SAP\vsp-custom`) HEAD `5a8bedb`
+> = lock verified_commit 정확 일치·clean → 델타 없이 기준 확정(예고한 첫 단계 이행).
+> 방식 = **git archive 스냅샷 → 최상위 `vsp/` 567파일, 히스토리 비이식**(D-037
+> append). 비이식 근거 = 편입 전 실사에서 원 레포 세션 기록 영역(reports/·contexts/)에
+> 비공개 접속 식별 정보 잔존 실측(HEAD 평문 1 + git 이력 다수). 제외 = 세션 기록류
+> 178파일(reports/ 155·contexts/ 22·최상위 터미널 로그 1 — 제품 코드 아님, D-036
+> "통째 편입(코드 분할 없음)" 취지 유지). 편입 트리 비공개 정보 재점검 0건(작업자 +
+> 독립 리뷰어 이중). 재현 빌드 실증: `CGO_ENABLED=0 -trimpath -buildvcs=false` +
+> BuildDate 원천 커밋 시각 고정 → sha256 `1fe843c8f0daeafc…` 2회 동일·vcs 스탬프
+> 부재(`go version -m`) = **머신·git 상태 독립 재현**; 바이너리·빌드 캐시 비커밋
+> (설계 제약 1 이행 — vsp/.gitignore 차단, git ls-files 0). lock 성격 전환:
+> `adapters/vsp/vsp.lock.json` = 외부 버전 lock → 빌드·명령 계약·provenance
+> (source_provenance 신설, binary_main_machine·repo 블록 제거 — 머신별 경로 소멸);
+> 오프라인 계약 스모크 3종(lint/parse/execute --help) in-repo 바이너리 재실측 PASS.
+> 경로 재정합: quality-gate-sap.ps1·verify-sap.ps1 = 머신별 폴백 → 레포 상대 단일
+> 경로(`vsp\build\vsp.exe`, fail-closed 유지) + CI vsp-build 잡 신설(ubuntu, CGO0
+> 빌드+스모크 3종+pkg/abaplint 테스트, 로컬 green 후 편입). 문서 재정합: DESIGN
+> §1·§2·§10·ARCHITECTURE·CLAUDE.md·COMMANDS.md·SAFETY-PROFILES.md·review-step.md
+> (분리 전제·외부 절대경로 제거, 역사 무수정) + DECISIONS **D-037**. 게이트 전량
+> green **14/14** — 코어 6+doctor(codex 핀 0.144.5→0.144.6 드리프트를 로컬 CLI
+> 업데이트 원인·편입 무관으로 선례 재검증 후 5/5)+음성시험 2(17/17·16/16)+PS
+> 3(23/16/17)+vsp 2(--version·go vet). **새-컨텍스트 독립 리뷰 PASS**(BLOCKER 0·
+> MAJOR 1·MINOR 1·INFO 3): 리뷰어가 원천 5a8bedb 대비 567/178 파일 대조(564 바이트
+> 동일+3 CRLF 정렬 무해)·비공개 0건·CI·문서 정합을 독립 재구성; MAJOR 1 = lock
+> 재현성 주장이 buildvcs 각인으로 부정확 → `-buildvcs=false` 정정·재실측 당일 수리
+> (`34e37e30`), MINOR 1 = 이 HANDOFF 갱신으로 해소, INFO 3 무해. 커밋: `faf8bcf1`
+> (스냅샷 567)·`542e7619`(배선+D-037)·`34e37e30`(MAJOR 수리)·`0c5dcf5f`(codex 핀).
+> **주 머신 후속 1회**: pull 후 in-repo 빌드 필요(quality-gate가 in-repo 경로만 봄;
+> 명령 = lock `binary.build_command`) — 구 사본 `D:\claude for SAP\vsp\vsp-custom`은
+> 더 이상 미참조. 원천 레포 = 무수정 보존, 처분(동결·보관)·origin 미푸시 1커밋
+> (5a8bedb 자체)·git 이력 비공개 기록 정리는 사용자 몫.
+>
+> **▶▶ 다음 착수 후보 (사용자 판단)**: ① U-gate 정의·기계 배선(D-034 잔여 — 무인
+> 조건부 개방의 운영 개방 선결) ② 검토 게이트 캡슐 배선(통합 결정 ⑵·D-032 — 후속
+> 소규모 설계) ③ vsp 테스트 수리(§9.6 4건 — 편입으로 이제 "레포 내 작업") ④ S5-A
+> (vsp transport list/get read-only 실측, 자격증명 셸 필요). 잔여 사용자 확인 1건 유지:
+> 주/보조 SAP 프로파일 명(IDEA-JNC vs IDES-DEV — SAFETY-PROFILES §⑦ 병기 상태).
 >
 > **확정된 통합 결정 5건 (평가 문서 §5):**
 > - **⑴ 방향 = 절충**: 대화형(attended) 중심 틀(원격 재기준 3축 Direct/Guided/Engine)을
@@ -944,7 +983,7 @@ D:\claude for SAP\sap-agentic-harness   ← 단일 레포 (원격: hjaewon/sap-a
 | `D:\claude for SAP\sc4sap-custom` | **동결** (지식 수정 금지) — 이식 원천. Claude 풀버전 플러그인이지만 lite가 대체 |
 | `D:\claude for SAP\sc4sap-lite` | **동결·이관됨** — interactive/로 subtree 병합 완료. README에 이관 표기. 삭제해도 무방(사용자 판단) |
 | `hjaewon/abap-mcp-adt-powerup` | **→ `engine/`으로 편입 (2026-07-11, D-017)** — 엔진 소스 정본은 이제 레포 내 `engine/`(재현 빌드 바이트 일치 검증). GitHub 포크·로컬 클론은 히스토리 아카이브. 엔진 이슈는 §6 — engine/에서 수리 |
-| `D:\claude for SAP\vsp\vsp-custom` (주) / `D:\Claude for SAP\vsp-custom` (보조) | **Engine 실행 백엔드·적용 경로와 독립인 완료 증거 백엔드** (핵심 의존 — 업스트림 oisee/vibing-steampunk 차용). **소유 전략 D-018 확정: 분리 유지 + 부트스트랩 시 버전 lock** (편입 기각 — 소비 계약=CLI 바이너리, 업스트림 활발). 보조 머신 검증 lock(2026-07-11, `adapters/vsp/vsp.lock.json` — aab1275, build/vsp.exe sha256 고정). **주 머신 빌드 완료(2026-07-13)** — lock 커밋 0b03ef2 재현(sha256 바이트 불일치 +3,072B는 Go 경로 임베딩 아티팩트 판정, `--version`/오프라인 계약 스모크 기능 완전 일치), lock에 `binary_main_machine` 병기(사용자 결정: 수용). **SAP 프로파일명 사실**: 이 머신 프로파일 홈(`~\.sah`)에는 `IDEA-JNC`·`KR-DEV`만 존재 — `IDEA-JNC` = `IDES-DEV`와 동일 시스템(S4H/100)의 이 머신 프로파일명, `IDES-DEV` 명칭은 이 머신에 없음. **통합 반영(2026-07-19)**: vsp lock **v2.38.1-94**(write 프로파일 게이트 포함) 채택(⑸) + vsp 편입 확정(**D-030**, 통합 직후 — 위 D-018 '편입 기각'을 vsp에 한해 supersede, ⑷) |
+| 레포 내 **`vsp/`** (2026-07-19 편입, D-030/D-037) ← 원천 `D:\Claude for SAP\vsp-custom` (보조)·미참조 구본 `D:\claude for SAP\vsp\vsp-custom` (주) | **Engine 실행 백엔드·적용 경로와 독립인 완료 증거 백엔드** (핵심 의존 — 업스트림 oisee/vibing-steampunk 차용). **소유 전략 D-018 확정: 분리 유지 + 부트스트랩 시 버전 lock** (편입 기각 — 소비 계약=CLI 바이너리, 업스트림 활발). 보조 머신 검증 lock(2026-07-11, `adapters/vsp/vsp.lock.json` — aab1275, build/vsp.exe sha256 고정). **주 머신 빌드 완료(2026-07-13)** — lock 커밋 0b03ef2 재현(sha256 바이트 불일치 +3,072B는 Go 경로 임베딩 아티팩트 판정, `--version`/오프라인 계약 스모크 기능 완전 일치), lock에 `binary_main_machine` 병기(사용자 결정: 수용). **SAP 프로파일명 사실**: 이 머신 프로파일 홈(`~\.sah`)에는 `IDEA-JNC`·`KR-DEV`만 존재 — `IDEA-JNC` = `IDES-DEV`와 동일 시스템(S4H/100)의 이 머신 프로파일명, `IDES-DEV` 명칭은 이 머신에 없음. **통합 반영(2026-07-19)**: vsp lock **v2.38.1-94**(write 프로파일 게이트 포함) 채택(⑸) + vsp 편입 확정(**D-030**, 통합 직후 — 위 D-018 '편입 기각'을 vsp에 한해 supersede, ⑷). **→ ✅ 편입 완결(2026-07-19, D-030/D-037)**: git archive 스냅샷으로 `vsp/` 567파일 in-repo 편입(히스토리 비이식·세션 기록 178파일 제외·비공개 정보 0건 이중 확인), 바이너리·빌드 캐시 비커밋(소스만 — 머신/CI 빌드), lock = 빌드·명령 계약+provenance로 전환(외부 절대경로 소멸), quality-gate/verify-sap 레포 상대 경로(`vsp\build\vsp.exe`)·CI vsp-build 잡 신설, 게이트 14/14 + 독립 리뷰 PASS. 외부 사본 2개 = 원천(보조, 무수정 보존)·미참조 구본(주). 커밋 `faf8bcf1`·`542e7619`·`34e37e30`. 주 머신 후속 = pull 후 in-repo 빌드 1회 |
 | final-harness: `D:\claude-practice\claude-fable-final` (주) / `D:\AI PROJECT\claude-final` (보조) | 트랙 A 하네스 엔진 — **자체 제작 독립 제품**(fable-harness 후속, sah 밖 사용처 가능). **D-018: 분리 유지 확정** — 버전은 여기 박제하지 않음(부패 실증). §15-F 재검증·lock **완료(2026-07-11)**: v0.17.3(8f7f13b)까지 전량 유지, `adapters/final-harness.lock.json`. **프로젝트 최종 완료 선언(사용자, 2026-07-13)** — 주 머신 클론 실측: HEAD=8f7f13b=origin/master(0/0)·클린·plugin.json v0.17.3 → **lock과 완전 일치, 재검증 불요**. → **2026-07-14 정정: 상류 개발 재개 실측**(v0.18.0~v0.19.1, HEAD 088bcb6 — Direct/Guided 재설계·무인=격리 필수). lock은 v0.17.3 유지, 재기준은 Phase 4 완주 후 정식 결정(D-022). 플러그인 설치는 여전히 보조 머신만(주 머신 enabledPlugins엔 sap-agentic-harness뿐 — ② harness-docs 착수 시 이 머신 설치 필요) |
 
 ## 2. 지금까지의 타임라인 (2026-07-10~11, 커밋은 본 레포 main)
