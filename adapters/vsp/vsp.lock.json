@@ -47,19 +47,22 @@
     "path": "vsp\\build\\vsp.exe",
     "committed": false,
     "go_version": "go1.26.4 windows/amd64",
-    "build_command": "cd vsp && CGO_ENABLED=0 go build -trimpath -ldflags \"-s -w -X main.Version=v2.38.1-94-g5a8bedb -X main.Commit=5a8bedb -X main.BuildDate=2026-07-18T11:53:07+09:00\" -o build/vsp.exe ./cmd/vsp",
+    "build_command": "cd vsp && CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags \"-s -w -X main.Version=v2.38.1-94-g5a8bedb -X main.Commit=5a8bedb -X main.BuildDate=2026-07-18T11:53:07+09:00\" -o build/vsp.exe ./cmd/vsp",
     "build_date_embedded": "2026-07-18T11:53:07+09:00",
     "build_date_source": "원천 커밋 5a8bedb의 committer date(`git show -s --format=%cI`) — 재현성 위해 벽시계 대신 고정",
-    "sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
+    "buildvcs_note": "`-buildvcs=false` 필수 — 없으면 Go 기본 buildvcs가 하네스(sah) 레포의 vcs.revision/time/modified를 바이너리에 각인해 크로스머신 비재현이 된다. `go version -m build/vsp.exe`에 vcs.* 필드가 부재해야 정상.",
+    "sha256": "1fe843c8f0daeafcc4f715e6f120fb666ad7d480ba3acff490eb61a30ea9f24c",
     "size_bytes": 18115584,
-    "built_at": "2026-07-19T13:39:25Z",
+    "built_at": "2026-07-19T14:17:29Z",
     "reproducible": {
       "verdict": "YES",
-      "_comment": "-trimpath + BuildDate 고정으로 경로·시각 독립 재현 빌드. D-018 시절 lock sha(0B9B3A33…/B10405459…)와 달라지는 것은 정상 — 새 빌드 파라미터(-trimpath 추가·BuildDate 고정)를 쓴 새 lock이다.",
-      "method": "동일 build_command 2회(산출물 sha256 기록 → 삭제 → 재빌드 → sha256 재계산)",
-      "build1_sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
-      "build2_sha256": "fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9",
+      "_comment": "-trimpath + BuildDate 고정 + -buildvcs=false로 경로·시각·git상태 독립 재현 빌드. D-018 시절 lock sha(0B9B3A33…/B10405459…)와 달라지는 것은 정상 — 새 빌드 파라미터를 쓴 새 lock이다.",
+      "correction_2026-07-19": "구 기록(sha256 fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9, verdict YES)은 부정확했다. `-buildvcs=false` 누락으로 Go 기본 buildvcs가 sah 레포의 git 상태(vcs.revision=542e7619·vcs.modified=true 실측)를 각인 → 크로스머신 비재현. 당시 '2회 동일'은 동일 git 상태 내 결정성일 뿐이었고 독립 새-컨텍스트 리뷰가 반증(size 동일·sha 상이). `-buildvcs=false` 추가로 정정, vcs.* 각인 부재를 `go version -m`으로 실측 확인. 리뷰어 실측 sha(e64bdf53a0126908…)는 리뷰어가 dirty 상태·buildvcs 포함으로 빌드한 값이라 신규 값과 다르며, 신규 실측값만 기록한다.",
+      "method": "동일 build_command(-buildvcs=false 포함) 2회(산출물 sha256 기록 → 삭제 → 재빌드 → sha256 재계산) + `go version -m`으로 vcs.* 필드 부재 확인 = git상태 독립 증거",
+      "build1_sha256": "1fe843c8f0daeafcc4f715e6f120fb666ad7d480ba3acff490eb61a30ea9f24c",
+      "build2_sha256": "1fe843c8f0daeafcc4f715e6f120fb666ad7d480ba3acff490eb61a30ea9f24c",
       "identical": true,
+      "vcs_stamps_present": false,
       "size_bytes_both": 18115584,
       "measured": "2026-07-19 · go1.26.4 · windows/amd64"
     }
@@ -154,7 +157,7 @@
     "scope_note": "vsp-custom을 읽기만 했다. 소스 수정 0 — 수리는 별도 repo 작업이며 사용자 결정 사항이다(§9.6).",
     "in_repo_smoke": {
       "_": "D-030 편입 후 레포 내 vsp/에서 in-repo 빌드 산출물로 오프라인 명령 계약 스모크 재현 (SAP 미접속). lock command_contract의 오프라인 3종 실측.",
-      "measured": "2026-07-19 · in-repo vsp/build/vsp.exe(sha256 fb5680a4052ae131c70d6a4cfcaf37a47b5486cc8c5e308fbc0b7919ee67f9d9) · windows/amd64 · go1.26.4 · 오프라인",
+      "measured": "2026-07-19 · in-repo vsp/build/vsp.exe(sha256 1fe843c8f0daeafcc4f715e6f120fb666ad7d480ba3acff490eb61a30ea9f24c) · windows/amd64 · go1.26.4 · 오프라인",
       "sample": "vsp/embedded/abap/zadt_test_simple_report.prog.abap",
       "results": [
         "vsp lint --file <sample> → \"No issues found\" · exit 0 (계약: Error만 비-0, clean 파일이라 0) ✅",

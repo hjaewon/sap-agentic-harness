@@ -134,7 +134,7 @@ jobs:
 
       - name: build (vsp · CGO0 · trimpath)
         working-directory: vsp
-        run: CGO_ENABLED=0 go build -trimpath -o build/vsp ./cmd/vsp
+        run: CGO_ENABLED=0 go build -trimpath -buildvcs=false -o build/vsp ./cmd/vsp
 
       - name: 오프라인 계약 스모크 — lint (Error만 비-0, clean 파일 exit 0)
         working-directory: vsp
