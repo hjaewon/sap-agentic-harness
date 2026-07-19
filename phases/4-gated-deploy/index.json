@@ -89,7 +89,7 @@
     {
       "step": 4,
       "name": "post-deploy-scoring",
-      "status": "pending",
+      "status": "completed",
       "verify": "powershell -Command \"$s = & 'scripts\\verify-sap.ps1' -- source read PROG ZSAH4_GL_LIST | Out-String; if ($LASTEXITCODE -ne 0) { exit 1 }; Set-Content -Encoding utf8 phases/4-gated-deploy/state/final-server-read.txt $s; node phases/4-gated-deploy/checks/check-verification.mjs green; if ($LASTEXITCODE -ne 0) { exit 1 }; $t = & 'scripts\\verify-sap.ps1' -- test PROG ZSAH4_GL_LIST | Out-String; Write-Host $t; if ($LASTEXITCODE -ne 0) { exit 1 }; if ($t -match '(?i)fail(ed|ures)?[:\\s]+[1-9]') { exit 1 }; exit 0\"",
       "targets": [
         "phases/4-gated-deploy/**"
@@ -99,7 +99,11 @@
       ],
       "domains": [
         "sap"
-      ]
+      ],
+      "started_at": "2026-07-19T13:18:18+0900",
+      "summary": "채점: source read PROG ZSAH4_GL_LIST → 서버=repo git diff --no-index exit 0 (바이트 동일 5028B, green LEFT OUTER JOIN·INNER JOIN 부재·AUTHORITY-CHECK F_SKA1_KTP 존재, LF sha256 ea4b21ac…=deploy-gate 캡슐 manifest 파일해시, R-006 이행); test → LTC_GL_LIST 5 passed/0 failed exit 0; atc → Total 10 finding(s) (WARN 2 SKA1/SKAT 버퍼우회 line 47 + INFO 8, Error급 0) exit 0. A-19 transport read-only: 기본 차단(transports not enabled) → SAP_ENABLE_TRANSPORTS=true로 'transport list' 6건(컬럼 NUMBER/OWNER/STATUS/TYPE/DESCRIPTION) + 'transport get S4HK903951'(header Owner HUB2150/Type K/Status Modifiable/Target S4V + Tasks 2 + Objects 1 R3TR PROG ZTEST01) 각 exit 0, write 미시도 (--transport-read-only는 MCP 전용 플래그라 CLI가 'unknown flag' 거부). A-20 ATC Error exit: ZSAH4_ATCPROBE(하드코딩 패스워드 리터럴 Init1234 + PARAMETERS 기반 동적 WHERE SQL injection) 배포 exit 0 → atc → IDES 기본 변형 Error급 0(INFO 2건, SLIN 시간대·미외부화 텍스트만, exit 0); 억지 금지 준수 → 'ATC Error급이 exit>0을 유발하는지'는 기본 변형에 해당 규칙 부재로 미확인 유지(COMMANDS §4/VERIFY-PATTERNS §2-4 미결 항목과 정합). A-3 CLAS 테스트 include 배포: 지원 확인(v2.38.1-94, ADR-002 '미지원 TODO' 갱신) — base .clas.abap deploy exit 0, .clas.testclasses.abap deploy → 'Updated CLAS/OC.testclasses ZCL_SAH4_PROBE' 활성 exit 0, test CLAS → LTC_PROBE.ADDS_TWO_NUMBERS PASS(거짓성공 아님 실증). 잔존물 정리: A-20/A-3 서버 객체는 MCP DeleteProgram/DeleteClass로 삭제 후 source read read-back 각 status 404(ExceptionResourceNotFound)·SearchObject 공백; 로컬 임시 3파일(zsah4_atcprobe.prog.abap·zcl_sah4_probe.clas.abap·zcl_sah4_probe.clas.testclasses.abap) 삭제 → src/ 원본 4파일 복원. state/probes-evidence.json 신설. MCP 사용 근거: vsp CLI에 객체 삭제 명령 부재(--help 전수 확인)라 프로브 정리는 PLANNING §4가 지정한 attended out-of-band 채널(MCP)로 수행 — read/delete만, 대상 전부 $TMP(dev tier). Forbidden 준수: zsah4_gl_list.prog.abap 무수정(green 동결), $TMP 외 SAP write 없음, row-data 도구(GetTableContents/GetSqlQuery) 미호출, 프로브 임시 산출물 전량 정리, 커밋 없음, .harness/ 무수정. AC verify(source read→check-verification green→test) 직접 재실행 결과 STEP4_VERIFY_RESULT=0.",
+      "contract": "ZSAH4_GL_LIST는 $TMP에 green(LEFT OUTER JOIN) 배포·활성 상태로 채점 통과(source read 서버=repo·test 5/5·atc Error급 0, R-006). state/probes-evidence.json 신설 — scoring{drift_clean,test,atc} + 3프로브 문자열(transport_readonly/atc_error_exit/clas_include_deploy); step6 check-phase-evidence.mjs가 phase3-evidence.json의 probes로 소비(각 len≥5 요구 충족). 프로브 임시객체 ZSAH4_ATCPROBE·ZCL_SAH4_PROBE는 전량 삭제(read-back 404). S5 drift는 이 ZSAH4_GL_LIST를 out-of-band(MCP UpdateProgram+ActivateObjects)로 변조 → vsp source read 대조 → deploy-gate 재배포로 원복.",
+      "completed_at": "2026-07-19T13:38:31+0900"
     },
     {
       "step": 5,
