@@ -34,9 +34,12 @@
 > + 양쪽 phase 산출물 바이트 보존(diff 0) + 크로스 정합 표본 전건. 부수: 병합이 가져온
 > 주 머신 판본 quality-gate-sap.ps1이 이 머신에서 fail-closed 즉사 → 머신별 경로 폴백
 > 수리(양 머신 실행 가능, 병합 커밋 포함). 원격 줄기 사전 검증(S6) = 반증 0·함정 7건
-> 기록. **▶▶ 다음 착수 = vsp-custom 편입 실행(D-030)** — push·stale 브랜치
-> (feat-3a-carrflt-seed) 삭제·주/보조 SAP 프로파일 명(IDEA-JNC vs IDES-DEV) 확인은
-> 사용자 결정 대기.
+> 기록. **→ ✅ push 완료(2026-07-19 사용자 승인)**: origin/main `5fd70c68..88bc2ede`
+> fast-forward — 주/보조 동기화 0/0, 분기 종결. stale 브랜치 feat-3a-carrflt-seed
+> 원격 삭제(승인, 증거는 main의 3b에 보존). 백업 가지 sprint-20260719는 원격 유지.
+> **▶▶ 다음 착수 = vsp-custom 편입 실행(D-030)** — 잔여 사용자 확인 1건: 주/보조
+> SAP 프로파일 명(IDEA-JNC vs IDES-DEV — 같은 시스템의 머신별 프로파일로 추정,
+> SAFETY-PROFILES §⑦에 정직 병기됨).
 >
 > **확정된 통합 결정 5건 (평가 문서 §5):**
 > - **⑴ 방향 = 절충**: 대화형(attended) 중심 틀(원격 재기준 3축 Direct/Guided/Engine)을
