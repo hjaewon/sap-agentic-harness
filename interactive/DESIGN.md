@@ -158,6 +158,14 @@ sc4sap-lite/
    컨설팅용)와 `connected`(서버+SAP 연결). 서버 8.25MB+런타임 4.5MB는 후자에서만.
 4. **지식 정본 선언**: 이식 완료 시점부터 지식 정본 = sc4sap-lite. 동결된 sc4sap-custom은
    지식 수정 금지. sap-agentic-harness packs는 lite의 스냅샷 버전을 provenance로 명기.
+5. **선택적 로컬 검증기 (vsp)**: 오프라인 ABAP 검증기 vsp(레포 내 `vsp/` 소스 정본,
+   D-030/D-037)를 sapkit의 **선택적 로컬 검증기**로 동봉한다 — 제품 MCP 서버 병합이
+   아니라(번들 도구와 표면 중복) CLI 검증기로, SAP 반영 전 오프라인 lint/parse를 붙인다.
+   배포는 D-037 비커밋 원칙과 정합하게 **GitHub 릴리스 자산**으로 하고, 플랫폼별 sha256
+   정본은 핀 파일 `provenance/vsp-release.lock.json`이 소유한다. 설치 = `scripts/get-vsp.mjs`
+   (OS/arch 감지 → 핀 URL 다운로드 → sha256 일치 시에만 `~/.sc4sap/bin/`). 선택 사항이라
+   미설치에서도 하네스는 정상 동작하며, 릴리스 자산 방식이라 완전 오프라인이 아니라
+   다운로드 1회가 필요하다. 근거·집행 = D-044.
 
 ## 4. 어댑터 3벌 (§2 확정안)
 

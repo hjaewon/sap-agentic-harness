@@ -406,7 +406,7 @@ Proceed to Phase {N}?
 Adopt the [sap-executor](../personas/sap-executor.md) persona for this step.
 
 Flow (source-first, single syntax check on the main program, batch activation):
-1. Generate ALL include sources locally first, from the approved spec + the mandatory main-program template — [zrsc4sap_oop_ex.prog.abap](../knowledge/abap/templates/oop-sample/zrsc4sap_oop_ex.prog.abap) (OOP) or [main-program.abap](../knowledge/abap/templates/procedural-sample/main-program.abap) (Procedural) — as the starting skeleton. When OOP with testing scope, the `{PROG}_tst` test-class include is part of this initial batch.
+1. Generate ALL include sources locally first, from the approved spec + the mandatory main-program template — [zrsc4sap_oop_ex.prog.abap](../knowledge/abap/templates/oop-sample/zrsc4sap_oop_ex.prog.abap) (OOP) or [main-program.abap](../knowledge/abap/templates/procedural-sample/main-program.abap) (Procedural) — as the starting skeleton. When OOP with testing scope, the `{PROG}_tst` test-class include is part of this initial batch. If `vsp` is installed, run `vsp lint` / `vsp parse` on these sources before step 2 — an optional local check ([troubleshooting §7](troubleshooting.md#7-vsp-local-verification-optional)).
 2. Create the includes via `CreateInclude` + `UpdateInclude`, then the main program via `CreateProgram` + `UpdateProgram`.
 3. Run a single `CheckSyntax` on the MAIN program (not per include). Syntax failures → fix-and-retry loop, max 3 iterations on the main program.
 4. Activate, then verify via `GetInactiveObjects` — the program's object set must return 0 inactive entries.

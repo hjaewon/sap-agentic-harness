@@ -337,3 +337,14 @@ Before any risky operation ("which system am I connected to?"), render a compact
 - **Active transport (pinned)**: `<TRKORR> — <description>` from `config.json` → `activeTransport`, else "-"
 - **Blocklist**: profile + extend/allow entry counts
 - **sap.env path**: absolute path in effect
+
+## 7. vsp Local Verification (Optional)
+
+`vsp` is an optional offline ABAP verifier that runs entirely on the local machine — no SAP connection needed, and nothing else in this document depends on it.
+
+- **Install**: `node interactive/scripts/get-vsp.mjs` — detects OS/arch, downloads the matching GitHub release asset, and installs only on a sha256 match.
+- **Location**: `~/.sc4sap/bin/vsp` (`vsp.exe` on Windows).
+- **Usage**: `vsp lint <file>` and `vsp parse <file>` — run against a local `.abap` file before reflecting it to SAP.
+- **Coverage note**: the parser covers 91 syntax constructs and the linter 8 rules, as shipped; real-world hit rate against production ABAP has not been measured.
+
+Not installed → skip this section; the plugin works the same without it.

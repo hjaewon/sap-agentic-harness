@@ -1,7 +1,7 @@
 # HANDOFF — 프로젝트 전체 상태와 재개 지침
 
 > **목적: 컨텍스트/세션이 클리어돼도 이 문서 하나로 전부 복원.**
-> 작성 2026-07-10 · 최종 갱신 2026-07-20. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
+> 작성 2026-07-10 · 최종 갱신 2026-07-21. 새 세션은 ① 이 문서 → ② 필요 시 해당 트랙
 > DESIGN.md 순으로 읽는다. 상태가 바뀌면 이 문서를 갱신하는 것까지가 작업의 일부다.
 >
 > ═══════════════════════════════════════════════════════════════════
@@ -45,49 +45,39 @@
 > (마켓명 파생이었다면 리뷰어 차단 84종이 죽는 것)는 **발생하지 않았다**. 공식 문서에
 > 없는 규칙이므로 이 실측이 정본이다.
 >
-> **▶▶ 내일 착수 (2026-07-22 예정) = vsp 동봉(②) 집행 — 사용자 확정 "2로 가자" (2026-07-21)**
+> **▶▶ vsp 동봉(②) = ✅ 집행 완료 (2026-07-21, 주 머신 · D-044) — 사용자 확정 "2로 가자"**
 >
-> **맥락**: 배포 제품 관점에서 로컬 검증기가 빠져 있다 — sapkit 설치자는 지식+MCP만 받고,
-> "SAP에 던지기 전 로컬에서 잡는" 루프의 반쪽(vsp `lint`/`parse` 오프라인)이 없다. 형태
-> ①(배선만·사용자 직접 다운로드) ②(동봉=릴리스 자산 자동 다운로드, ① 포함) ③(vsp를 제품
-> MCP 서버로 병합) 중 **② 채택, ③ 기각**(기존 번들 서버 155도구와 정면 중복). 법적 근거 =
-> MIT(`vsp/LICENSE`+README 포크 고지 유지 — 소스는 이미 레포 공개 상태). D-037 "바이너리
-> 비커밋"과의 정합 = git이 아니라 **GitHub 릴리스 자산**으로 배포.
+> **맥락(기록)**: 배포 제품 관점에서 로컬 검증기가 빠져 있었다 — sapkit 설치자는 지식+MCP만
+> 받고 "SAP에 던지기 전 로컬에서 잡는" 루프의 반쪽(vsp `lint`/`parse` 오프라인)이 없었다.
+> 형태 ①(배선만·사용자 직접 다운로드) ②(동봉=릴리스 자산 자동 다운로드, ① 포함) ③(vsp를
+> 제품 MCP 서버로 병합) 중 **② 채택 · ③ 기각**(기존 번들 서버 155도구와 정면 중복). 법적
+> 근거 = MIT(`vsp/LICENSE`+README 포크 고지 유지). D-037 "바이너리 비커밋"과의 정합 = git이
+> 아니라 GitHub 릴리스 자산으로 배포. 결정·대안 전문 = **D-044**.
 >
-> **순서 (각 단계 검증 포함)**:
-> 1. **6플랫폼 재현 빌드 = ✅ 완료 (07-21 밤)** — lock(`adapters/vsp/vsp.lock.json`)의
->    build_command 파라미터 그대로(고정 BuildDate · `-trimpath` · `-buildvcs=false` · CGO 0),
->    `vsp/build/dist/`에 6개(win/darwin/linux × amd64/arm64, 각 16~18MB) + sha256 실측
->    (windows-amd64 = `5a86023c81…`). **⚠️ lock sha `1fe843c8…`와 불일치는 예상된 사실** —
->    lock 빌드는 07-19 스냅샷 기준이고, 07-20 레포 내 vsp 수리(pkg/adt/recorder.go 등)가
->    소스를 바꿨다. 내일 잔여 2건: ⓐ 재현성 재확증(동일 명령 2회 → sha 동일) ⓑ **버전 표기
->    결정** — 임베디드 Version(`v2.38.1-94-g5a8bedb`)이 07-20 수리를 반영하지 못하므로 재빌드
->    시 `-X main.Version=v2.38.1-94-g5a8bedb+sapkit.<short>`로 병기 권장(정직 표기 — sha가
->    바뀌는 건 무해, 핀 파일이 정본).
-> 2. **핀 파일** `interactive/provenance/vsp-release.lock.json` — version·**빌드 소스 =
->    sapkit 레포 커밋**(vsp/ 정본이 이 레포이므로)·플랫폼별 sha256·릴리스 URL 패턴.
->    interactive/ 파일 추가라 **이식 스냅샷 재생성 필요**.
-> 3. **GitHub 릴리스** — tag `vsp-v2.38.1-94-g5a8bedb`(코드 태그와 구분되는 `vsp-` 접두어) @
->    `agentic-sap/sapkit`, 자산 6개 + SHA256SUMS.txt, 릴리스 노트에 upstream MIT 고지.
->    **선행 = 사용자 1회: `! gh auth login`** (이 머신 gh 미인증 — 유일한 사용자 의존 단계).
-> 4. **다운로드 스크립트** `interactive/scripts/get-vsp.mjs` — OS/arch 감지 → 핀 파일 URL에서
->    다운로드 → **sha256 일치 시에만** 설치(불일치 = 삭제+exit 1), 설치 위치 `~/.sc4sap/bin/`
->    (Phase 2 개명 보류와 정합), idempotent(존재+sha 일치 = no-op). **음성시험 동반**(변조
->    바이너리 → 거부) — 통과만 하는 게이트 금지 원칙.
-> 5. **배선(① 포함)** — `core/procedures/troubleshooting.md`+개발 절차에 "vsp 있으면 SAP 반영
->    전 lint/parse" 규칙, 3사 어댑터 README에 get-vsp 안내.
-> 6. **기록·게이트** — D-044 append(제품 구성 변경: vsp = 선택적 로컬 검증기·릴리스 자산 배포·
->    ③ 기각 근거) + `interactive/DESIGN.md` 제품 구성 갱신 + HANDOFF + 게이트 전량(스냅샷
->    재생성 포함) + 커밋. push는 사용자 판단.
+> **집행 실측 (6단계 전량 완료)**:
+> ⑴ **6플랫폼 재현 빌드**(win/darwin/linux × amd64/arm64, go1.26.4 · CGO 0 · `-trimpath` ·
+>    `-buildvcs=false` · 고정 BuildDate) — 동일 명령 2회 → sha256 **6/6 동일** 확증. 버전 표기
+>    = `-X main.Version=v2.38.1-94-g5a8bedb+sapkit.3e3f7235`(07-20 vsp 수리를 정직 병기).
+> ⑵ **핀 파일** `interactive/provenance/vsp-release.lock.json` 신설 — version · source(커밋
+>    `3e3f7235`·path `vsp/`) · release(tag·asset_url_pattern) · install_dir `~/.sc4sap/bin` ·
+>    플랫폼 6종 sha256 실측(windows-amd64 = `a0249d3761ef10bc…`).
+> ⑶ **GitHub 릴리스** https://github.com/agentic-sap/sapkit/releases/tag/vsp-v2.38.1-94-g5a8bedb
+>    — 자산 7개(바이너리 6 + SHA256SUMS.txt) · MIT 포크 고지 · latest는 미표시(--latest=false 지정했으나 유일 릴리스라 GitHub API상 latest로 해석됨, 기능 영향 0 — 설치는 태그 핀 고정). **gh CLI 이
+>    머신(주) 신규 설치(winget v2.96.0)·사용자 인증(hjaewon) 완료 (2026-07-21)**; 릴리스 생성은
+>    사용자 직접 실행.
+> ⑷ **다운로드 스크립트** `interactive/scripts/get-vsp.mjs` 신설 — OS/arch 감지 → 핀 URL
+>    다운로드(리다이렉트 추종) → **sha256 일치 시에만** `~/.sc4sap/bin/` 설치(불일치 = 임시파일
+>    삭제 + exit 1) · idempotent(sha 일치 시 네트워크 0 no-op). 음성시험 `test-get-vsp.mjs`
+>    **21어서션 전건 PASS**(불일치 거부 · 잔존 0 · idempotent · 미지원 플랫폼 · TBD 거부).
+> ⑸ **E2E 실측** — 실다운로드 설치 sha = 핀 일치 · `--version` = `…+sapkit.3e3f7235` · 재실행 no-op.
+> ⑹ **배선** — `core/procedures/troubleshooting.md` §7 신설 + create-program(Phase 4)·
+>    create-object(Step 4)에 "vsp 있으면 SAP 반영 전 lint/parse" 1줄 + 3사 어댑터 README 안내.
+>    부수: 이 머신 git remote를 `agentic-sap/sapkit`으로 갱신(D-041 정합).
 >
-> **선결정값(이견 있으면 착수 때 변경)**: 설치 위치 `~/.sc4sap/bin/` · 태그 접두어 `vsp-` ·
-> 플랫폼 6종(32bit 제외). **머신 메모(집/보조에서 할 경우)**: vsp-custom은 이 작업에서
-> **불사용**(정본 = 레포 내 `vsp/` — 경로 차이 무관) · 빌드 산출물은 gitignore라 **집에서
-> 재빌드**(go1.26.4 동일 전제 시 sha 재현) · 스냅샷 재생성은 `--src`/`SC4SAP_SRC`로 원본
-> 경로 지정 · gh 인증은 릴리스 올리는 머신에서 1회. **정직**: vsp 파서 커버리지(구문 91종·린트 8룰)의 실전 실효는
-> 미실측 — ZUNIWHT 도그푸딩이 관찰 자리다. 릴리스 자산 방식이라 완전 오프라인 설치는 불가
-> (다운로드 1회 필요). **도그푸딩과 독립** — 이 작업이 안 끝나도 ZUNIWHT는 시작 가능(주 머신엔
-> `vsp\build\vsp.exe` 이미 존재).
+> **정직 유보**: vsp 파서 커버리지(구문 91종·린트 8룰)의 실전 실효는 미실측 — ZUNIWHT
+> 도그푸딩이 관찰 자리다 · 릴리스 자산 방식이라 완전 오프라인 설치는 불가(다운로드 1회
+> 필요) · `adapters/vsp/vsp.lock.json`의 sha(`1fe843c8…`, 07-19 스냅샷 기준)와 릴리스 sha
+> 불일치는 예상된 사실 — 릴리스 정본은 새 핀 파일이고 구 lock은 빌드·명령 계약 정본으로 존속.
 >
 > **▶▶ 다음 착수 (주 머신)**: ② **권한 병합 갱신** —
 > 프로젝트 `.claude/settings.local.json`의 allow 목록이 **구 네임스페이스라 이제 매칭

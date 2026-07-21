@@ -88,6 +88,18 @@ codex mcp get sap --json     # "disabled_tools": ["GetTableContents","GetSqlQuer
 > config-level 승인이 exec에서 fail-open이라 `launch.cjs` 앞단에 이름-보존형 tools/list
 > 필터가 필요하다(별도 항목 — 권장만, 미구현). 현재 정본 권장은 위의 하드 차단.
 
+## 로컬 오프라인 검증 (vsp, 선택)
+
+SAP 반영 전 `.abap` 파일을 로컬에서 미리 점검하고 싶으면 `vsp`(오프라인 ABAP
+검증기)를 설치한다 — 없어도 플러그인 동작에는 지장 없다.
+
+```
+node interactive/scripts/get-vsp.mjs   # ~/.sc4sap/bin/vsp(.exe) 설치
+```
+
+설치 후 `vsp lint <파일>` / `vsp parse <파일>`로 사용. 자세한 내용:
+[core/procedures/troubleshooting.md §7](../../core/procedures/troubleshooting.md#7-vsp-local-verification-optional).
+
 ## SAP 프로젝트 루트 AGENTS.md
 
 `AGENTS-template.md`의 내용을 대상 SAP 프로젝트의 `AGENTS.md`에 병합한다

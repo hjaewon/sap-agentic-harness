@@ -56,6 +56,18 @@ agy plugin install  "D:\claude for SAP\sap-agentic-harness"
 [core/policies/sap-standards.md](../../core/policies/sap-standards.md)의 Always-on
 summary 섹션만 복사한다 (파일당 12,000자 한도 — 요약만, 상세는 경로 참조).
 
+## 로컬 오프라인 검증 (vsp, 선택)
+
+SAP 반영 전 `.abap` 파일을 로컬에서 미리 점검하고 싶으면 `vsp`(오프라인 ABAP
+검증기)를 설치한다 — 없어도 플러그인 동작에는 지장 없다.
+
+```
+node interactive/scripts/get-vsp.mjs   # ~/.sc4sap/bin/vsp(.exe) 설치
+```
+
+설치 후 `vsp lint <파일>` / `vsp parse <파일>`로 사용. 자세한 내용:
+[core/procedures/troubleshooting.md §7](../../core/procedures/troubleshooting.md#7-vsp-local-verification-optional).
+
 ## 안전 모델 주의
 
 Claude 훅 같은 사전 차단이 없다. 방어선: ① rules 요약+core/policies ② 서버 내장
