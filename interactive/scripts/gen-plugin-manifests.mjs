@@ -93,9 +93,9 @@ const manifests = {
   [meta.targets.claude_marketplace]: {
     $schema: 'https://anthropic.com/claude-code/marketplace.schema.json',
     _generated: GEN_NOTE,
-    name: meta.name,
+    name: meta.marketplace.name,
     description: D.marketplace_long,
-    owner: meta.author,
+    owner: meta.marketplace.owner,
     plugins: [
       {
         name: meta.name,
@@ -107,6 +107,7 @@ const manifests = {
         tags: meta.tags,
       },
     ],
+    renames: meta.marketplace.renames,
     version: meta.version,
   },
 
@@ -141,7 +142,7 @@ const manifests = {
 
   [meta.targets.agy_marketplace]: {
     _generated: GEN_NOTE,
-    name: meta.name,
+    name: meta.marketplace.name,
     interface: { displayName: meta.displayName },
     plugins: [
       {

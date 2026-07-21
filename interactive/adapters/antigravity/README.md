@@ -11,7 +11,7 @@ agy plugin validate "D:\claude for SAP\sap-agentic-harness"   # skills 11 + agen
 agy plugin install  "D:\claude for SAP\sap-agentic-harness"
 ```
 
-임포트 위치: `~/.gemini/config/plugins/sap-agentic-harness/` — **core/·server/ 포함 전체 복사**라
+임포트 위치: `~/.gemini/config/plugins/sapkit/` — **core/·server/ 포함 전체 복사**라
 스킬 래퍼의 PLUGIN_ROOT 상대 해석이 유지된다. 갱신 시 재설치 필요(레포 수정이 자동 반영되지
 않음 — doctor 점검 대상).
 
@@ -112,5 +112,5 @@ agy --print --sandbox "…/core/procedures/review-checklist.md를 읽고 <review
 ## 활성 스코프 (2026-07-10 실측)
 
 agy 1.0.7의 enable/disable은 전역 스위치뿐 — 프로젝트 스코프 없음. 운용:
-`agy plugin enable sap-agentic-harness` (SAP 작업 시) / `agy plugin disable ...` (종료).
+`agy plugin enable sapkit` (SAP 작업 시) / `agy plugin disable ...` (종료).
 현재 기본 상태: disabled.

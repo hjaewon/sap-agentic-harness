@@ -1,11 +1,11 @@
 # AGENTS.md 병합 템플릿 (SAP 프로젝트 루트용)
 
-아래 블록을 대상 SAP 프로젝트의 `AGENTS.md`에 붙여 넣는다. `<LITE>`는 sap-agentic-harness
+아래 블록을 대상 SAP 프로젝트의 `AGENTS.md`에 붙여 넣는다. `<LITE>`는 sapkit
 설치 경로(예: `D:\claude for SAP\sap-agentic-harness`)로 치환.
 
 ---
 
-## SAP Development Standards (sap-agentic-harness)
+## SAP Development Standards (sapkit)
 
 Always-on rules — non-negotiable:
 

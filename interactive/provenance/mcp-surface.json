@@ -315,8 +315,8 @@
         "GetTableContents/GetSqlQuery는 의도적으로 제외"
       ],
       "must_not_mention": [
-        "mcp__plugin_sap-agentic-harness_sap__GetTableContents",
-        "mcp__plugin_sap-agentic-harness_sap__GetSqlQuery"
+        "mcp__plugin_sapkit_sap__GetTableContents",
+        "mcp__plugin_sapkit_sap__GetSqlQuery"
       ]
     }
   }

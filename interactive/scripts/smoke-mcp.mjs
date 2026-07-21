@@ -23,6 +23,9 @@ import { fileURLToPath } from 'node:url';
 import { sha256 } from './lib/target-hash.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+// 도구 네임스페이스는 **플러그인 이름**에서 파생한다. 하드코딩하면 개명 시 아래 must_not_mention이
+// 존재할 수 없는 문자열을 찾게 되어 **부정 단언이 조용히 공허해진다**(D-041 개명에서 실제로 발견).
+const NS = `mcp__plugin_${JSON.parse(fs.readFileSync(path.join(ROOT, 'plugin-metadata.json'), 'utf8')).name}_sap__`;
 
 const argv = process.argv.slice(2);
 const UPDATE = argv.includes('--update');
@@ -199,10 +202,7 @@ if (UPDATE) {
         file: 'adapters/claude/permissions-template.json',
         mechanism: 'allow-list에서 row-data 의도적 제외 → 호출별 승인',
         must_mention: ['GetTableContents/GetSqlQuery는 의도적으로 제외'],
-        must_not_mention: [
-          'mcp__plugin_sap-agentic-harness_sap__GetTableContents',
-          'mcp__plugin_sap-agentic-harness_sap__GetSqlQuery',
-        ],
+        must_not_mention: [`${NS}GetTableContents`, `${NS}GetSqlQuery`],
       },
     },
   };

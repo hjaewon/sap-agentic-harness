@@ -48,7 +48,7 @@ function pluginInstalledNote(cmd) {
   const r = spawnSync(cmd, ['plugin', 'list'], { shell: true, timeout: 30000, encoding: 'utf8' });
   if (r.error) return '플러그인 목록 조회 실패';
   const out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
-  return out.includes('sap-agentic-harness') ? '플러그인 설치됨' : '플러그인 미설치';
+  return out.includes('sapkit') ? '플러그인 설치됨' : '플러그인 미설치';
 }
 
 // pinnedVersion === null → 버전 고정 없음(Claude): CLI 존재 + 플러그인 여부만 확인

@@ -8,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 const CONFIG = path.join(os.homedir(), '.codex', 'config.toml');
-const KEY = 'sap-agentic-harness@sap-agentic-harness';
+const KEY = 'sapkit@agentic-sap';
 const SECTION = `[plugins."${KEY}"]`;
 
 const mode = process.argv[2];

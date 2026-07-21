@@ -1,4 +1,4 @@
-# PRD — sap-agentic-harness
+# PRD — sapkit (구 sap-agentic-harness)
 
 > Engine이 이 파일을 **매 스텝 프롬프트에 주입**한다(scripts/execute.py: docs/*.md
 > 전량, 48KB 경고·64KB 기동 거부). 그러므로 스코프의 **가드레일**만 얇게 적고 상세는
@@ -67,7 +67,7 @@ Domain Packs(FI 첫 팩 완성, 07-19 — 축적 계속)**. 완료 기준 원문
 ### 트랙 B — 대화형 플러그인 (interactive/)
 sc4sap-custom의 전 자산(지식 · 페르소나 26 · 절차 · 정책)을 하네스 중립 코어 +
 MCP 서버 번들 + 어댑터 3사(Claude/Codex/Antigravity)로 재편한 라이트 플러그인(플러그인명
-sap-agentic-harness). 현황: L0~L5 구현 + E2E + 3사 교차검증 완료. 설계 정본 =
+sapkit — D-041 개명 전 `sap-agentic-harness`). 현황: L0~L5 구현 + E2E + 3사 교차검증 완료. 설계 정본 =
 interactive/DESIGN.md.
 
 두 트랙의 유일한 접점: 트랙 A의 packs가 interactive/core/knowledge에서 선별 이식한다

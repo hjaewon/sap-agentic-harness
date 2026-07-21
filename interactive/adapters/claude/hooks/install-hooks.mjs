@@ -39,7 +39,7 @@ function resolveHookScript(basename) {
       '.claude',
       'plugins',
       'marketplaces',
-      'sap-agentic-harness',
+      'agentic-sap',
       'interactive',
       'adapters',
       'claude',

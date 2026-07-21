@@ -1,4 +1,4 @@
-# CLAUDE.md — sap-agentic-harness
+# CLAUDE.md — sapkit (구 sap-agentic-harness)
 
 ## 프로젝트 정체성 (30초 맥락 — 이걸 모르면 판단하지 말 것)
 

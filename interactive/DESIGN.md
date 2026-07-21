@@ -60,7 +60,7 @@
 | 역할 | 위치 (2026-07 기준) |
 |---|---|
 | 이식 원천 (동결 예정) | `D:\claude for SAP\sc4sap-custom` — `hjaewon/sc4sap-custom` (MIT, 업스트림 babamba2/superclaude-for-sap) |
-| 본 설계 산출물 | `sap-agentic-harness/interactive/` — L0에서 sc4sap-lite 레포로 생성 후 2026-07-10 subtree 병합·개명 (플러그인명 `sap-agentic-harness`) |
+| 본 설계 산출물 | `sapkit/interactive/` — L0에서 sc4sap-lite 레포로 생성 후 2026-07-10 subtree 병합·개명 (플러그인명 `sapkit` — D-041 개명 전 `sap-agentic-harness`) |
 | MCP 엔진 업스트림 | `hjaewon/abap-mcp-adt-powerup` (번들 원천, npm `@hjaewon/abap-mcp-adt-powerup`) |
 | 무인 하네스 트랙 (별개) | `D:\claude for SAP\sap-agentic-harness` — DESIGN.md v2.1. packs가 lite core를 지식 원천으로 사용 (§5-3) |
 | 선행 설계 문서 | `sc4sap-custom/private/lightweight-redesign-design.md` (비공개 유지) |
@@ -395,11 +395,21 @@ v1 → v2(본문 §3·§4) 반영의 결정적 지적:
 배경: D-040으로 하네스(ENGINE)는 제품 정체성에서 빠졌다 — `sap-agentic-harness`는
 옛 정체성 이름이며, 설치 명령의 중복(`이름@이름`)과 길이도 실사용 지적이다.
 
-- **Phase 1 (집행 시 D-041 기록)**: 플러그인명·마켓플레이스명·레포명 = **`sapkit`**.
-  파급 = 스킬 접두어 `/sapkit:*` · 도구 네임스페이스 `mcp__plugin_sapkit_sap__*` ·
-  권한 템플릿 재생성(gen-permissions) · 매니페스트 5종 재생성(단일 정본 게이트) ·
-  문서 접두어 일괄 수정 · 설치 머신 재설치. 후보 비교: **sapkit**(채택 — 상담+개발
+- **Phase 1 — ✅ 집행 완료 (2026-07-21, D-041)**: 이름은 **세 층으로 갈린다**(집행 중
+  발견 — 원안의 "전부 sapkit"은 D-041 ②로 supersede):
+  · **플러그인 = `sapkit`** — 스킬 접두어 `/sapkit:*` · 도구 네임스페이스
+    `mcp__plugin_sapkit_sap__*`. 매 호출 등장하므로 짧게 유지한다(길이 × 도구 수 =
+    세션 고정 토큰, §D-040 ② KPI 3순위).
+  · **마켓플레이스 = `agentic-sap`** — 설치 명령이 `플러그인@마켓`이라 동명이면
+    `sapkit@sapkit`으로 이 절이 지적한 중복이 그대로 남는다. 조직명과 맞춰
+    `sapkit@agentic-sap`으로 해소. kebab-case 소문자 강제.
+  · **레포 = `agentic-sap/sapkit`** — GitHub 조직 신설 + 이전(옛 경로는 리다이렉트).
+  파급 = 권한 템플릿 재생성(gen-permissions) · 매니페스트 5종 재생성(단일 정본 게이트) ·
+  문서 접두어 일괄 수정 · **설치 머신 재설치**. 후보 비교: **sapkit**(채택 — 상담+개발
   폭을 표현) / zdev(개발 편향) / abapkit(모듈 상담이 가려짐).
+  집행 시 얻은 규약 2건: ⓐ 도구 네임스페이스는 **정본에서 파생**한다(하드코딩 시
+  개명에서 부정 단언이 공허해짐 — smoke-mcp 실측) ⓑ 플러그인 개명은 `renames`로
+  자동 이관되나 **마켓 이름 개명은 이관 경로가 없다** → 마켓 이름은 되돌리기 비싼 값.
 - **Phase 2 (보류)**: `.sc4sap/` 디렉토리명·`~/.sah/` 프로파일 홈·`SC4SAP_*` 환경
   변수는 원조 유래 legacy 명칭이나, **서버 번들 자체가 `.sc4sap`을 읽고**(§7 R3 —
   tier 가드) 훅·절차 등 30+ 파일에 배선돼 있어 개명은 엔진 소스 수정 + 재번들

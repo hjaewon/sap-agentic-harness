@@ -60,9 +60,9 @@
 | **하네스 엔진** | `https://github.com/hjaewon/claude-fable-final.git` | `D:\claude-practice\claude-fable-final` | 검증 lock: `adapters/final-harness.lock.json` (v0.17.1 cf42b64, §15-F 재검증 2026-07-11) | 자작 |
 | **SAP 검증/배포 백엔드** | 레포 내 `vsp/` (D-030 편입 — 원천 `hjaewon/vsp-custom` HEAD `5a8bedb`의 git archive 스냅샷, 히스토리 비이식·D-037) | `vsp/` (본 레포 서브트리) | 빌드·명령 계약·provenance: `adapters/vsp/vsp.lock.json` (원천 v2.38.1-94-g5a8bedb, 바이너리 비커밋) | MIT — 업스트림 `oisee/vibing-steampunk` |
 | 지식 시드 (동결 — 지식 수정 금지, 2026-07-10) | `https://github.com/hjaewon/sc4sap-custom.git` | `D:\claude for SAP\sc4sap-custom` | — | MIT — 업스트림 `babamba2/superclaude-for-sap` |
-| **지식 정본 + 3사 대화형 트랙** | 본 레포 `interactive/` (2026-07-10 subtree 병합, 플러그인명 sap-agentic-harness) | `D:\claude for SAP\sap-agentic-harness\interactive` | L5+리뷰 반영 | MIT 승계 — 설계: `interactive/DESIGN.md` |
+| **지식 정본 + 3사 대화형 트랙** | 본 레포 `interactive/` (2026-07-10 subtree 병합, 플러그인명 sapkit — D-041 개명) | `D:\claude for SAP\sap-agentic-harness\interactive` | L5+리뷰 반영 | MIT 승계 — 설계: `interactive/DESIGN.md` |
 | 비교 검토된 MCP 서버 | `https://github.com/hjaewon/abap-mcp-adt-powerup.git` | `D:\claude for SAP\abap-mcp-adt-powerup` | v4.13.0 | — |
-| **본 레포** | `https://github.com/hjaewon/sap-agentic-harness.git` (main) | `D:\claude for SAP\sap-agentic-harness` | — | — |
+| **본 레포** | `https://github.com/agentic-sap/sapkit.git` (main — D-041 개명·조직 이전, 구 `hjaewon/sap-agentic-harness`는 리다이렉트) | `D:\claude for SAP\sap-agentic-harness` (로컬 폴더명은 미변경) | — | — |
 
 위 레포 모두 hjaewon 소유(자작 또는 포크)다. MIT 업스트림이므로 콘텐츠 이식·개작에
 법적 제약 없음(저작권 고지 유지). 본 문서의 수치·좌표 검증일: 2026-07-09.

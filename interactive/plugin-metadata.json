@@ -3,7 +3,20 @@
   "_generate": "node interactive/scripts/gen-plugin-manifests.mjs          (5개 매니페스트 재생성)",
   "_check": "node interactive/scripts/gen-plugin-manifests.mjs --check   (드리프트 검사 — CI)",
   "_why": "version이 5곳에 복제돼 있어 한 곳만 올리면 조용히 갈라졌다. 자산 수(페르소나/스킬/절차/도구)도 손으로 적어 실제와 어긋났다(예: '11 procedures'인데 절차 파일은 16 — 스킬 수와 절차 수를 혼동). 이제 수는 파일시스템과 mcp-surface.json에서 **계산**해 넣는다.",
-  "name": "sap-agentic-harness",
+  "name": "sapkit",
+  "_name": "**플러그인** 이름. 스킬 접두어(/sapkit:*)와 MCP 도구 네임스페이스에 매 호출 등장하므로 짧게 유지한다 — 길이가 도구 수(186)만큼 곱해져 세션 고정 토큰이 된다.",
+  "marketplace": {
+    "_": "**마켓플레이스** 식별자. 플러그인 이름과 별개다 — 설치 명령은 `플러그인@마켓`(= sapkit@agentic-sap) 형태이고, 마켓 name은 kebab-case 소문자만 허용된다.",
+    "name": "agentic-sap",
+    "owner": {
+      "name": "AgenticSAP"
+    },
+    "_owner": "표시 전용 자유 문자열(기능 영향 0). 플러그인 author와 의도적으로 분리 — owner=조직, author=개인.",
+    "_renames": "구 플러그인 이름 → 현 이름. 기존 설치가 자동 이관된다(Claude Code v2.1.193+). **append-only** — 다음에 또 개명하면 기존 항목을 고치지 말고 새 항목을 추가할 것(Claude Code가 연쇄를 따라간다). 이 객체는 생성물에 그대로 실리므로 주석 키를 넣지 말 것.",
+    "renames": {
+      "sap-agentic-harness": "sapkit"
+    }
+  },
   "version": "0.1.0",
   "displayName": "SAP Agentic Harness",
   "author": {

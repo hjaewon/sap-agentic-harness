@@ -1,4 +1,4 @@
-# ARCHITECTURE — sap-agentic-harness
+# ARCHITECTURE — sapkit (구 sap-agentic-harness)
 
 > Engine이 docs/*.md를 매 스텝 프롬프트에 주입한다(48KB 경고·64KB 기동 거부). 구조의
 > **지도와 계약**만 얇게 적는다 — 설계 서사는 DESIGN.md·interactive/DESIGN.md, 결정의

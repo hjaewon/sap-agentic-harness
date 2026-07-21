@@ -43,7 +43,7 @@ denied). See [data-extraction-policy](../../core/policies/data-protection/data-e
 ## Wildcard prohibition
 
 Do NOT allow the server's whole namespace with a wildcard (e.g.
-`mcp__plugin_sap-agentic-harness_sap__*` in Claude Code permissions). Wildcards
+`mcp__plugin_sapkit_sap__*` in Claude Code permissions). Wildcards
 silently capture the two excluded tools above. Enumerate from the section files
 explicitly — that is what `scripts/gen-permissions.mjs` does from live
 tools/list.
