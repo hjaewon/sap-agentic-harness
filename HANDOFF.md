@@ -45,6 +45,47 @@
 > (마켓명 파생이었다면 리뷰어 차단 84종이 죽는 것)는 **발생하지 않았다**. 공식 문서에
 > 없는 규칙이므로 이 실측이 정본이다.
 >
+> **▶▶ 내일 착수 (2026-07-22 예정) = vsp 동봉(②) 집행 — 사용자 확정 "2로 가자" (2026-07-21)**
+>
+> **맥락**: 배포 제품 관점에서 로컬 검증기가 빠져 있다 — sapkit 설치자는 지식+MCP만 받고,
+> "SAP에 던지기 전 로컬에서 잡는" 루프의 반쪽(vsp `lint`/`parse` 오프라인)이 없다. 형태
+> ①(배선만·사용자 직접 다운로드) ②(동봉=릴리스 자산 자동 다운로드, ① 포함) ③(vsp를 제품
+> MCP 서버로 병합) 중 **② 채택, ③ 기각**(기존 번들 서버 155도구와 정면 중복). 법적 근거 =
+> MIT(`vsp/LICENSE`+README 포크 고지 유지 — 소스는 이미 레포 공개 상태). D-037 "바이너리
+> 비커밋"과의 정합 = git이 아니라 **GitHub 릴리스 자산**으로 배포.
+>
+> **순서 (각 단계 검증 포함)**:
+> 1. **6플랫폼 재현 빌드 = ✅ 완료 (07-21 밤)** — lock(`adapters/vsp/vsp.lock.json`)의
+>    build_command 파라미터 그대로(고정 BuildDate · `-trimpath` · `-buildvcs=false` · CGO 0),
+>    `vsp/build/dist/`에 6개(win/darwin/linux × amd64/arm64, 각 16~18MB) + sha256 실측
+>    (windows-amd64 = `5a86023c81…`). **⚠️ lock sha `1fe843c8…`와 불일치는 예상된 사실** —
+>    lock 빌드는 07-19 스냅샷 기준이고, 07-20 레포 내 vsp 수리(pkg/adt/recorder.go 등)가
+>    소스를 바꿨다. 내일 잔여 2건: ⓐ 재현성 재확증(동일 명령 2회 → sha 동일) ⓑ **버전 표기
+>    결정** — 임베디드 Version(`v2.38.1-94-g5a8bedb`)이 07-20 수리를 반영하지 못하므로 재빌드
+>    시 `-X main.Version=v2.38.1-94-g5a8bedb+sapkit.<short>`로 병기 권장(정직 표기 — sha가
+>    바뀌는 건 무해, 핀 파일이 정본).
+> 2. **핀 파일** `interactive/provenance/vsp-release.lock.json` — version·**빌드 소스 =
+>    sapkit 레포 커밋**(vsp/ 정본이 이 레포이므로)·플랫폼별 sha256·릴리스 URL 패턴.
+>    interactive/ 파일 추가라 **이식 스냅샷 재생성 필요**.
+> 3. **GitHub 릴리스** — tag `vsp-v2.38.1-94-g5a8bedb`(코드 태그와 구분되는 `vsp-` 접두어) @
+>    `agentic-sap/sapkit`, 자산 6개 + SHA256SUMS.txt, 릴리스 노트에 upstream MIT 고지.
+>    **선행 = 사용자 1회: `! gh auth login`** (이 머신 gh 미인증 — 유일한 사용자 의존 단계).
+> 4. **다운로드 스크립트** `interactive/scripts/get-vsp.mjs` — OS/arch 감지 → 핀 파일 URL에서
+>    다운로드 → **sha256 일치 시에만** 설치(불일치 = 삭제+exit 1), 설치 위치 `~/.sc4sap/bin/`
+>    (Phase 2 개명 보류와 정합), idempotent(존재+sha 일치 = no-op). **음성시험 동반**(변조
+>    바이너리 → 거부) — 통과만 하는 게이트 금지 원칙.
+> 5. **배선(① 포함)** — `core/procedures/troubleshooting.md`+개발 절차에 "vsp 있으면 SAP 반영
+>    전 lint/parse" 규칙, 3사 어댑터 README에 get-vsp 안내.
+> 6. **기록·게이트** — D-044 append(제품 구성 변경: vsp = 선택적 로컬 검증기·릴리스 자산 배포·
+>    ③ 기각 근거) + `interactive/DESIGN.md` 제품 구성 갱신 + HANDOFF + 게이트 전량(스냅샷
+>    재생성 포함) + 커밋. push는 사용자 판단.
+>
+> **선결정값(이견 있으면 착수 때 변경)**: 설치 위치 `~/.sc4sap/bin/` · 태그 접두어 `vsp-` ·
+> 플랫폼 6종(32bit 제외). **정직**: vsp 파서 커버리지(구문 91종·린트 8룰)의 실전 실효는
+> 미실측 — ZUNIWHT 도그푸딩이 관찰 자리다. 릴리스 자산 방식이라 완전 오프라인 설치는 불가
+> (다운로드 1회 필요). **도그푸딩과 독립** — 이 작업이 안 끝나도 ZUNIWHT는 시작 가능(주 머신엔
+> `vsp\build\vsp.exe` 이미 존재).
+>
 > **▶▶ 다음 착수 (주 머신)**: ② **권한 병합 갱신** —
 > 프로젝트 `.claude/settings.local.json`의 allow 목록이 **구 네임스페이스라 이제 매칭
 > 안 됨**(실측: allow 187건 중 **184건이 구 접두어**, 신 접두어 0건). 새 템플릿
