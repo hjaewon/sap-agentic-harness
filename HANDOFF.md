@@ -101,6 +101,14 @@
 > 대로 스테일을 검출한 실증). **머신 규약 신설: pull이 `engine/patches/*.patch`를
 > 갱신하면 그 머신에서 `engine/ npm install` 재실행**(정본 = engine/CLAUDE.md 빌드 절).
 >
+> **▶ `/sapkit:setup` 신설 (2026-07-22 오후 · D-045 — 5-15 당일 집행)**: 대화형 설치
+> 마법사 — 스킬 12번째·절차 17번째. 프로파일(비밀 뼈대 전용)→`.sc4sap/` 2파일→권한
+> 추가-전용 병합→안전훅→(선택)vsp→층별 자가점검. 게이트 6종 green · 독립 리뷰
+> PASS(0/0/0·INFO 3). 부수 재핀: engine sourceCommit 7a37ee90→040cdd1(번들 바이트
+> 불변 실측 — 아침 package-lock 동기화 커밋이 provenance 게이트에 걸린 후속).
+> **다음 JNC 설치는 `/plugin install sapkit@agentic-sap` + `/sapkit:setup`으로
+> 진행 = 이 스킬의 첫 실전 E2E**(캐시 내 adapters/·scripts/ 실재 확인 포함, D-045 ⓑ).
+>
 > **▶ 실데이터 접근 모델 전환 (2026-07-21 · D-043)**: 소유자 머신 = **서버 바닥선 모델**
 > — 호출별 승인 층을 걷어내고 서버 blocklist(deny: 계좌·마스터PII·급여·인증 / ask:
 > 전표류)가 유일한 잠금. Codex `disabled_tools`는 이 머신에 **원래 부재였음을 실측
@@ -1745,6 +1753,12 @@ Opus sap-reviewer 새-컨텍스트 리뷰 FAIL→수정→**PASS** → CheckSynt
   가르칠 뻔했고, 정본이 이미 상류에 존재함을 놓쳤다.
 
 ### 5-15. 대화형 setup 절차 복원 검토 (2026-07-22 등록 — 도그푸딩 마찰 1호)
+
+**→ ✅ 집행 (2026-07-22 당일, D-045 — 보류 해제)**: 같은 날 실수요 발화 2회("배포용으론
+너무 불편")로 트리거 충족 판정 → `/sapkit:setup` 신설(12번째 스킬·17번째 절차, 설계 =
+`docs/reference/designs/2026-07-22-sapkit-setup-skill.md`). 게이트 6종 green ·
+독립 리뷰 PASS(0/0/0·INFO 3, INFO-1 당일 수리). **잔여 = JNC 실전 설치 E2E**(첫 검증
+겸 도그푸딩 — 캐시 내 adapters/·scripts/ 실재 확인 포함). 그때까지 완료 아님.
 
 - **근거(실수요 신호)**: 원본 sc4sap 사용자(소유자)가 설치 경험을 직접 비교 실감 —
   "원본은 `/setup`·`/sap-doctor` 스킬로 설치했는데 sapkit엔 없나". 원본 대비 온보딩

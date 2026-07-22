@@ -65,7 +65,11 @@ or [adapters/antigravity/README.md](../../adapters/antigravity/README.md).
 
 On Claude Code (`PLUGIN_ROOT` below = the plugin root the skill wrapper resolved —
 the directory containing `core/` and `adapters/`; the shell's working directory
-is the user's project, so bare relative paths will NOT find these files):
+is the user's project, so bare relative paths will NOT find these files). If your
+installed plugin cache turns out not to contain `adapters/` or `scripts/`,
+downgrade the affected step (3, 4, or 5) to guidance — point the user at the
+matching adapter README section instead of running the command, and say so
+plainly rather than failing silently:
 
 1. Read `PLUGIN_ROOT/adapters/claude/permissions-template.json` and the project's
    `.claude/settings.local.json` (create the latter with an empty
