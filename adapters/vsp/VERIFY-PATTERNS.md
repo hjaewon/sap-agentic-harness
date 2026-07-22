@@ -24,6 +24,18 @@
    나머지 3종(obsolete·colon·naming)은 Warning이라 exit 0으로 통과한다 — 게이트가
    막는 결함 범위는 "구문 오류"가 아니라 이 4종뿐임을 전제로 삼을 것.
 
+   **재실측 (2026-07-22, in-repo 빌드 v2.38.1-94-g5a8bedb)**: 위 07-11(v2.38.1-86)
+   실측과 동일 — 등록 7종·Error 4종·Error 시 exit≠0 불변(결함 샘플 7종 실행 +
+   `vsp/cmd/vsp/cli_extra.go` 등록부·`vsp/pkg/abaplint/rules.go` 심각도 대조).
+   주의: 이 "4종"은 offline lint 한정 계수다 — connected 채점
+   (`vsp/pkg/adt/codeanalysis.go`, 13종 등록)에는 Error 2종
+   (hardcoded_credentials·commit_in_loop)이 더 있어 두 검사기 합집합은 Error 6종.
+   `domain/abap/CHECKLIST.md` 항목 2의 "6종"은 이 합집합을 가리키므로 본 절의
+   "4종"과 모순이 아니다. 그 2종은 offline 게이트를 통과하므로(위 실측 —
+   `lv_password = '리터럴'`·루프 내 `COMMIT WORK` 모두 exit 0) 초안 단계에서
+   스스로 피해야 한다. (07-19 A-21 소스 재검증 판정 "§②-1 4종은 정확·무수정"과
+   정합 — 본 주석은 그 판정을 현행 in-repo 빌드 실행으로 재확증한 기록이다.)
+
 2. **`vsp lint <TYPE> <NAME>`** — 연결, SAP에서 소스를 fetch해 같은 린트를 돌린다.
    drift check 겸용 후보(§14-2 결론 — 실제로는 `vsp source read`가 더 적합, 아래 참조).
    연결 실패 시 CODE_FAIL이 아니라 ENV_FAIL/LOCK_FAIL로 갈릴 수 있으므로 반드시
