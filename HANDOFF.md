@@ -108,6 +108,15 @@
 > 불변 실측 — 아침 package-lock 동기화 커밋이 provenance 게이트에 걸린 후속).
 > **다음 JNC 설치는 `/plugin install sapkit@agentic-sap` + `/sapkit:setup`으로
 > 진행 = 이 스킬의 첫 실전 E2E**(캐시 내 adapters/·scripts/ 실재 확인 포함, D-045 ⓑ).
+> **후속 실측 3건 (같은 날 오후, 배포 교훈)**: ⑴ **버전 미범프 = update no-op 실측**
+> ("already at latest 0.1.0" — 캐시에 setup 부재 그대로) → v0.2.0 범프(`cc59ab5`,
+> 단일 정본만 수정·생성기 재생성)로 해소. **자산이 바뀌면 버전 범프까지가 배선이다.**
+> ⑵ update 후 캐시 실측: `cache/agentic-sap/sapkit/0.2.0`에 **adapters/·scripts/
+> 포함 확인** — D-045 ⓑ의 캐시 포함 여부, 이 머신(Directory 마켓) 기준 종결
+> (GitHub 마켓 설치본은 여전히 미실측). ⑶ **`claude plugin update` 기본 스코프 =
+> user** — local 설치와 **이중 등록**(local 0.1.0 + user 0.2.0)이 생기는 함정 실측
+> → `--scope local`로 갱신 + user 등록 제거, 최종 단일 local 0.2.0 enabled.
+> 재시작하면 이 머신에도 /sapkit:setup 적용.
 >
 > **▶ 실데이터 접근 모델 전환 (2026-07-21 · D-043)**: 소유자 머신 = **서버 바닥선 모델**
 > — 호출별 승인 층을 걷어내고 서버 blocklist(deny: 계좌·마스터PII·급여·인증 / ask:
