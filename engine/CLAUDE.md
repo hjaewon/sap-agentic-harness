@@ -23,6 +23,13 @@ npm run build               # biome check --write + tsc
 npm run bundle               # tools/bundle.mjs → dist/server.bundle.cjs
 ```
 
+After pulling commits that touch `patches/*.patch`, re-run `npm install` in
+`engine/` so patch-package reapplies them — a stale node_modules fails the
+tripwire tests (deleteLocalIncludesFamily, 4 cases) by design. If patch-package
+errors because older patches are already applied, delete
+`node_modules/@babamba2/mcp-abap-adt-clients` and run `npm install` again
+(2026-07-22 main-machine finding: 4 FAIL → env refresh → 655 PASS / 0 FAIL).
+
 ## Versioning
 
 Bump with `npm version <semver> --no-git-tag-version`, then add a matching
