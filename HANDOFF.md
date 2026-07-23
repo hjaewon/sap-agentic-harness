@@ -156,6 +156,20 @@
 > PASS(BLOCKER/MAJOR/MINOR 0 · INFO 2, INFO-2가 P5로 승격 수리)**. 미수리 관찰:
 > doctor FAIL 1 = agy 1.1.1 ≠ 핀 1.1.4(선행 머신 드리프트, 이번 변경 무관).
 >
+> **▶▶ 다음 착수 변경 (2026-07-23 · D-047) — aegis v0.20 방법론 흡수를 ZUNIWHT에
+> 선행**: 사용자 목적 확인 — 원목표는 "sc4sap 개발방법론 대신 최신화된 방법론"이었고,
+> ENGINE을 버린 만큼(D-040) 엔진 외 조각은 흡수됐어야 했다. 원천 =
+> `D:\claude-practice\claude-fable-final`(aegis v0.20 "한 루프 세 강도" — Direct=
+> `skills/direct` 67줄 · Guided=`skills/loop` · 라우터=`skills/using-aegis` ·
+> Memory=`skills/lesson`, 전부 순수 절차 스킬 · 보증 = 절차적+감사가능). **흡수
+> 조각 6종**(강도 선택 · run 증거+중단재개 · bounded 수정→재검증 2회 ·
+> execution_owner · LESSONS→RULES · 보증 등급 명문)을 **보완 형태(패턴 주입 —
+> 라우터 통이식 아님)**로 기존 절차에 녹인다. 상세·대안 기각 = D-047.
+> **순서 = 흡수 설계→집행(1~2세션) → ZUNIWHT 도그푸딩**(새 방법론의 시험장).
+> D-043 선행 2건(실데이터 항상 허용 · MCP_ALLOW_TABLE)은 그대로 유효.
+> 설계·집행 미착수 — run 경로·RULES 위치·절차별 적용 범위·provenance 방식·
+> 버전 범프는 설계 문서에서 확정.
+>
 > **▶ 실데이터 접근 모델 전환 (2026-07-21 · D-043)**: 소유자 머신 = **서버 바닥선 모델**
 > — 호출별 승인 층을 걷어내고 서버 blocklist(deny: 계좌·마스터PII·급여·인증 / ask:
 > 전표류)가 유일한 잠금. Codex `disabled_tools`는 이 머신에 **원래 부재였음을 실측
