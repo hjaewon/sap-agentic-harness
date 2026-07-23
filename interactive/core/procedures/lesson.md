@@ -19,7 +19,9 @@ CONSULT rules simply continue silently when the files are absent.
 
 ## Files
 
-- `.sc4sap/LESSONS.md` — the append-only failure log (L-ids).
+- `.sc4sap/LESSONS.md` — the entry-preserving failure log (L-ids): new lessons
+  are appended with the next L-id, and an existing entry's CAUSE/RULE lines are
+  updated in place as the procedure directs, but entries are never deleted.
 - `.sc4sap/RULES.md` — the distilled prohibitions (R-ids), capped at 40.
 
 Both are **local-only working state**: not shared across machines, and `setup`

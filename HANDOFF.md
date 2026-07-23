@@ -173,6 +173,20 @@
 > 후속 정합 후보(비차단): create-object SearchObject 충돌 메시지의 raw `Update*`
 > 안내 잔존(D-048 ⓒ).
 >
+> **▶ 부기 — Codex 이종 교차 리뷰 후속 수리 (같은 날, push 후)**: 사용자 지시로
+> 구현 커밋 `18010bb`에 Codex(`gpt-5.6-sol`·max·read-only) 2차 리뷰 → **NEEDS-FIX
+> (MAJOR 4·MINOR 2)**, Claude 계열 리뷰가 놓친 정책 모순 2건이 실물이었다:
+> ⑴ approval-gates 신규 문장 "모든 강도에 두 게이트 적용" ↔ Minimal 흔적 0 모순
+> → "강도는 게이트를 약화하지 않음 + Gate A는 spec 소유 흐름 한정"으로 재서술
+> ⑵ Gate B (c)의 auto-approval 금지가 D-043 예외를 재반전 → subagent/batch만으로
+> 한정 ⑶ "worker" 용어 충돌(Phase 6 control artifact 주체) → "the main context"
+> 교체 + 수리 경로 execution_owner 반영 + state.json에 owner/selection_source 기록
+> ⑷ "One agent runs all phases" 스테일 표면 4곳(절차 frontmatter·래퍼·marketplace_long·
+> PRD 비목표 주석) 통일 ⑸ 계수 잔재 3곳(CLAUDE 스킬 14 병기·metadata 주석 12→14·
+> DESIGN 11→14) ⑹ lesson "append-only"→"entry-preserving". 전건 수리(sonnet 2기) ·
+> 재생성·재핀(마지막) · 게이트 6종 green 재확인. **교차 리뷰 교훈: 동종 모델 리뷰만으로
+> 정책 문서 모순이 안 잡힌다 — 정책 층 변경은 이종 교차 리뷰 가치가 실증됨.**
+>
 > **▶ 직전 재개점 (2026-07-23 · D-047) — aegis 방법론 흡수를 ZUNIWHT에
 > 선행**: 사용자 목적 확인 — 원목표는 "sc4sap 개발방법론 대신 최신화된 방법론"이었고,
 > ENGINE을 버린 만큼(D-040) 엔진 외 조각은 흡수됐어야 했다. 원천 =

@@ -1,6 +1,6 @@
 ---
 name: approval-gates
-description: Human approval gates — explicit-keyword spec approval bound to spec hash + system + transport, and per-call approval for row-level data reads
+description: Human approval gates — explicit-keyword spec approval bound to spec hash + system + transport, and per-call approval for row-level data reads (distribution default; owner-machine exception per D-043)
 source:
   - sc4sap-custom/skills/create-program/spec-approval-gate.md
   - sc4sap-custom/CLAUDE.md
@@ -9,11 +9,20 @@ source:
 
 # Approval Gates
 
-Two points in every workflow require an explicit human decision. An agent never
-crosses either gate on its own initiative, regardless of execution mode. These
-gates hold across every procedure intensity in
+This harness gates two points, and procedure intensity never weakens a gate
+that applies to it. Gate A requires an explicit human decision on `spec.md`
+before implementation; it applies to flows that own a spec/approval artifact —
+the [create-program](../procedures/create-program.md) Full pipeline. Minimal
+([modify-object](../procedures/modify-object.md)) and Standard
+([create-object](../procedures/create-object.md)) carry no spec-approval step
+and sit outside Gate A's scope. Gate B applies to the row-data action itself
+regardless of procedure intensity in
 [development-loop](./development-loop.md) — Minimal/Standard/Full does not
-change when either gate fires.
+change when it fires. Its enforcement layer varies: a per-call human decision
+under the distribution default (a), or the server-side blocklist floor under
+the owner-machine exception (b). An agent never crosses either gate on its own
+initiative — for Gate B, that means never substituting its own judgment for
+whichever layer is active.
 
 ## Gate A — Spec approval (before any implementation)
 
@@ -60,9 +69,9 @@ an explicit decision to adopt the server-side table-blocklist floor
 replaced by that server-side guard. Distribution defaults elsewhere stay
 locked.
 
-**(c) Invariant under both (a) and (b).** Subagent, batch, and auto-approval
-are prohibited regardless of which layer is active — no exception path
-removes this.
+**(c) Invariant under both (a) and (b).** Subagent and batch use are
+prohibited regardless of which layer is active — no exception path removes
+this.
 
 Schema/DDIC reads (`GetTable`, `GetStructure`, `GetView`, `GetDataElement`,
 `GetDomain`) are metadata, not row data, and are not gated by this rule.

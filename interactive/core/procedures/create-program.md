@@ -1,6 +1,6 @@
 ---
 name: create-program
-description: End-to-end procedure for creating ABAP programs (Report / CRUD / ALV / Batch / Interface) with Main+Include structure. One agent runs all phases sequentially — SAP version preflight, two-stage Socratic interview, planning with reuse gates, spec writing, human approval gate, implementation, self-QA, fresh-context review gate, debug escalation, completion report.
+description: End-to-end procedure for creating ABAP programs (Report / CRUD / ALV / Batch / Interface) with Main+Include structure. The main context owns all phases and runs them in order (implementation may be delegated to a single fresh worker per the development-loop execution_owner policy) — SAP version preflight, two-stage Socratic interview, planning with reuse gates, spec writing, human approval gate, implementation, self-QA, fresh-context review gate, debug escalation, completion report.
 source:
   - sc4sap-custom/skills/create-program/SKILL.md
   - sc4sap-custom/skills/create-program/agent-pipeline.md
@@ -370,7 +370,7 @@ Choice: 1 / 2 / 3  (default: 2)
 
 ### Step 2 — Persist Selection
 
-Write the selection to `.sc4sap/program/{PROG}/state.json` under `execution_mode`. Also log phase timestamps here (see the state.json schema below).
+Write the selection to `.sc4sap/program/{PROG}/state.json` under `execution_mode`. Also record the resolved `execution_owner` and `selection_source` (`explicit` | `auto`) from [development-loop.md](../policies/development-loop.md) alongside it. Also log phase timestamps here (see the state.json schema below).
 
 ### Step 3 — Mode Semantics
 
@@ -472,20 +472,22 @@ Steps:
    adapters it is role + adapter config (see review-checklist.md's adapter-defense
    note). It returns its verdict as review-result JSON, conforming to
    [schemas/review-result.schema.json](./schemas/review-result.schema.json), in its final
-   response. **The worker** (back in this context) validates that JSON against the schema
+   response. **The main context** (back in this context) validates that JSON against the schema
    and, on success, writes it to `.sc4sap/program/{PROG}/review-result.json`. On
    schema-validation failure, treat the run as blocked — do not fabricate a passing result —
    and re-run the reviewer in a fresh context.
-6. Handle the verdict (as the worker, back in this context):
+6. Handle the verdict (as the main context, back in this context):
    - **PASS with no findings** → proceed to Phase 8.
-   - **PASS with MINOR findings** → fix each MINOR finding via `Update*` calls, then re-run
+   - **PASS with MINOR findings** → fix each MINOR finding via `Update*` calls (routed
+     through the resolved execution_owner when delegated), then re-run
      the full machine-verification chain from step 1 (`CheckSyntax` → `ActivateObjects` /
      `GetInactiveObjects` → `RunUnitTest` when in scope → `GetAtcFindings` when available)
      per [verification-policy.md](../policies/verification-policy.md)'s re-run rule ("a fix
      is a new change and invalidates earlier evidence"), updating `verification.json`. No
      full re-review is required for MINOR-only fixes. Proceed to Phase 8 once the refreshed
      `verification.json` satisfies the Phase 8 gate matrix.
-   - **FAIL (one or more MAJOR findings)** → fix the findings via `Update*` calls, then
+   - **FAIL (one or more MAJOR findings)** → fix the findings via `Update*` calls (routed
+     through the resolved execution_owner when delegated), then
      re-run the full machine-verification chain from step 1 (same order as above) per
      [verification-policy.md](../policies/verification-policy.md)'s re-run rule, updating
      `verification.json`. Refresh `review-request.json` and re-run the review in ANOTHER
@@ -570,6 +572,8 @@ In `manual`/`hybrid` mode: prompt the user before writing the report.
 {
   "prog": "ZFI_...",
   "execution_mode": "auto | manual | hybrid",
+  "execution_owner": "auto | main | delegated (optional)",
+  "selection_source": "explicit | auto (optional)",
   "phases": {
     "0_preflight":   { "status": "completed", "ts": "2026-04-18T10:00:00Z" },
     "1a_interview":  { "status": "completed", "ts": "..." },
