@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [4.13.17] - 2026-07-24
+
+### Fixed
+- **`ActivateObjects` false-reported a fully successful activation as an all-objects-failure (dogfooding finding, ZUNIWTH project; lessons-pack layer1 #6/#11 recurrence).** On S/4HANA 2021, activating a program-with-screens object family via the mass-activation endpoint (`/sap/bc/adt/activation/runs`) returned a self-contradictory result: `success:false, activated:false, failed_count:7` alongside `errors:[], warnings:[], generated:true`. Root cause in `parseActivationResults` (`src/lib/localGroupActivation.ts`): per-object status was `errs.length === 0 && activated`, where `activated` is derived **solely** from the group-level `activationExecuted` attribute — but this successful run's results carried `generationExecuted="true"` with **no** `activationExecuted="true"` and zero error messages, so every object fell to the `failed` default even though the oracle (`GetInactiveObjects` → 0 of our objects) confirmed they were active. Generation is downstream of activation, so its success implies activation ran; per-object status now gates on `activated || generated` (`runExecuted`), and the run-level `success` (both the `runs` and `sync` return paths) likewise becomes `(activated || generated) && errors.length === 0`. An object still fails only when it carries an actual activation error message (unchanged). The `ActivateObjects` tool description gains an in-band #6/#11 guardrail: the success/activated flags are not proof — confirm by re-querying `GetInactiveObjects`. A regression case in `src/__tests__/unit/localGroupActivation.test.ts` pins a results body with `generationExecuted="true"` and no `activationExecuted` → all objects `activated`; reverse-verified by reverting the gate to `activated`-only, which reproduces the exact `failed` symptom, then restoring to green. The prior "survives empty input" contract (`<chkl:messages/>` with no flags → all `failed`) is preserved (`runExecuted` is false there). **Verification boundary:** the fix is derived from the reported parsed output (which pins that the real results XML omitted `activationExecuted`) and jest reverse-verified; a live red→green replay against the exact ZUNIWTH family, and the fuller lessons-#6/#11 remedy of embedding the `GetInactiveObjects` oracle re-query inside the handler, are recorded as follow-ups in `UPSTREAM-FIX-HANDOFF.md` (needs live SAP + the raw `/results/{id}` XML).
+
+### Notes
+- **Capability surface unchanged** (155 tools at the default `readonly,high` exposition). Server-only change — no client-package patch, no tool added/removed/renamed. No schema change; the `ActivateObjects` description text is amended (guarded by `handleActivateObjects.test.ts`, whose existing assertions still hold).
+
 ## [4.13.16] - 2026-07-19
 
 ### Fixed

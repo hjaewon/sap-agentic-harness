@@ -251,6 +251,18 @@ export function parseActivationResults(
     }
   }
 
+  // An object is "failed" only when it carries an actual activation error.
+  // The group-level activationExecuted flag is NOT a reliable per-object gate:
+  // SAP's /activation/runs results can report generationExecuted="true" WITHOUT
+  // activationExecuted="true" on a fully successful run (observed on S/4HANA
+  // 2021 activating a program-with-screens family — the run returned 0 errors,
+  // generationExecuted="true", and the objects read back active, yet every
+  // object was reported "failed"). Generation is downstream of activation, so
+  // its success implies activation ran. Gating solely on `activated` turned a
+  // clean run into an all-objects-failed false report (lessons-pack layer1
+  // #6/#11: a success flag is not proof — and, symmetrically, the absence of
+  // one is not proof of failure; re-query the server to confirm).
+  const runExecuted = activated || generated;
   const perObject: ActivationObjectResult[] = inputObjects.map((obj) => {
     const errs = perObjectErrors.get(obj.uri) ?? [];
     const wrns = perObjectWarnings.get(obj.uri) ?? [];
@@ -258,7 +270,7 @@ export function parseActivationResults(
       name: obj.name,
       type: obj.type,
       uri: obj.uri,
-      status: errs.length === 0 && activated ? 'activated' : 'failed',
+      status: errs.length === 0 && runExecuted ? 'activated' : 'failed',
       errors: errs,
       warnings: wrns,
     };
@@ -350,7 +362,8 @@ export async function activateObjectsLocal(
       const parsed = parseActivationResults(body, resolved);
       return {
         endpoint: 'runs',
-        success: parsed.activated && parsed.errors.length === 0,
+        success:
+          (parsed.activated || parsed.generated) && parsed.errors.length === 0,
         activated: parsed.activated,
         checked: parsed.checked,
         generated: parsed.generated,
@@ -391,7 +404,8 @@ export async function activateObjectsLocal(
   const parsed = parseActivationResults(body, resolved);
   return {
     endpoint: 'sync',
-    success: parsed.activated && parsed.errors.length === 0,
+    success:
+      (parsed.activated || parsed.generated) && parsed.errors.length === 0,
     activated: parsed.activated,
     checked: parsed.checked,
     generated: parsed.generated,

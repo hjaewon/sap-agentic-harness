@@ -1,4 +1,7 @@
-import { parseActivationResults } from '../../lib/localGroupActivation';
+import {
+  activateObjectsLocal,
+  parseActivationResults,
+} from '../../lib/localGroupActivation';
 
 // Minimal response shape from /sap/bc/adt/activation/results/{id}.
 // Two objects: one include that activated cleanly, one with an error pointing
@@ -23,6 +26,17 @@ const cleanXml = `<?xml version="1.0" encoding="UTF-8"?>
   <chkl:properties activationExecuted="true" checkExecuted="true" generationExecuted="true"/>
 </chkl:messages>`;
 
+// ZUNIWTH false-failure repro (S/4HANA 2021, program-with-screens family):
+// SAP's /activation/runs results reported generationExecuted="true" with NO
+// activationExecuted flag and zero error messages, yet the old parser marked
+// every object "failed". The oracle (GetInactiveObjects → 0) confirmed the
+// objects were in fact active. generationExecuted="true" + zero errors must
+// therefore report activated (lessons-pack layer1 #6/#11).
+const generatedNoActivationFlagXml = `<?xml version="1.0" encoding="UTF-8"?>
+<chkl:messages xmlns:chkl="http://www.sap.com/abapxml/checklist">
+  <chkl:properties checkExecuted="true" generationExecuted="true"/>
+</chkl:messages>`;
+
 const inputs = [
   {
     name: 'ZMCP_INC01',
@@ -43,6 +57,18 @@ describe('parseActivationResults', () => {
     expect(result.checked).toBe(true);
     expect(result.generated).toBe(true);
     expect(result.errors).toEqual([]);
+    for (const o of result.objects) {
+      expect(o.status).toBe('activated');
+    }
+  });
+
+  it('reports objects activated when the run generated but omitted the activationExecuted flag (ZUNIWTH false-failure, lessons #6/#11)', () => {
+    const result = parseActivationResults(generatedNoActivationFlagXml, inputs);
+    // The raw activation flag is genuinely absent...
+    expect(result.activated).toBe(false);
+    expect(result.generated).toBe(true);
+    expect(result.errors).toEqual([]);
+    // ...but a clean, generated run must not be reported as an all-failed run.
     for (const o of result.objects) {
       expect(o.status).toBe('activated');
     }
@@ -76,6 +102,88 @@ describe('parseActivationResults', () => {
     // Neither activated nor errored → status defaults to "failed" (not activated)
     for (const o of result.objects) {
       expect(o.status).toBe('failed');
+    }
+  });
+});
+
+// Pins the run-level `success` composition in activateObjectsLocal — the two
+// return sites `(parsed.activated || parsed.generated) && errors.length === 0`
+// that parseActivationResults' per-object test does not exercise (review nit).
+// A generated-only results body (no activationExecuted, zero errors) must yield
+// success:true on BOTH the runs and the sync-fallback path.
+const okResp = (data: string, headers: Record<string, string> = {}) => ({
+  status: 200,
+  statusText: 'OK',
+  data,
+  headers,
+  config: {} as any,
+});
+const generatedOnlyResultsBody = `<?xml version="1.0" encoding="UTF-8"?>
+<chkl:messages xmlns:chkl="http://www.sap.com/abapxml/checklist">
+  <chkl:properties checkExecuted="true" generationExecuted="true"/>
+</chkl:messages>`;
+
+// Minimal IAbapConnection stub; only makeAdtRequest routes per URL/method.
+const connStubs = {
+  setSessionType() {},
+  getSessionMode: () => 'stateless',
+  getSessionId: () => 'testsessionid00000000000000000000',
+  getBaseUrl: async () => 'https://sap.example.com:44300',
+  getAuthHeaders: async () => ({}),
+};
+
+describe('activateObjectsLocal run-level success (generated-only run)', () => {
+  it('runs endpoint: generationExecuted="true" + 0 errors → success true, all activated', async () => {
+    const connection = {
+      ...connStubs,
+      async makeAdtRequest(o: any) {
+        const url = String(o.url);
+        const method = String(o.method).toUpperCase();
+        if (method === 'POST' && url.includes('/activation/runs')) {
+          return okResp('', { location: '/sap/bc/adt/activation/runs/RUN1' });
+        }
+        if (method === 'GET' && url.includes('/activation/results/')) {
+          return okResp(generatedOnlyResultsBody);
+        }
+        if (method === 'GET' && url.includes('/activation/runs/')) {
+          return okResp('<run status="finished"/>');
+        }
+        throw new Error(`unexpected request ${method} ${url}`);
+      },
+    };
+    const result = await activateObjectsLocal(connection as any, inputs);
+    expect(result.endpoint).toBe('runs');
+    expect(result.activated).toBe(false); // raw flag genuinely absent
+    expect(result.generated).toBe(true);
+    expect(result.success).toBe(true); // (activated || generated) && no errors
+    for (const o of result.objects) {
+      expect(o.status).toBe('activated');
+    }
+  });
+
+  it('sync fallback: same body over the legacy endpoint → success true', async () => {
+    const connection = {
+      ...connStubs,
+      async makeAdtRequest(o: any) {
+        const url = String(o.url);
+        const method = String(o.method).toUpperCase();
+        if (method === 'POST' && url.includes('/activation/runs')) {
+          const err: any = new Error('runs endpoint unavailable');
+          err.response = { status: 404 };
+          throw err; // → fall back to the sync endpoint
+        }
+        if (method === 'POST') {
+          return okResp(generatedOnlyResultsBody); // /sap/bc/adt/activation
+        }
+        throw new Error(`unexpected request ${method} ${url}`);
+      },
+    };
+    const result = await activateObjectsLocal(connection as any, inputs);
+    expect(result.endpoint).toBe('sync');
+    expect(result.generated).toBe(true);
+    expect(result.success).toBe(true);
+    for (const o of result.objects) {
+      expect(o.status).toBe('activated');
     }
   });
 });

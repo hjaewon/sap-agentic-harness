@@ -1,4 +1,4 @@
-# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.15
+# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.17
 
 Paste this whole file into the Claude Code (or hand it to the maintainer) on the
 machine that holds the fork/upstream source. It is **self-contained**: for each
@@ -46,6 +46,8 @@ exact diffs from these commits if a hand-application drifts:
 | 4.13.13 | `(pending)` | Real-data gate honesty: self-closing NULL cell drop/shift + row-count meta + sporadic-400 retry (§12) |
 | 4.13.14 | `(pending)` | DDIC write real-generation: CreateStructure fields→DDL (§13) + FM read inactive-edit-loss warning + description honesty (§14) |
 | 4.13.15 | `(pending)` | Local-include Delete family repaired — dedicated clear path replaces the broken `update('')` delegation (§15, client-package, backlog 11-⑩) + low unit-test schemas drop 4 cloud-only no-op params (§15, server) + `CreateProgramLow` type-substitution guard mirrored from the high-level (§4, Known-remaining #2) |
+| 4.13.16 | `(pending)` | Branch-integration renumber — no code change (see engine/CHANGELOG.md [4.13.16]) |
+| 4.13.17 | `(pending)` | `ActivateObjects` false-failure: a clean run (`generationExecuted="true"`, no `activationExecuted`, 0 errors) reported every object failed — per-object status + run success now gate on `activated \|\| generated` (§16, server) |
 
 > Note: commit `acad614d` is the authoritative 4.13.8 boundary (the CHANGELOG's
 > `## [4.13.8]` header was added retroactively — content is identical).
@@ -1202,6 +1204,75 @@ schema change removes properties, not tools.
 
 ---
 
+## §16 — ActivateObjects false-failure: a clean run reported as all-objects-failed (4.13.17)
+
+Server-only, one file. A recurrence of the lessons-pack layer1 #6/#11 principle
+("a success flag is not proof; re-query to confirm") — here in its *inverse*
+form: the **absence** of a success flag was treated as proof of failure.
+
+### Symptom
+
+Dogfooding finding (ZUNIWTH project, S/4HANA 2021). Activating a
+program-with-screens object family via the mass endpoint
+(`/sap/bc/adt/activation/runs`) returned a self-contradictory result:
+`success:false, activated:false, failed_count:7` next to
+`errors:[], warnings:[], generationExecuted="true"`, message "0 error(s)". The
+oracle (`GetInactiveObjects` → 0 of the seven objects present) confirmed all
+seven were in fact active. So the run succeeded but every object was reported
+`failed`.
+
+Note: the old observation that MCP activation *hangs* on screen-bearing programs
+did **not** reproduce on the current engine — activation completed normally; the
+only remaining defect was this reporting bug.
+
+### Root cause
+
+`parseActivationResults` (`src/lib/localGroupActivation.ts`) derived per-object
+status as `errs.length === 0 && activated`, where `activated` comes **solely**
+from the group `activationExecuted` attribute
+(`props['@_activationExecuted'] === 'true'`). This run's `/results/{id}` body
+carried `generationExecuted="true"` (parsed correctly — the caller saw
+`generated:true`) but **no** `activationExecuted="true"`, and zero error
+messages. So `activated` was false, and every object fell to the `failed`
+default. The run-level `success` (`parsed.activated && errors.length === 0`, on
+both the `runs` and `sync` return paths) collapsed for the same reason.
+
+### Fix — server (parser + description)
+
+Per-object `failed` now requires an actual activation error. The group flag is
+not a reliable per-object gate: generation is downstream of activation, so
+`generationExecuted="true"` implies activation ran. A `runExecuted =
+activated || generated` local now gates per-object status, and run-level
+`success` becomes `(activated || generated) && errors.length === 0` on both
+return paths. An object with ≥1 attributed error message still fails
+(unchanged). The `ActivateObjects` tool description gains the #6/#11 guardrail in
+band: the success/activated flags are not proof — confirm by re-querying
+`GetInactiveObjects`.
+
+### Regression test
+
+`src/__tests__/unit/localGroupActivation.test.ts` gains a case: a results body
+with `generationExecuted="true"`, no `activationExecuted`, zero errors → every
+object `activated` (while `result.activated`, the raw flag, stays `false`).
+**Reverse-verified** by reverting the gate to `activated`-only: the new case
+FAILS with the exact `failed` symptom ("Expected activated, Received failed");
+restoring makes it green. The prior "survives empty input" contract
+(`<chkl:messages/>`, no flags → all `failed`) is preserved — `runExecuted` is
+false there. Full suite 656 passed / 5 skipped.
+
+### Verification boundary (why this is not marked live-verified)
+
+The fix is derived from the reported *parsed output* — which pins that the real
+results XML omitted `activationExecuted` — and is jest reverse-verified, but it
+was **not** replayed live against the exact ZUNIWTH family, and the raw
+`/results/{id}` XML was not captured (the handler summary does not surface
+`raw_response`). Two follow-ups are recorded in Known-remaining #10/#11 below:
+a live red→green replay, and the fuller remedy of embedding the
+`GetInactiveObjects` oracle re-query inside the handler so activation is
+confirmed by server state rather than by any response flag.
+
+---
+
 ## Known-remaining defects (still present upstream)
 
 Confirmed against the reference `HANDOFF.md` §6 backlog. These are **not** fixed
@@ -1285,6 +1356,25 @@ was only reasoned (not live-staged) it is flagged **code-review-verified only**.
    `DeleteStructure` to an explicit lock → `DELETE(lockHandle)` → read-back-404
    flow (verifying by absence, not by a non-error) — adopt it if a no-op case is
    ever observed.
+
+10. **`ActivateObjects` false-failure fix awaits a live red→green replay (§16,
+    4.13.17).** The parser fix (`activated || generated` gate) is derived from the
+    reported parsed output and jest reverse-verified, but was not replayed live
+    against the exact ZUNIWTH program-with-screens family, and the raw
+    `/results/{id}` XML that omitted `activationExecuted` was not captured (the
+    handler summary drops `raw_response`). Capture that XML and replay red→green to
+    confirm the exact SAP shape. *Code-review-verified only.*
+
+11. **`ActivateObjects` still trusts a response flag rather than server state
+    (§16 follow-up — the fuller #6/#11 remedy).** §16 fixes the false-*failure*
+    direction but the handler still derives activation from the run response, not
+    from a re-query. The lessons-#6/#11-complete remedy embeds the oracle inside
+    `activateObjectsLocal`: after the run finishes, re-query `GetInactiveObjects`
+    and confirm the batch's objects are absent from it (what the ZUNIWTH operator
+    did by hand). That closes the residual false-*success* gap (an object that
+    fails to activate but emits no per-object error message under a
+    `generationExecuted="true"` run). Deferred — it adds a network call that needs
+    live SAP verification. Candidate for the next connected session.
 
 ---
 
