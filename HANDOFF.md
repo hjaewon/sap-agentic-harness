@@ -242,6 +242,36 @@
 > CheckSyntax = 정상 result)·#11(일부러 깨진 형제로 활성 실패 유도 → 오라클이
 > failed 판정) 라이브 확인.
 >
+> **▶▶ 도그푸딩 라운드 3 — #11 라이브 종결 · #12 잔존 오탐 수리 (2026-07-24 저녁 ·
+> engine 4.13.19 · 플러그인 v0.3.3 · UPSTREAM §18)**: ZUNIWTH가 v0.3.2로 #11/#12
+> 라이브 재연 결과를 회신 → 이 세션(sapkit)이 처리. **#11 = 완전 종결**: happy-path
+> 무회귀(ZUNIWR2030 7객체 재활성 → success·전 activated·오라클 0) + negative-path
+> 라이브 확증(형제 include ZUNIWI2030S에 period-missing 주입 → 활성 success:false·
+> failed_count:7, 실오류가 ZUNIWI2030S에 귀속, GetInactiveObjects가 그 1건만 비활성으로
+> 지목 → 오라클 서버상태 다운그레이드 정확 발화; 주입 완전 원복). Known-remaining #11 닫힘.
+> **#12 = 목표 green이나 잔존 오탐 발견·수리**: v0.3.2에서 tool-error→normal-result는
+> 라이브 green이었으나, §17-B 폴백이 고른 `runProgramTreeCheck`가 `version="inactive"`로
+> **부재한 비활성 버전을 재검사**해 같은 "REPORT missing" noise를 재발 → 완전-활성
+> ZUNIWR2030(유효 REPORT)에 거짓 E·success:false 잔존(§17-B의 "활성 소스 검증" 주장이
+> 코드상 미구현이었음 — 유닛의 빈 fake-`/checkruns` body가 가림). **수리(4.13.19/§18)**:
+> program 무소스 noise 분기를 `runActiveProgramSourceCheck`로 교체 — 활성 소스를
+> `read(...,'active')`로 읽어 source-bearing inline 검사(`version="active"`, 유효→clean·
+> 깨짐→실오류)로 검증 + `downgradeReportMissingNoise` 안전망(status-aware) + 소스 미독 시
+> clean. `runProgramTreeCheck` 무접촉(inactive 호출자 불변; 죽은 `perIncludeSweep`는
+> 플래그만·미삭제). **사용자 결정 = "활성 소스를 실제로 검사"**(대안 "비활성 없음=통과"
+> 기각 — 위음성 위험). 유닛 13케이스·전체 **677 green** · 새-컨텍스트 독립 리뷰
+> **SHIP-WITH-NITS → MINOR(status 게이트 누락) 즉시 반영**, MINOR(미독 소스 불가시성)는
+> §18 후속 공개. 커밋 A `4c1c20a`(engine 4.13.19) → VERSION/integrity 재핀(sourceCommit
+> 4c1c20a) → 번들 반영 → 스냅샷 재핀(server/ 목적지 해시 3줄만, pin·roots 36·inventory
+> 487 불변) → 플러그인 v0.3.2→v0.3.3(단일 정본+매니페스트 5종 재생성). 게이트 6종 green ·
+> doctor FAIL 2 = Codex 0.145.0≠핀0.144.6 · agy 1.1.1≠핀1.1.4(CLI 핀 드리프트, 이 변경
+> 무관 — bundle integrity ①은 OK). **잔여 = #12 라이브 red→green 재연만**(Known-remaining #12).
+> **▶▶ 다음 착수**: `claude plugin update sapkit --scope local`(스코프 함정 주의) +
+> reload → **토큰 전후 실측**(D-040 합격선) → ZUNIWTH에서 #12 라이브 확인 — ⑴ 완전-활성
+> ZUNIWR2030 무소스 CheckSyntax = **정상 result·success:true·errors 0**(거짓 "REPORT
+> missing" 소멸) ⑵ 일부러 깨진 활성 프로그램 무소스 CheckSyntax = **실오류(라인번호)** 반환.
+> 확인되면 UPSTREAM Known-remaining #12를 CLOSED로 이동. RV4 열림·unattended sealed 불변.
+>
 > **▶ 직전 재개점 (2026-07-23 · D-047) — aegis 방법론 흡수를 ZUNIWHT에
 > 선행**: 사용자 목적 확인 — 원목표는 "sc4sap 개발방법론 대신 최신화된 방법론"이었고,
 > ENGINE을 버린 만큼(D-040) 엔진 외 조각은 흡수됐어야 했다. 원천 =
