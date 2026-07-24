@@ -36,6 +36,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.runSyntaxCheck = runSyntaxCheck;
+exports.isReportMissingNoiseText = isReportMissingNoiseText;
 exports.assertNoCheckErrors = assertNoCheckErrors;
 const fast_xml_parser_1 = require("fast-xml-parser");
 const checkRunParser_1 = require("./checkRunParser");
@@ -75,8 +76,30 @@ async function runSyntaxCheck(context, args) {
                     const programUri = `/sap/bc/adt/programs/programs/${(0, utils_1.encodeSapObjectName)(name).toLowerCase()}`;
                     return await runInlineArtifactCheck(connection, programUri, `${programUri}/source/main`, args.sourceCode, logger);
                 }
-                const state = await (0, utils_1.safeCheckOperation)(() => client.getProgram().check({ programName: name }, 'inactive'), name, debugLogger);
-                rawResponse = state?.checkResult;
+                try {
+                    const state = await (0, utils_1.safeCheckOperation)(() => client.getProgram().check({ programName: name }, 'inactive'), name, debugLogger);
+                    rawResponse = state?.checkResult;
+                }
+                catch (checkErr) {
+                    // isAlreadyChecked is the outer catch's job → re-throw untouched.
+                    if (checkErr?.isAlreadyChecked || (0, utils_1.isAlreadyCheckedError)(checkErr)) {
+                        throw checkErr;
+                    }
+                    // A fully-active program with no inactive version staged makes the
+                    // vendored inactive check throw the "REPORT/PROGRAM statement is
+                    // missing, or the program type is INCLUDE" noise — a false positive
+                    // (nothing inactive to compile) that leaked out as a -32603 MCP tool
+                    // error. Fall back to the noise-aware program-tree check, which
+                    // validates the real (active) source and returns a NORMAL result
+                    // (also fixing the contract-breaking error-channel leak). Non-noise
+                    // errors still propagate. (ZUNIWTH dogfooding #12; the source-bearing
+                    // path was already honest — layer1 #7.)
+                    if (isReportMissingNoiseText(checkErr?.message ?? String(checkErr))) {
+                        logger?.debug?.(`program '${name}': no inactive version (REPORT-missing noise) → active program-tree fallback`);
+                        return await runProgramTreeCheck(connection, name, logger);
+                    }
+                    throw checkErr;
+                }
                 break;
             }
             case 'class': {

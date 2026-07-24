@@ -24,6 +24,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseActivationResults = parseActivationResults;
 exports.activateObjectsLocal = activateObjectsLocal;
 const fast_xml_parser_1 = require("fast-xml-parser");
+const clients_1 = require("./clients");
 const resolveAdtUri_1 = require("./resolveAdtUri");
 const utils_1 = require("./utils");
 const ACTIVATION_CT = 'application/vnd.sap.adt.activation.request+xml; charset=utf-8';
@@ -196,6 +197,73 @@ function parseActivationResults(xmlBody, inputObjects) {
     };
 }
 /**
+ * Best-effort oracle confirmation (lessons-pack layer1 #6/#11): the activation
+ * run's success flags are NOT proof. After the run, re-query the inactive-object
+ * worklist; any object we tried to activate that is STILL inactive did not
+ * actually activate, whatever the response said. This is exactly what the
+ * ZUNIWTH operator did by hand (GetInactiveObjects → 0 = truly active).
+ *
+ * Matching is by uppercased name + base type prefix. The inactive worklist
+ * reports `{ type, name }` where `type` is a `<base>/<subtype>` code
+ * (PROG/P, TABL/DS, DDLS/DF …) whose subtype does not always equal the
+ * activation input's subtype — live-measured 2026-07-24 — so we compare the
+ * base type (before `/`) plus the name, and fall back to name-only when our
+ * object arrived without a type (the {name, uri} input mode), so an empty base
+ * can never silently disable the check for that object.
+ *
+ * Downgraded objects flip to `failed` and get an error message; the returned
+ * messages are merged into the run's error list so `success`/counts stay
+ * consistent. A failure of the re-query itself never changes the flag-based
+ * result — the probe is swallowed (same discipline as the 4.13.14 FM
+ * check_inactive probe).
+ */
+async function confirmActivationViaOracle(connection, objects, logger) {
+    const oracleErrors = [];
+    try {
+        const client = (0, clients_1.createAdtClient)(connection);
+        const inactive = await client.getUtils().getInactiveObjects();
+        const list = Array.isArray(inactive?.objects)
+            ? inactive.objects
+            : [];
+        const base = (type) => String(type ?? '')
+            .split('/')[0]
+            .toUpperCase();
+        const upper = (name) => String(name ?? '').toUpperCase();
+        const baseNameKeys = new Set(list.map((o) => `${base(o.type)}|${upper(o.name)}`));
+        // Name-only fallback: an input supplied as {name, uri} with no type has an
+        // empty base that could never match a worklist entry, silently disabling
+        // the oracle for that object (the dangerous false-success direction). When
+        // our object has no base type, match on name alone.
+        const names = new Set(list.map((o) => upper(o.name)));
+        for (const obj of objects) {
+            if (obj.status !== 'activated')
+                continue;
+            const b = base(obj.type);
+            const stillInactive = b
+                ? baseNameKeys.has(`${b}|${upper(obj.name)}`)
+                : names.has(upper(obj.name));
+            if (!stillInactive)
+                continue;
+            obj.status = 'failed';
+            const msg = {
+                type: 'E',
+                text: `Object ${obj.name} is still inactive after the activation run (oracle re-query via GetInactiveObjects) — activation did not take, despite the run response.`,
+                objectName: obj.name,
+                objectUri: obj.uri,
+            };
+            obj.errors.push(msg);
+            oracleErrors.push(msg);
+        }
+    }
+    catch (err) {
+        // Best-effort: an errored/uncertain re-query must never flip a real result.
+        // Log so a permanently-disabled oracle (a legacy 404, a wiring regression)
+        // is detectable rather than an invisible no-op.
+        logger?.debug?.(`activation oracle re-query skipped (result unchanged): ${err?.message ?? String(err)}`);
+    }
+    return oracleErrors;
+}
+/**
  * Activate many ABAP objects in a single request. Attempts the run-based
  * endpoint first and falls back to the sync endpoint on legacy systems.
  */
@@ -236,15 +304,17 @@ async function activateObjectsLocal(connection, objects, options = {}) {
                 ? resultsResp.data
                 : String(resultsResp.data ?? '');
             const parsed = parseActivationResults(body, resolved);
+            const oracleErrors = await confirmActivationViaOracle(connection, parsed.objects, options.logger);
+            const errors = [...parsed.errors, ...oracleErrors];
             return {
                 endpoint: 'runs',
-                success: (parsed.activated || parsed.generated) && parsed.errors.length === 0,
+                success: (parsed.activated || parsed.generated) && errors.length === 0,
                 activated: parsed.activated,
                 checked: parsed.checked,
                 generated: parsed.generated,
                 run_id: runId,
                 objects: parsed.objects,
-                errors: parsed.errors,
+                errors,
                 warnings: parsed.warnings,
                 raw_response: body,
             };
@@ -268,14 +338,16 @@ async function activateObjectsLocal(connection, objects, options = {}) {
         ? syncResp.data
         : String(syncResp.data ?? '');
     const parsed = parseActivationResults(body, resolved);
+    const oracleErrors = await confirmActivationViaOracle(connection, parsed.objects, options.logger);
+    const errors = [...parsed.errors, ...oracleErrors];
     return {
         endpoint: 'sync',
-        success: (parsed.activated || parsed.generated) && parsed.errors.length === 0,
+        success: (parsed.activated || parsed.generated) && errors.length === 0,
         activated: parsed.activated,
         checked: parsed.checked,
         generated: parsed.generated,
         objects: parsed.objects,
-        errors: parsed.errors,
+        errors,
         warnings: parsed.warnings,
         raw_response: body,
     };

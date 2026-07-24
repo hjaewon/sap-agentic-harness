@@ -159,12 +159,35 @@ export async function runSyntaxCheck(
             logger,
           );
         }
-        const state: any = await safeCheckOperation(
-          () => client.getProgram().check({ programName: name }, 'inactive'),
-          name,
-          debugLogger,
-        );
-        rawResponse = state?.checkResult;
+        try {
+          const state: any = await safeCheckOperation(
+            () => client.getProgram().check({ programName: name }, 'inactive'),
+            name,
+            debugLogger,
+          );
+          rawResponse = state?.checkResult;
+        } catch (checkErr: any) {
+          // isAlreadyChecked is the outer catch's job → re-throw untouched.
+          if (checkErr?.isAlreadyChecked || isAlreadyCheckedError(checkErr)) {
+            throw checkErr;
+          }
+          // A fully-active program with no inactive version staged makes the
+          // vendored inactive check throw the "REPORT/PROGRAM statement is
+          // missing, or the program type is INCLUDE" noise — a false positive
+          // (nothing inactive to compile) that leaked out as a -32603 MCP tool
+          // error. Fall back to the noise-aware program-tree check, which
+          // validates the real (active) source and returns a NORMAL result
+          // (also fixing the contract-breaking error-channel leak). Non-noise
+          // errors still propagate. (ZUNIWTH dogfooding #12; the source-bearing
+          // path was already honest — layer1 #7.)
+          if (isReportMissingNoiseText(checkErr?.message ?? String(checkErr))) {
+            logger?.debug?.(
+              `program '${name}': no inactive version (REPORT-missing noise) → active program-tree fallback`,
+            );
+            return await runProgramTreeCheck(connection, name, logger);
+          }
+          throw checkErr;
+        }
         break;
       }
 
@@ -728,7 +751,7 @@ async function perIncludeSweep(
  * the source is really broken, activation will surface the real error
  * with line numbers.
  */
-function isReportMissingNoiseText(text: string): boolean {
+export function isReportMissingNoiseText(text: string): boolean {
   return (
     /REPORT\/?\s*PROGRAM statement is missing/i.test(text) ||
     /program type is INCLUDE/i.test(text)

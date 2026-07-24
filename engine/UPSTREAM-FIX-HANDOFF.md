@@ -1,4 +1,4 @@
-# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.17
+# Upstream fix hand-off: `abap-mcp-adt-powerup` server + `mcp-abap-adt-clients` client, releases 4.13.2 – 4.13.18
 
 Paste this whole file into the Claude Code (or hand it to the maintainer) on the
 machine that holds the fork/upstream source. It is **self-contained**: for each
@@ -48,6 +48,7 @@ exact diffs from these commits if a hand-application drifts:
 | 4.13.15 | `(pending)` | Local-include Delete family repaired — dedicated clear path replaces the broken `update('')` delegation (§15, client-package, backlog 11-⑩) + low unit-test schemas drop 4 cloud-only no-op params (§15, server) + `CreateProgramLow` type-substitution guard mirrored from the high-level (§4, Known-remaining #2) |
 | 4.13.16 | `(pending)` | Branch-integration renumber — no code change (see engine/CHANGELOG.md [4.13.16]) |
 | 4.13.17 | `(pending)` | `ActivateObjects` false-failure: a clean run (`generationExecuted="true"`, no `activationExecuted`, 0 errors) reported every object failed — per-object status + run success now gate on `activated \|\| generated` (§16, server) |
+| 4.13.18 | `(pending)` | `ActivateObjects` server-state oracle re-query (§17-A, #11 — completes #6/#11) + `CheckSyntax` no-source fallback for fully-active programs (§17-B, #12 — noise-throw → active program-tree check, fixes `-32603` leak) |
 
 > Note: commit `acad614d` is the authoritative 4.13.8 boundary (the CHANGELOG's
 > `## [4.13.8]` header was added retroactively — content is identical).
@@ -1273,6 +1274,44 @@ confirmed by server state rather than by any response flag.
 
 ---
 
+## §17 — ActivateObjects oracle re-query + CheckSyntax no-inactive fallback (4.13.18)
+
+Two ZUNIWTH-dogfooding follow-ups, both live-reproduced on DEV/700, both
+server-only. §17-A completes the #6/#11 remedy that §16 began (#11); §17-B is a
+separate CheckSyntax false-positive (#12). §16's live replay (#10) is closed
+here: on DEV/700, re-activating the `ZUNIWR2030` family (main + 6 includes) on
+the 4.13.17 bundle returned `success:true` / all `activated` where the pre-fix
+bundle false-failed — and the oracle (`GetInactiveObjects` → our objects absent)
+confirmed real activation.
+
+### §17-A — ActivateObjects server-state oracle (#11)
+
+`activateObjectsLocal` now re-queries the inactive worklist after the run and
+overrides the flag-based verdict with server state: any object reported
+`activated` that is still in the worklist is downgraded to `failed` and
+`success` flips to false. Uses `createAdtClient(connection).getUtils()
+.getInactiveObjects()` (the `GetInactiveObjects` path). Best-effort — a failed
+probe is swallowed. Match key = uppercased **name + base type** (the worklist's
+`{type,name}` subtype does not always equal the input's — live-measured: input
+`PROG/I` vs worklist `PROG/P`/`TABL/DS`/`DDLS/DF`; name is the stable key).
+Four jest cases pin it (downgrade+success-false, name/base-type match across
+differing subtype+casing, unrelated-object ignored, failing-probe swallowed);
+reverse-verified by neutering the oracle. **Live replay still open — #11.**
+
+### §17-B — CheckSyntax no-inactive fallback (#12)
+
+`runSyntaxCheck` program/no-source now wraps the vendored `getProgram().check(
+{...},'inactive')`: on the `isReportMissingNoiseText` signature it falls back to
+the noise-aware `runProgramTreeCheck` (validates the real active source, returns
+a normal result); `isAlreadyChecked` is re-thrown for the outer catch; other
+errors propagate. This fixes both the false positive on a fully-active program
+with no inactive version *and* the contract-breaking `-32603` tool-error leak.
+The try only intercepts the throw, so the happy path is unchanged.
+`isReportMissingNoiseText` is exported and pinned against the exact live message.
+**Live replay against `ZUNIWR2030` still open — #12.**
+
+---
+
 ## Known-remaining defects (still present upstream)
 
 Confirmed against the reference `HANDOFF.md` §6 backlog. These are **not** fixed
@@ -1357,43 +1396,32 @@ was only reasoned (not live-staged) it is flagged **code-review-verified only**.
    flow (verifying by absence, not by a non-error) — adopt it if a no-op case is
    ever observed.
 
-10. **`ActivateObjects` false-failure fix awaits a live red→green replay (§16,
-    4.13.17).** The parser fix (`activated || generated` gate) is derived from the
-    reported parsed output and jest reverse-verified, but was not replayed live
-    against the exact ZUNIWTH program-with-screens family, and the raw
-    `/results/{id}` XML that omitted `activationExecuted` was not captured (the
-    handler summary drops `raw_response`). Capture that XML and replay red→green to
-    confirm the exact SAP shape. *Code-review-verified only.*
+10. **~~`ActivateObjects` false-failure fix awaits a live red→green replay
+    (§16, 4.13.17).~~ CLOSED live (ZUNIWTH dogfooding, 2026-07-24).** On DEV/700,
+    re-activating the `ZUNIWR2030` family (main + 6 includes) on the 4.13.17
+    bundle returned `success:true` / all `activated` — the exact false-failure
+    scenario (`activated:false` + `generated:true`) now judged correctly — and
+    the oracle (`GetInactiveObjects` → our objects absent) confirmed real
+    activation. The pre-fix bundle false-failed the same family. Live-verified.
 
-11. **`ActivateObjects` still trusts a response flag rather than server state
-    (§16 follow-up — the fuller #6/#11 remedy).** §16 fixes the false-*failure*
-    direction but the handler still derives activation from the run response, not
-    from a re-query. The lessons-#6/#11-complete remedy embeds the oracle inside
-    `activateObjectsLocal`: after the run finishes, re-query `GetInactiveObjects`
-    and confirm the batch's objects are absent from it (what the ZUNIWTH operator
-    did by hand). That closes the residual false-*success* gap (an object that
-    fails to activate but emits no per-object error message under a
-    `generationExecuted="true"` run). Deferred — it adds a network call that needs
-    live SAP verification. Candidate for the next connected session.
+11. **~~`ActivateObjects` still trusts a response flag rather than server
+    state.~~ RESOLVED in 4.13.18 — see §17-A** (code + jest done; live replay
+    pending). `activateObjectsLocal` now best-effort re-queries the inactive
+    worklist after the run and overrides the flag verdict with server state
+    (match by name + base type; failing probe swallowed). Only the live
+    red→green replay of a genuinely-still-inactive object remains — *unit-verified
+    with the live-confirmed `{type,name}` worklist shape; live replay open.*
 
-12. **`CheckSyntax` (and any Update* post-write check) false-fails a no-source
-    check on an object with no inactive version (ZUNIWTH dogfooding, 2026-07-24;
-    layer1 #7 was "already honest" for the source-bearing path — this is the
-    no-source path).** With `source_code` omitted, `runSyntaxCheck`
-    (`preCheckBeforeActivation.ts:162-167` program, `:182-187` class, `:202-208`
-    interface) checks the **inactive** version
-    (`client.getX().check({...}, 'inactive')`). For a fully-active object with
-    nothing staged inactive, SAP compiles an empty/absent inactive version and
-    returns a false positive — observed as "REPORT statement missing" / wrong
-    INCLUDE-type report. Recommended fix: when no `source_code` and no inactive
-    version exists (or it matches active byte-for-byte — the case the `:719-720`
-    comment already anticipates), fall back to `runRawCheckRun(..., 'active')`
-    (the active-version check path already exists, `:472-502`/`:683`), or make the
-    no-source description state that a no-source check is only meaningful when an
-    inactive (staged) version exists. Deferred — the correct behavior depends on
-    SAP's active-vs-absent-inactive checkrun responses and must be verified live
-    red→green (same discipline as #10/#11). Candidate for the next connected
-    session. *Observed, not yet code-changed.*
+12. **~~`CheckSyntax` no-source false-fails a fully-active program.~~ RESOLVED in
+    4.13.18 — see §17-B** (code + jest done; live replay pending). The
+    program/no-source branch now catches the `isReportMissingNoiseText` throw
+    from the vendored inactive check and falls back to the noise-aware
+    `runProgramTreeCheck` (normal result, not a `-32603` tool error). Live
+    reproduced on DEV/700 (`ZUNIWR2030`) before the fix; the fallback trigger is
+    unit-pinned. Only the live red→green replay on the fixed bundle remains.
+    (`class`/`interface` no-source use `getX().check(...,'inactive')` too but do
+    not carry the REPORT/INCLUDE noise; left unchanged unless a live case shows
+    otherwise.)
 
 ---
 

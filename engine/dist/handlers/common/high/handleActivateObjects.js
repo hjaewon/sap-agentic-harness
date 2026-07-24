@@ -88,6 +88,7 @@ async function handleActivateObjects(context, args) {
         const result = await (0, localGroupActivation_1.activateObjectsLocal)(connection, inputs, {
             preauditRequested: args.preaudit !== false,
             runTimeoutMs: args.run_timeout_ms,
+            logger,
         });
         const failed = result.objects.filter((o) => o.status === 'failed').length;
         const summary = {

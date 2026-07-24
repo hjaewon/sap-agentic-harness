@@ -3,6 +3,23 @@ import {
   parseActivationResults,
 } from '../../lib/localGroupActivation';
 
+// #11 oracle re-query drives GetInactiveObjects through the vendored client.
+// Mock it so tests control the inactive worklist. Default = empty (nothing
+// inactive → no downgrade), overridden per-test.
+const mockGetInactiveObjects = jest.fn(async () => ({
+  objects: [] as Array<{ type: string; name: string }>,
+}));
+jest.mock('../../lib/clients', () => ({
+  createAdtClient: () => ({
+    getUtils: () => ({ getInactiveObjects: mockGetInactiveObjects }),
+  }),
+}));
+
+beforeEach(() => {
+  mockGetInactiveObjects.mockReset();
+  mockGetInactiveObjects.mockResolvedValue({ objects: [] });
+});
+
 // Minimal response shape from /sap/bc/adt/activation/results/{id}.
 // Two objects: one include that activated cleanly, one with an error pointing
 // at its href (line + col encoded in the fragment).
@@ -185,5 +202,117 @@ describe('activateObjectsLocal run-level success (generated-only run)', () => {
     for (const o of result.objects) {
       expect(o.status).toBe('activated');
     }
+  });
+});
+
+// #11: the oracle re-query. Reuse the runs happy-path wire (which reports every
+// object activated) and vary only the inactive worklist via the mocked client.
+const makeRunsConnection = () => ({
+  ...connStubs,
+  async makeAdtRequest(o: any) {
+    const url = String(o.url);
+    const method = String(o.method).toUpperCase();
+    if (method === 'POST' && url.includes('/activation/runs')) {
+      return okResp('', { location: '/sap/bc/adt/activation/runs/RUN1' });
+    }
+    if (method === 'GET' && url.includes('/activation/results/')) {
+      return okResp(generatedOnlyResultsBody);
+    }
+    if (method === 'GET' && url.includes('/activation/runs/')) {
+      return okResp('<run status="finished"/>');
+    }
+    throw new Error(`unexpected request ${method} ${url}`);
+  },
+});
+
+describe('activateObjectsLocal oracle re-query (#11, lessons #6/#11)', () => {
+  it('downgrades an object still inactive after the run and flips success', async () => {
+    // The run reports every object activated (generated-only body), but the
+    // oracle worklist still lists ZMCP_INC02 → it did not actually activate.
+    mockGetInactiveObjects.mockResolvedValue({
+      objects: [{ type: 'PROG/I', name: 'ZMCP_INC02' }],
+    });
+    const result = await activateObjectsLocal(
+      makeRunsConnection() as any,
+      inputs,
+    );
+    const inc1 = result.objects.find((o) => o.name === 'ZMCP_INC01')!;
+    const inc2 = result.objects.find((o) => o.name === 'ZMCP_INC02')!;
+    expect(inc1.status).toBe('activated'); // absent from worklist → really active
+    expect(inc2.status).toBe('failed'); // still inactive → oracle overrides flag
+    expect(result.success).toBe(false);
+    expect(result.errors.some((e) => /still inactive/i.test(e.text))).toBe(
+      true,
+    );
+  });
+
+  it('matches by name + BASE type (subtype/casing differ across worklist vs input)', async () => {
+    // Input ZMCP_INC02 is PROG/I; the worklist may report it under a different
+    // subtype (PROG/P) and lowercase. Base-type PROG + uppercased name matches.
+    mockGetInactiveObjects.mockResolvedValue({
+      objects: [{ type: 'PROG/P', name: 'zmcp_inc02' }],
+    });
+    const result = await activateObjectsLocal(
+      makeRunsConnection() as any,
+      inputs,
+    );
+    expect(result.objects.find((o) => o.name === 'ZMCP_INC02')!.status).toBe(
+      'failed',
+    );
+  });
+
+  it('ignores unrelated inactive objects (different name)', async () => {
+    mockGetInactiveObjects.mockResolvedValue({
+      objects: [{ type: 'TABL/DS', name: 'ZFIRS0010' }],
+    });
+    const result = await activateObjectsLocal(
+      makeRunsConnection() as any,
+      inputs,
+    );
+    expect(result.success).toBe(true);
+    for (const o of result.objects) expect(o.status).toBe('activated');
+  });
+
+  it('does not downgrade a same-NAME but different-BASE-type worklist entry', async () => {
+    // Input ZMCP_INC02 is PROG/I (base PROG); a TABL entry with the same name
+    // is a different object — base discrimination must prevent a false failure.
+    mockGetInactiveObjects.mockResolvedValue({
+      objects: [{ type: 'TABL/DS', name: 'ZMCP_INC02' }],
+    });
+    const result = await activateObjectsLocal(
+      makeRunsConnection() as any,
+      inputs,
+    );
+    expect(result.objects.find((o) => o.name === 'ZMCP_INC02')!.status).toBe(
+      'activated',
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it('name-only fallback: matches an object supplied without a type (#1 fail-open fix)', async () => {
+    // {name, uri} input mode → empty type → empty base. Matching must fall back
+    // to name so the oracle is not silently disabled for that object.
+    mockGetInactiveObjects.mockResolvedValue({
+      objects: [{ type: 'PROG/P', name: 'ZNOTYPE' }],
+    });
+    const result = await activateObjectsLocal(makeRunsConnection() as any, [
+      {
+        name: 'ZNOTYPE',
+        type: '',
+        uri: '/sap/bc/adt/programs/programs/znotype',
+      },
+    ]);
+    expect(result.objects[0].status).toBe('failed');
+    expect(result.success).toBe(false);
+  });
+
+  it('a failing oracle re-query never flips the flag-based result (best-effort)', async () => {
+    mockGetInactiveObjects.mockRejectedValue(new Error('worklist unavailable'));
+    const result = await activateObjectsLocal(
+      makeRunsConnection() as any,
+      inputs,
+    );
+    expect(result.success).toBe(true);
+    for (const o of result.objects) expect(o.status).toBe('activated');
   });
 });

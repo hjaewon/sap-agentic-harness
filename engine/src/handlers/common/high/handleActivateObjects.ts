@@ -125,6 +125,7 @@ export async function handleActivateObjects(
     const result = await activateObjectsLocal(connection, inputs, {
       preauditRequested: args.preaudit !== false,
       runTimeoutMs: args.run_timeout_ms,
+      logger,
     });
 
     const failed = result.objects.filter((o) => o.status === 'failed').length;
