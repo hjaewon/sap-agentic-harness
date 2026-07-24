@@ -205,6 +205,21 @@
 > 수리 중 진단-부재 마찰·ABAP Unit seam 빈도) 양쪽 데이터 확보 → 그때 D-049 흡수 설계
 > 후보.** 이 부기는 기록일 뿐 집행 아님 — 절차·스킬·매니페스트·버전 전부 무접촉.
 >
+> **▶ ZUNIWHT 도그푸딩 첫 엔진 성과 — ActivateObjects 거짓-실패 수리 (2026-07-24 · engine 4.13.17 · UPSTREAM §16)**:
+> ZUNIWHT 도그푸딩이 낸 첫 실물 엔진 결함. `/activation/runs` 결과가 error 0·
+> `generationExecuted=true`·`activationExecuted` 부재인 정상 활성인데 전 객체를
+> failed로 보고(`success:false`·`failed_count:7` ↔ `errors:[]`·`generated:true`) —
+> 오라클 `GetInactiveObjects`=0으로 실활성 확인. lessons-pack 층1 #6/#11 재현(성공
+> 플래그 부재 ≠ 실패). `parseActivationResults` per-object status + 두 반환지
+> `success`를 `activated` 단독 → `(activated || generated)` 게이트로 교정
+> (generation은 activation 하류) + 도구 설명에 재조회 가드레일. 전체 jest **658
+> green**(신규 3·역-검증 완료) · 새-컨텍스트 독립 리뷰 **SHIP-WITH-NITS**(Nit #2
+> run-level success 미검증 → 당 커밋서 fake-connection 2건으로 고정). 커밋 A
+> `1d973d4`(engine 소스+dist+§16) → VERSION 재핀(sourceCommit `1d973d4`) → 번들
+> 4.13.17 반영. **미완(UPSTREAM Known-remaining #10/#11)**: 라이브 red→green 재연 ·
+> 오라클 재조회 핸들러 내장(#6/#11 완전판, 잔여 silent-failure 구멍 폐색)= 다음 연결
+> 세션. 부수 관측: 과거 "화면 프로그램 활성 hang"은 현 엔진서 **미재현(해소)**.
+>
 > **▶ 직전 재개점 (2026-07-23 · D-047) — aegis 방법론 흡수를 ZUNIWHT에
 > 선행**: 사용자 목적 확인 — 원목표는 "sc4sap 개발방법론 대신 최신화된 방법론"이었고,
 > ENGINE을 버린 만큼(D-040) 엔진 외 조각은 흡수됐어야 했다. 원천 =
