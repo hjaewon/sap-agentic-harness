@@ -1376,6 +1376,25 @@ was only reasoned (not live-staged) it is flagged **code-review-verified only**.
     `generationExecuted="true"` run). Deferred — it adds a network call that needs
     live SAP verification. Candidate for the next connected session.
 
+12. **`CheckSyntax` (and any Update* post-write check) false-fails a no-source
+    check on an object with no inactive version (ZUNIWTH dogfooding, 2026-07-24;
+    layer1 #7 was "already honest" for the source-bearing path — this is the
+    no-source path).** With `source_code` omitted, `runSyntaxCheck`
+    (`preCheckBeforeActivation.ts:162-167` program, `:182-187` class, `:202-208`
+    interface) checks the **inactive** version
+    (`client.getX().check({...}, 'inactive')`). For a fully-active object with
+    nothing staged inactive, SAP compiles an empty/absent inactive version and
+    returns a false positive — observed as "REPORT statement missing" / wrong
+    INCLUDE-type report. Recommended fix: when no `source_code` and no inactive
+    version exists (or it matches active byte-for-byte — the case the `:719-720`
+    comment already anticipates), fall back to `runRawCheckRun(..., 'active')`
+    (the active-version check path already exists, `:472-502`/`:683`), or make the
+    no-source description state that a no-source check is only meaningful when an
+    inactive (staged) version exists. Deferred — the correct behavior depends on
+    SAP's active-vs-absent-inactive checkrun responses and must be verified live
+    red→green (same discipline as #10/#11). Candidate for the next connected
+    session. *Observed, not yet code-changed.*
+
 ---
 
 ## Applying and verifying
